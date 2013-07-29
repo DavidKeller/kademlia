@@ -1,0 +1,805 @@
+{
+	"id": 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,
+	"peer_count": 0,
+	"k_bucket_size": 20,
+	"k_buckets": 
+	{
+		"index": 0,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 1,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 2,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 3,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 4,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 5,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 6,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 7,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 8,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 9,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 10,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 11,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 12,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 13,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 14,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 15,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 16,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 17,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 18,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 19,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 20,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 21,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 22,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 23,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 24,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 25,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 26,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 27,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 28,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 29,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 30,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 31,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 32,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 33,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 34,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 35,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 36,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 37,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 38,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 39,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 40,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 41,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 42,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 43,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 44,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 45,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 46,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 47,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 48,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 49,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 50,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 51,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 52,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 53,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 54,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 55,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 56,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 57,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 58,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 59,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 60,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 61,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 62,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 63,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 64,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 65,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 66,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 67,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 68,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 69,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 70,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 71,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 72,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 73,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 74,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 75,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 76,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 77,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 78,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 79,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 80,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 81,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 82,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 83,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 84,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 85,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 86,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 87,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 88,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 89,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 90,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 91,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 92,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 93,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 94,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 95,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 96,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 97,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 98,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 99,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 100,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 101,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 102,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 103,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 104,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 105,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 106,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 107,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 108,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 109,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 110,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 111,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 112,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 113,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 114,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 115,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 116,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 117,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 118,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 119,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 120,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 121,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 122,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 123,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 124,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 125,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 126,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 127,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 128,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 129,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 130,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 131,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 132,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 133,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 134,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 135,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 136,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 137,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 138,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 139,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 140,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 141,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 142,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 143,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 144,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 145,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 146,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 147,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 148,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 149,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 150,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 151,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 152,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 153,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 154,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 155,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 156,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 157,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 158,
+		"bit_value": 0,
+		"peer_count": 0
+	}
+	{
+		"index": 159,
+		"bit_value": 0,
+		"peer_count": 0
+	}
