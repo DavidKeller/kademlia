@@ -23,19 +23,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TEST_COMMON_HPP
-#define KADEMLIA_TEST_COMMON_HPP
-
+#ifndef KADEMLIA_TEST_HELPERS_COMMON_HPP
+#define KADEMLIA_TEST_HELPERS_COMMON_HPP
 #ifdef __clang__
 #   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
 #   pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp>
 #ifdef __clang__
 #   pragma clang diagnostic pop
 #endif
+
+#include <string>
+#include <boost/filesystem/path.hpp>
+
+std::string get_capture_path( std::string const & capture_name ); 
 
 #endif

@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helper_common.hpp"
+#include "helpers/common.hpp"
 
 #include <sstream>
 #include "id.hpp"
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_SUITE( test_print )
 
 BOOST_AUTO_TEST_CASE( id_is_printable )
 {
-    boost::test_tools::output_test_stream out( "test/pattern_id.out", true );
+    boost::test_tools::output_test_stream out( get_capture_path( "pattern_id.out" ), true );
 
     out << kd::id( "0000000000000000000000000000000011000011100110101001001001011001101110111000000001111001101110101001101111111001010100111110110011011110000000001000100101001110" );
 

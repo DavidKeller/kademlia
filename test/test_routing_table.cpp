@@ -23,9 +23,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helper_common.hpp"
+#include "helpers/common.hpp"
+#include "helpers/peer_factory.hpp"
 
-#include "helper_peer.hpp"
 #include "routing_table.hpp"
 
 namespace k = kademlia;
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_SUITE( test_print )
 
 BOOST_AUTO_TEST_CASE( print_empty_routing_table )
 {
-    boost::test_tools::output_test_stream out( "test/pattern_empty_routing_table.out", true);
+    boost::test_tools::output_test_stream out( get_capture_path( "pattern_empty_routing_table.out" ), true);
 
     out << kd::routing_table( kd::id( "" ), 20 );
 

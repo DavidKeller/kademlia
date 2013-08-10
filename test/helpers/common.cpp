@@ -23,15 +23,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "peer.hpp"
+#define BOOST_TEST_MAIN
+#include "common.hpp"
 
-inline kademlia::detail::peer
-create_peer
-    ( std::string const& ip = std::string("localhost")
-    , std::string const& service = std::string("12345") )
+namespace filesystem = boost::filesystem;
+namespace unit_test = boost::unit_test;
+
+namespace {
+
+filesystem::path captures_directory_;
+
+struct test_arguments {
+    test_arguments( void )   { captures_directory_ = unit_test::framework::master_test_suite().argv[1]; }
+};
+
+} // namespace
+
+std::string get_capture_path( std::string const & capture_name )
 {
-    kademlia::detail::peer::endpoints_type e;
-    e.push_back( kademlia::endpoint( ip, service ) );
-    return kademlia::detail::peer( e );
+    return (captures_directory_ / capture_name).string();
 }
+
+BOOST_GLOBAL_FIXTURE( test_arguments );
 

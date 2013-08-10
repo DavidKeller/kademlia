@@ -23,10 +23,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helper_common.hpp"
-
 #include <utility>
-#include "helper_peer.hpp"
+
+#include "helpers/common.hpp"
+#include "helpers/peer_factory.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

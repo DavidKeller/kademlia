@@ -26,18 +26,21 @@
 # Include implementation headers.
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Host all tests within a single binary.
-add_executable(all_tests
-    main.cpp
-    test_id.cpp
-    test_peer.cpp
-    test_routing_table.cpp
-    test_session.cpp
-    helper_common.hpp)
-target_link_libraries(all_tests 
-    kademlia 
-    ${Boost_LIBRARIES})
+add_definitions(-DBOOST_TEST_DYN_LINK)
 
-# Associate it with test target.
-add_test(all_tests all_tests)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
+
+macro(build_and_run_test source_file)
+    get_filename_component(test_name ${source_file} NAME_WE)
+    add_executable(${test_name} helpers/common.cpp helpers/common.hpp ${source_file} ${ARGN}) 
+    target_link_libraries(${test_name} kademlia ${Boost_LIBRARIES})
+    add_dependencies(check ${test_name})
+    add_test(${test_name} ${test_name} ${CMAKE_CURRENT_SOURCE_DIR}/captures)
+endmacro()
+
+build_and_run_test(test_id.cpp)
+build_and_run_test(test_peer.cpp helpers/peer.hpp)
+build_and_run_test(test_routing_table.cpp)
+build_and_run_test(test_session.cpp)
+
 

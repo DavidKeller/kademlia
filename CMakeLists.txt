@@ -22,20 +22,28 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-cmake_minimum_required(VERSION 2.6) 
+cmake_minimum_required(VERSION 2.8) 
 project(kademlia) 
 
 # Check environment.
 find_package(Boost REQUIRED COMPONENTS 
     system
+    filesystem 
     unit_test_framework)
 
 # Configure compilers.
-set(CMAKE_CXX_FLAGS                "-Wall -std=c++11 -stdlib=libc++")
-set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g")
-set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
+if (IS_CXX11_SUPPORTED)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+else()
+    message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
+endif()
+check_cxx_compiler_flag(-stdlib=libc++ IS_CLANG_STL_PRESENT)
+if (IS_CLANG_STL_PRESENT)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
 add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
 add_definitions(-DBOOST_ASIO_HAS_MOVE)

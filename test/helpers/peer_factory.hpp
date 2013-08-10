@@ -23,7 +23,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#define BOOST_TEST_MODULE "kademlia"
+#ifndef KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP
+#define KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP
 
-#include "helper_common.hpp"
+#include "peer.hpp"
 
+inline kademlia::detail::peer
+create_peer
+    ( std::string const& ip = std::string("localhost")
+    , std::string const& service = std::string("12345") )
+{
+    kademlia::detail::peer::endpoints_type e;
+    e.push_back( kademlia::endpoint( ip, service ) );
+    return kademlia::detail::peer( e );
+}
+
+#endif // KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP
