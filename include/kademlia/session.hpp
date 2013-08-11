@@ -35,9 +35,6 @@
 #include <memory>
 #include <functional>
 #include <system_error>
-#ifndef HAS_CXX11_METHOD_SPECIFIER
-#   include <boost/noncopyable.hpp>
-#endif
 
 #include <kademlia/detail/symbol_visibility.hpp>
 #include <kademlia/detail/cxx11_macros.hpp>
@@ -48,13 +45,7 @@ namespace kademlia {
 /**
  *
  */
-class session
-#ifdef HAS_CXX11_FINAL
-    final
-#endif
-#ifndef HAS_CXX11_METHOD_SPECIFIER
-    : private boost::noncopyable
-#endif
+class session final
 {
 public:
     //
@@ -74,7 +65,6 @@ public:
      *
      */
     KADEMLIA_SYMBOL_VISIBILITY
-    explicit
     session
         ( std::vector< endpoint > const& listening_endpoints
         , endpoint const& initial_peer );
@@ -86,7 +76,6 @@ public:
     ~session
         ( void );
 
-#ifdef HAS_CXX11_METHOD_SPECIFIER
     /**
      * Disabled copy constructor.
      */
@@ -101,7 +90,6 @@ public:
     operator=
         ( session const& )
         = delete;
-#endif
 
     /**
      *
@@ -122,6 +110,30 @@ public:
         ( std::string const& key
         , load_handler_type handler );
 
+    /**
+     *
+     */
+    KADEMLIA_SYMBOL_VISIBILITY
+    std::error_code
+    run_one
+            ( void );
+
+    /**
+     *
+     */
+    KADEMLIA_SYMBOL_VISIBILITY
+    std::error_code
+    run
+            ( void );
+
+    /**
+     *
+     */
+    KADEMLIA_SYMBOL_VISIBILITY
+    std::error_code
+    abort
+            ( void );
+
 private:
     //
     class impl;
@@ -131,7 +143,7 @@ private:
     std::unique_ptr< impl > impl_;
 };
 
-}
+} // namespace kademlia
 
 #endif
 

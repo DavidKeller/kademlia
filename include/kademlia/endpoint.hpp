@@ -40,10 +40,7 @@ namespace kademlia {
 /**
  *
  */
-class endpoint 
-#ifdef HAS_CXX11_FINAL
-    final
-#endif
+class endpoint final
 {
 public:
     ///

@@ -23,104 +23,65 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_PEER_HPP
-#define KADEMLIA_PEER_HPP
+#include <kademlia/error.hpp>
 
-#if defined(_MSC_VER)
-#   pragma once
-#endif
-
-#include <iosfwd>
 #include <string>
-#include <vector>
-#include <cassert>
-
-#include <kademlia/endpoint.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
-namespace detail {
+
+namespace {
 
 /**
  *
  */
-class peer final
+struct kademlia_error_category : std::error_category
 {
-public:
-    typedef std::vector< endpoint > endpoints_type;
+    char const* 
+    name
+        ( void ) 
+        const noexcept override
+    {
+        return "kademlia";
+    }
 
-public:
-    /**
-     *
-     */
-    explicit 
-    peer
-        ( endpoints_type const& endpoints );
-
-    /**
-     *
-     */
-    bool
-    operator==
-        ( peer const& o )
-        const;
-
-    /**
-     *
-     */
-    bool
-    operator!=
-        ( peer const& o )
-        const;
-
-    /**
-     *
-     */
-    endpoints_type const&
-    get_endpoints
-        ( void )
-        const;
-
-private:
-    ///
-    endpoints_type endpoints_;
+    std::string 
+    message
+        ( int condition ) 
+        const noexcept override 
+    {
+        switch ( condition )
+        {
+            case RUN_ABORTED:
+                return "run aborted";
+            default:
+                return "unknown error";
+        }
+    }
 };
 
-/**
- *
- */
-std::ostream&
-operator<<
-    ( std::ostream & out
-    , peer const& p );
+} // namespace
 
-inline
-peer::peer
-    ( endpoints_type const& endpoints )
-    : endpoints_( endpoints )
-{ assert( ! endpoints_.empty() && "peer's endpoints list must not be empty" ); }
-
-inline bool
-peer::operator==
-    ( peer const& o )
-    const
-{ return endpoints_ == o.endpoints_; }
-
-inline bool
-peer::operator!=
-    ( peer const& o )
-    const
-{ return ! this->operator==( o ); }
-
-inline peer::endpoints_type const&
-peer::get_endpoints
+std::error_category const&
+error_category
     ( void )
-    const
-{ return endpoints_; }
+{
+    static const kademlia_error_category category_{};
+    return category_;
+}
 
+std::error_condition
+make_error_condition
+    ( error_type code )
+{
+    return std::error_condition{ static_cast<int>(code), error_category() };
+}
 
-} // namespace detail
+std::error_code
+make_error_code
+    ( error_type code )
+{
+    return std::error_code{ static_cast<int>(code), error_category() };
+}
+
 } // namespace kademlia
-
-#endif
 

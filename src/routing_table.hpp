@@ -34,9 +34,6 @@
 #include <list>
 #include <vector>
 #include <iosfwd>
-#ifndef HAS_CXX11_METHOD_SPECIFIER
-#   include <boost/noncopyable.hpp>
-#endif
 #include <boost/iterator/iterator_facade.hpp>
 
 #include <kademlia/detail/cxx11_macros.hpp>
@@ -52,13 +49,7 @@ namespace detail {
  *  @note Current implementation use a discret symbol approach.
  *  @note Hide implementation behind a pimpl to speed up compilation.
  */
-class routing_table
-#ifdef HAS_CXX11_FINAL
-    final
-#endif
-#ifndef HAS_CXX11_METHOD_SPECIFIER
-    : private boost::noncopyable
-#endif
+class routing_table final
 {
 public:
     enum { DEFAULT_K_BUCKET_SIZE = 20 };
@@ -81,7 +72,6 @@ public:
     ~routing_table
         ( void );
 
-#ifdef HAS_CXX11_METHOD_SPECIFIER
     /**
      * Disabled copy constructor.
      */
@@ -96,7 +86,6 @@ public:
     operator=
         ( routing_table const& )
         = delete;
-#endif
 
     /**
      *  Count the number of peer in the routing table.

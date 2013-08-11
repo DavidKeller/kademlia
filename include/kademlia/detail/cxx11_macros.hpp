@@ -27,22 +27,18 @@
 #define KADEMLIA_DETAIL_CXX11_MACROS_HPP
 
 #ifdef _MSC_VER
+#   if _MSC_VER >= 1700
+#   else
+#   endif
 #endif
 
 #ifdef __clang__
-#   define HAS_CXX11_THREAD
-#   define HAS_CXX11_METHOD_SPECIFIER
-#   define HAS_CXX11_FINAL
 #endif
-
 
 #if __GNUC__ == 4
 #   if __GNUC_MINOR__ >= 4
-#       define HAS_CXX11_METHOD_SPECIFIER
-#       define HAS_CXX11_THREAD
 #   endif
 #   if __GNUC_MINOR__ >= 7
-#       define HAS_CXX11_FINAL
 #   endif
 #endif
 

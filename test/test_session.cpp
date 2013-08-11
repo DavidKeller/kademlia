@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE( session_opens_sockets )
 {
     // Create listening socket.
     std::vector< k::endpoint > es;
-	es.push_back( k::endpoint( "127.0.0.1", "11111" ) );
-	es.push_back( k::endpoint( "127.0.0.1", "11112" ) );
+    es.push_back( k::endpoint( "127.0.0.1", "11111" ) );
+    es.push_back( k::endpoint( "127.0.0.1", "11112" ) );
     
     // Create Dummy initial peer.
     k::endpoint const initial_peer( "127.0.0.1", "22222" );

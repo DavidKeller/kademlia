@@ -39,7 +39,7 @@ macro(build_and_run_test source_file)
 endmacro()
 
 build_and_run_test(test_id.cpp)
-build_and_run_test(test_peer.cpp helpers/peer.hpp)
+build_and_run_test(test_peer.cpp helpers/peer_factory.hpp)
 build_and_run_test(test_routing_table.cpp)
 build_and_run_test(test_session.cpp)
 

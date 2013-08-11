@@ -65,15 +65,15 @@ convert_endpoints
 {
     std::vector<typename Protocol::endpoint> resolved_endpoints;
 
-	BOOST_FOREACH( endpoint const& e, es ) {
-		// One raw endpoint (e.g. localhost) can be resolved to
-		// multiple endpoints (e.g. IPv4 / IPv6 address).
-		// Use iterator to handle this case.
-		auto begin = resolve_endpoint<Protocol>( io_service, e );
-		static typename Protocol::resolver::iterator const end;
+    BOOST_FOREACH( endpoint const& e, es ) {
+        // One raw endpoint (e.g. localhost) can be resolved to
+        // multiple endpoints (e.g. IPv4 / IPv6 address).
+        // Use iterator to handle this case.
+        auto begin = resolve_endpoint<Protocol>( io_service, e );
+        static typename Protocol::resolver::iterator const end;
 
-		resolved_endpoints.insert( resolved_endpoints.end(), begin, end );
-	}
+        resolved_endpoints.insert( resolved_endpoints.end(), begin, end );
+    }
 
     return std::move( resolved_endpoints );
 }
@@ -85,8 +85,8 @@ convert_endpoints
 template<typename Endpoint>
 typename Endpoint::protocol_type::socket
 create_socket
-	( boost::asio::io_service & io_service
-	, Endpoint const& e )
+    ( boost::asio::io_service & io_service
+    , Endpoint const& e )
 { return typename Endpoint::protocol_type::socket( io_service, e ); }
 
 
@@ -99,18 +99,18 @@ create_sockets
     ( boost::asio::io_service & io_service
     , std::vector<endpoint> const& es )
 {
-	// Get resolved endpoints from raw endpoints.
+    // Get resolved endpoints from raw endpoints.
     auto const endpoints = convert_endpoints<Protocol>( io_service, es );
 
     std::vector<typename Protocol::socket> sockets;
-	sockets.reserve( endpoints.size() );
-	
+    sockets.reserve( endpoints.size() );
+    
     // Create one socket per resolved_endpoint.
-	BOOST_FOREACH( typename Protocol::endpoint const& e, endpoints ) 
-		sockets.push_back( create_socket( io_service, e ) );
+    BOOST_FOREACH( typename Protocol::endpoint const& e, endpoints ) 
+        sockets.push_back( create_socket( io_service, e ) );
 
     return std::move( sockets );
-	return std::vector<typename Protocol::socket>();
+    return std::vector<typename Protocol::socket>();
 }
 
 /**
@@ -121,7 +121,7 @@ void
 graceful_close_socket
     ( Socket & s )
 {
-	boost::system::error_code error_discared;
+    boost::system::error_code error_discared;
     s.shutdown( Socket::shutdown_both, error_discared );
     s.close( error_discared );
 }

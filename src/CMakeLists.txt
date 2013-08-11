@@ -28,6 +28,8 @@ add_library(kademlia SHARED
     session.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
     endpoint.cpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
+    error.cpp
     peer.hpp
     peer.cpp
     id.hpp

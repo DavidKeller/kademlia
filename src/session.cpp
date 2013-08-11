@@ -33,16 +33,14 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
-#ifdef HAS_CXX11_THREAD
-#   include <thread>
-#else
-#   include <boost/thread.hpp>
-#endif
+#include <thread>
 #include <functional>
 #include <boost/throw_exception.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/tcp.hpp>
+
+#include <kademlia/error.hpp>
 
 #include "socket.hpp"
 
@@ -65,19 +63,11 @@ public:
     impl
         ( std::vector<endpoint> const& endpoints
         , endpoint const& initial_peer )
-        : io_service_()
-        , message_sockets_( create_sockets<udp>( io_service_, endpoints ) )
-		, content_sockets_( create_sockets<tcp>( io_service_, endpoints ) )
-        , main_thread_()
+        : io_service_{}
+        , message_sockets_{ create_sockets<udp>( io_service_, endpoints ) }
+        , content_sockets_{ create_sockets<tcp>( io_service_, endpoints ) }
     {
-		init( initial_peer );
-
-        // Run the main loop on a dedicated thread.
-#ifdef HAS_CXX11_THREAD
-        main_thread_ = std::thread( &impl::run_loop, this );
-#else
-        main_thread_ = boost::thread( std::bind( &impl::run_loop, this ) );
-#endif
+        init( initial_peer );
     }
 
     /**
@@ -87,22 +77,20 @@ public:
         ( void )
     {
         graceful_close_sockets( message_sockets_ );
-		graceful_close_sockets( content_sockets_ );
+        graceful_close_sockets( content_sockets_ );
         // Stop is_service, this will break the run_loop.
         io_service_.stop();
-        // Wait for the main_thread to exit.
-        main_thread_.join();
     }
 
     /**
      *
      */
-	void
-	init
-		( endpoint const& initial_peer  )
-	{
+    void
+    init
+        ( endpoint const& initial_peer  )
+    {
 
-	}
+    }
 
     /**
      *
@@ -112,7 +100,7 @@ public:
         ( std::string const& key 
         , std::string const& data
         , save_handler_type handler )
-    { }
+    { throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; }
 
     /**
      *
@@ -121,51 +109,40 @@ public:
     async_load
         ( std::string const& key
         , load_handler_type handler )
-    { }
+    { throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; }
 
-private:
     /**
      *
      */
-    void
-    run_loop
-        ( void )
-    {
-        while ( io_service_.run_one() > 0 ) {
+    std::error_code
+    run_one
+        ( void ) 
+    { return make_error_code( UNIMPLEMENTED ); }
 
-        }
-    }
+    /**
+     *
+     */
+    std::error_code
+    abort
+        ( void )
+    { return make_error_code( UNIMPLEMENTED ); }
 
 private:
     ao::io_service io_service_;
     std::vector<udp::socket> message_sockets_;
     std::vector<tcp::socket> content_sockets_;
-#ifdef HAS_CXX11_THREAD
-    std::thread main_thread_;
-#else
-    boost::thread main_thread_;
-#endif
 };
 
-/**
- *
- */
 session::session
     ( std::vector<endpoint> const& endpoints
     , endpoint const& initial_peer )
-    : impl_( new impl( endpoints, initial_peer ) )
+    : impl_{ new impl{ endpoints, initial_peer } }
 { }
 
-/**
- *
- */
 session::~session
     ( void )
 { }
 
-/**
- *
- */
 void
 session::async_save
     ( std::string const& key 
@@ -173,15 +150,35 @@ session::async_save
     , save_handler_type handler )
 { impl_->async_save( key, data, handler ); }
 
-/**
- *
- */
 void
 session::async_load
     ( std::string const& key
     , load_handler_type handler )
 { impl_->async_load( key, handler ); }
 
+std::error_code
+session::run_one
+        ( void ) 
+{ return impl_->run_one(); }
+
+std::error_code
+session::run
+        ( void )
+{ 
+    std::error_code failure;
+    do 
+    {
+        failure = run_one();
+    }
+    while ( ! failure );
+
+    return failure;
+}
+
+std::error_code
+session::abort
+        ( void )
+{ return impl_->abort(); }
 
 } // namespace kademlia
 
