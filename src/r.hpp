@@ -38,24 +38,31 @@ namespace detail {
 #include <type_traits>
 
 /**
- *
+ *  @brief Designed to return a value <b>or</b> an error code.
+ *  @tparam ReturnType The value type to return if no error occured.
  */
 template< typename ReturnType >
 class r
 {
 public:
-    ///
+    /// Exception type thrown when a value is accessed 
+    /// while the r contains an error.
     using exception_type = std::system_error;
 
-    ///
+    /// The error type used to store error.
     using error_type = std::error_code;
 
-    ///
+    /// The value stored when no error occured.
     using value_type = ReturnType;
 
 public:
     /**
-     *
+     *  @brief Construct this initialized with
+     *         a value whose emplace constructor 
+     *         arguments are provided
+     *         to this constructor.
+     *  @tparam Args Value constructor arguments type.
+     *  @param args Value constructor arguments.
      */
     template< typename ...Args >
     r
@@ -64,7 +71,8 @@ public:
     { construct_value( args... ); }
 
     /**
-     *
+     *  @brief Construct this initialized with an error.
+     *  @param error A constant reference to an error.
      */
     r
         ( error_type const & error )
@@ -72,7 +80,8 @@ public:
     { } 
 
     /**
-     *
+     *  @brief Construct this initialized with an error.
+     *  @param error A mutable reference to an error.
      */
     r
         ( error_type & error )
@@ -80,7 +89,8 @@ public:
     { } 
 
     /**
-     *
+     *  @brief Construct this initialized with an error.
+     *  @param error A rvalue reference to an error.
      */
     r
         ( error_type && error )
@@ -88,7 +98,8 @@ public:
     { } 
 
     /**
-     *
+     *  @brief Copy constructor.
+     *  @param other A constant reference to an error.
      */
     r
         ( r const & other )
@@ -96,7 +107,8 @@ public:
     { if ( other ) construct_value( other.v() ); }
 
     /**
-     *
+     *  @brief Copy constructor.
+     *  @param other A mutable reference to an error.
      */
     r
         ( r & other )
@@ -104,7 +116,8 @@ public:
     { }
 
     /**
-     *
+     *  @brief Copy constructor.
+     *  @param other A rvalue reference to an error.
      */
     r
         ( r && other )
@@ -112,14 +125,15 @@ public:
     { if ( other ) construct_value( std::move( other.v() ) ); }
 
     /**
-     *
+     *  @brief Destructor.
      */
     ~r
         ( void )
     { destruct_value_if_present(); }
 
     /**
-     *
+     *  @brief Assignment operator.
+     *  @param other A constant reference to an error.
      */
     r &
     operator=
@@ -127,7 +141,8 @@ public:
     { *this = r{ other }; }
 
     /**
-     *
+     *  @brief Assignment operator.
+     *  @param other A rvalue reference to an error.
      */
     r &
     operator=
@@ -140,7 +155,9 @@ public:
     }
 
     /**
-     *
+     *  @brief Assignment from an error operator.
+     *  @param error The error to assign to this.
+     *  @return A reference to this.
      */
     r &
     operator=
@@ -154,7 +171,9 @@ public:
     }
 
     /**
-     *
+     *  @brief Assignment from a value operator.
+     *  @param value The value to assign to this.
+     *  @return A reference to this.
      */
     r &
     operator=
@@ -168,7 +187,9 @@ public:
     }
 
     /**
-     *
+     *  @brief Assignment from a value operator.
+     *  @param value The value to assign to this.
+     *  @return A reference to this.
      */
     r &
     operator=
@@ -181,30 +202,36 @@ public:
         return *this;
     }
 
-
     /**
-     *
+     *  @brief bool operator used to check if this
+     *         has been initialized with a value.
+     *  @return true if initliazed from a value, 
+     *          false otherwise.
      */
     explicit 
     operator bool() const noexcept
     { return ! error_; }
 
     /**
-     *
+     *  @brief Get the value stored in this.
+     *  @return A reference to the stored value.
+     *  @note throw exception_type if this is initiliazed with an error.
+     *  @throw exception_type
      */
     value_type &
     v() 
     { return access_value_or_throw(); }
 
     /**
-     *
+     *  @copydoc value_type & v()
      */
     value_type const &
     v() const
     { return access_value_or_throw(); }
 
     /**
-     *
+     *  @brief Get the error stored in this.
+     *  @return A constant reference to the stored error.
      */
     error_type const &
     e() const
@@ -212,7 +239,7 @@ public:
 
 private:
     /**
-     *
+     *  @brief Construct the value in the initilized value_ buffer.
      */
     template< typename ...Args >
     void
@@ -221,14 +248,15 @@ private:
     { ::new(&value_) value_type( std::forward< Args >( args )... ); }
 
     /**
-     *
+     *  @brief If a value has been stored in the value_ buffer,
+     *         call the destructor.
      */
     void
     destruct_value_if_present()
     { if (*this) access_value_or_throw().~ReturnType(); }
 
     /**
-     *
+     *  @brief Return the value_ buffer as a value.
      */
     value_type &
     access_value_or_throw()
@@ -240,7 +268,7 @@ private:
     }
 
     /**
-     *
+     *  @copydoc value_type & access_value_or_throw()
      */
     value_type const &
     access_value_or_throw() const
@@ -253,10 +281,11 @@ private:
 
 
 private:
-    ///
+    /// The error stored if no value has be set.
     error_type error_;
 
-    ///
+    /// A buffer used to store a value if this is not
+    /// initliazed with an error.
     typename std::aligned_storage< sizeof( value_type )
                                  , std::alignment_of< value_type >::value
                                  >::type value_;
