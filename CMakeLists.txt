@@ -34,11 +34,8 @@ find_package(Boost REQUIRED COMPONENTS
 # Configure compilers.
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
-check_cxx_compiler_flag(-std=c++0x IS_CXX0X_SUPPORTED)
 if (IS_CXX11_SUPPORTED)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
-elseif(IS_CXX0X_SUPPORTED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++0x")
 else()
     message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
 endif()
