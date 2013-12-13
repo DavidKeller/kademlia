@@ -37,15 +37,12 @@
 #include <functional>
 #include <boost/throw_exception.hpp>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/udp.hpp>
-#include <boost/asio/ip/tcp.hpp>
 
 #include <kademlia/error.hpp>
 
-#include "socket.hpp"
+#include "message_socket.hpp"
 
 namespace ao = boost::asio;
-using ao::ip::udp;
 
 namespace kademlia {
 
@@ -63,7 +60,7 @@ public:
         ( std::vector< endpoint > const& endpoints
         , endpoint const& initial_peer )
         : io_service_{}
-        , message_sockets_{ create_sockets<udp>( io_service_, endpoints ) }
+        , message_sockets_{ create_sockets( io_service_, endpoints ) }
     {
         init( initial_peer );
     }
@@ -126,7 +123,7 @@ public:
 
 private:
     ao::io_service io_service_;
-    std::vector< udp::socket > message_sockets_;
+    message_sockets message_sockets_;
 };
 
 session::session

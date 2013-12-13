@@ -23,54 +23,43 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_NETWORK_HPP
-#define KADEMLIA_NETWORK_HPP
-
-#if defined(_MSC_VER)
-#   pragma once
-#endif
-
-#include <list>
-#include <vector>
-#include <memory>
-#include <boost/asio/io_service.hpp>
-#include <boost/foreach.hpp>
-
-#include <kademlia/endpoint.hpp>
+#include "message_socket.hpp"
 
 namespace kademlia {
+
+namespace {
+
+using udp = boost::asio::ip::udp;
 
 /**
  *
  */
-template<typename Protocol>
-typename Protocol::resolver::iterator
+udp::resolver::iterator
 resolve_endpoint
     ( boost::asio::io_service & io_service
     , endpoint const& e )
 {
-    typename Protocol::resolver r(io_service);
-    typename Protocol::resolver::query q(e.address(), e.service());
+    udp::resolver r(io_service);
+    udp::resolver::query q(e.address(), e.service());
     return r.resolve(q);
 }
 
 /**
  *
  */
-template<typename Protocol>
-std::vector<typename Protocol::endpoint>
+std::vector<udp::endpoint>
 convert_endpoints
     ( boost::asio::io_service & io_service
     , std::vector<endpoint> const& es )
 {
-    std::vector<typename Protocol::endpoint> resolved_endpoints;
+    std::vector< udp::endpoint > resolved_endpoints;
 
-    BOOST_FOREACH( endpoint const& e, es ) {
+    for ( endpoint const& e : es ) {
         // One raw endpoint (e.g. localhost) can be resolved to
         // multiple endpoints (e.g. IPv4 / IPv6 address).
         // Use iterator to handle this case.
-        auto begin = resolve_endpoint<Protocol>( io_service, e );
-        static typename Protocol::resolver::iterator const end;
+        auto begin = resolve_endpoint( io_service, e );
+        static udp::resolver::iterator const end;
 
         resolved_endpoints.insert( resolved_endpoints.end(), begin, end );
     }
@@ -78,64 +67,59 @@ convert_endpoints
     return std::move( resolved_endpoints );
 }
 
-
 /**
  *
  */
-template<typename Endpoint>
-typename Endpoint::protocol_type::socket
+message_socket
 create_socket
     ( boost::asio::io_service & io_service
-    , Endpoint const& e )
-{ return typename Endpoint::protocol_type::socket( io_service, e ); }
-
-
-/**
- *
- */
-template<typename Protocol>
-std::vector<typename Protocol::socket>
-create_sockets
-    ( boost::asio::io_service & io_service
-    , std::vector<endpoint> const& es )
-{
-    // Get resolved endpoints from raw endpoints.
-    auto const endpoints = convert_endpoints<Protocol>( io_service, es );
-
-    std::vector<typename Protocol::socket> sockets;
-    sockets.reserve( endpoints.size() );
-    
-    // Create one socket per resolved_endpoint.
-    BOOST_FOREACH( typename Protocol::endpoint const& e, endpoints ) 
-        sockets.push_back( create_socket( io_service, e ) );
-
-    return std::move( sockets );
-    return std::vector<typename Protocol::socket>();
-}
+    , message_socket::endpoint_type const& e )
+{ return message_socket( io_service, e ); }
 
 /**
  *
  */
-template<typename Socket>
 void
 graceful_close_socket
-    ( Socket & s )
+    ( message_socket & s )
 {
     boost::system::error_code error_discared;
-    s.shutdown( Socket::shutdown_both, error_discared );
     s.close( error_discared );
 }
 
+} // anonymous namespace 
+
 /**
  *
  */
-template<typename Socket>
+message_sockets
+create_sockets
+    ( boost::asio::io_service & io_service
+    , std::vector< endpoint > const& es )
+{
+    // Get resolved endpoints from raw endpoints.
+    auto const endpoints = convert_endpoints( io_service, es );
+
+    std::vector<message_socket> sockets;
+    sockets.reserve( endpoints.size() );
+    
+    // Create one socket per resolved_endpoint.
+    for( auto const& e : endpoints ) 
+        sockets.push_back( create_socket( io_service, e ) );
+
+    return std::move( sockets );
+}
+
+/**
+ *
+ */
 void
 graceful_close_sockets
-    ( std::vector<Socket> & s )
-{ std::for_each( s.begin(), s.end(), graceful_close_socket<Socket> ); }
+    ( message_sockets & sockets )
+{ 
+    for ( auto & s : sockets )
+        graceful_close_socket(s);
+}
 
 } // namespace kademlia
-
-#endif
 
