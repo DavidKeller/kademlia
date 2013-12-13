@@ -36,7 +36,8 @@ add_library(kademlia SHARED
     id.cpp
     routing_table.hpp
     routing_table.cpp
-    socket.hpp)
+    socket.hpp
+    buffer.hpp)
 
 add_definitions(-DKADEMLIA_BUILDING)
 

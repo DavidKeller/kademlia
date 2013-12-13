@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -44,9 +44,9 @@ class endpoint final
 {
 public:
     ///
-    typedef std::string address_type;
+    using address_type = std::string;
     ///
-    typedef std::string service_type;
+    using service_type = std::string;
 
     /**
      *

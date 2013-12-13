@@ -23,22 +23,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TEST_HELPERS_COMMON_HPP
-#define KADEMLIA_TEST_HELPERS_COMMON_HPP
-#ifdef __clang__
-#   pragma clang diagnostic push
-#   pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#   pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-#include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp>
-#ifdef __clang__
-#   pragma clang diagnostic pop
+#ifndef KADEMLIA_BUFFER_HPP
+#define KADEMLIA_BUFFER_HPP
+
+#if defined(_MSC_VER)
+#   pragma once
 #endif
 
-#include <string>
-#include <boost/filesystem/path.hpp>
+#include <vector>
+#include <cstdint>
 
-std::string get_capture_path( std::string const & capture_name ); 
+namespace kademlia {
+namespace detail {
+
+using buffer = std::vector< std::uint8_t >;
+
+} // namespace detail
+} // namespace kademlia
 
 #endif
+

@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,7 @@ namespace detail {
 class peer final
 {
 public:
-    typedef std::vector< endpoint > endpoints_type;
+    using endpoints_type = std::vector< endpoint >;
 
 public:
     /**

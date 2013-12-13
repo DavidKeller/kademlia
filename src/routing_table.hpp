@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -56,7 +56,7 @@ public:
 
     class iterator;
     
-    typedef std::pair< id, peer > value_type;
+    using value_type = std::pair< id, peer >;
     
 public:
     /**
@@ -147,10 +147,10 @@ public:
 private:
     
     /// Contains peer with a common base id.
-    typedef std::list< value_type > k_bucket;
+    using k_bucket = std::list< value_type >;
     /// Contains all the k_bucket.
     /// @note Algorithms expect a vector here, do not change this.
-    typedef std::vector< k_bucket > k_buckets;
+    using k_buckets = std::vector< k_bucket >;
 
 private:
     k_buckets::iterator

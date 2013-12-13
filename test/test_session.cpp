@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,6 @@
 namespace k = kademlia;
 namespace bo = boost::asio;
 using bo::ip::udp;
-using bo::ip::tcp;
 
 namespace {
 
@@ -64,9 +63,6 @@ check_listening
 {
     auto udp_failure = create_socket< udp::socket >( ip, port ); 
     BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, udp_failure );
-
-    auto tcp_failure = create_socket< tcp::acceptor >( ip, port );
-    BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, tcp_failure );
 }
 
 } // namespace
