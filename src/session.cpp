@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -46,7 +46,6 @@
 
 namespace ao = boost::asio;
 using ao::ip::udp;
-using ao::ip::tcp;
 
 namespace kademlia {
 
@@ -61,11 +60,10 @@ public:
      */
     explicit 
     impl
-        ( std::vector<endpoint> const& endpoints
+        ( std::vector< endpoint > const& endpoints
         , endpoint const& initial_peer )
         : io_service_{}
         , message_sockets_{ create_sockets<udp>( io_service_, endpoints ) }
-        , content_sockets_{ create_sockets<tcp>( io_service_, endpoints ) }
     {
         init( initial_peer );
     }
@@ -77,7 +75,6 @@ public:
         ( void )
     {
         graceful_close_sockets( message_sockets_ );
-        graceful_close_sockets( content_sockets_ );
         // Stop is_service, this will break the run_loop.
         io_service_.stop();
     }
@@ -97,8 +94,8 @@ public:
      */
     void
     async_save
-        ( std::string const& key 
-        , std::string const& data
+        ( key_type const& key 
+        , data_type const& data
         , save_handler_type handler )
     { throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; }
 
@@ -107,7 +104,7 @@ public:
      */
     void
     async_load
-        ( std::string const& key
+        ( key_type const& key
         , load_handler_type handler )
     { throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; }
 
@@ -129,12 +126,11 @@ public:
 
 private:
     ao::io_service io_service_;
-    std::vector<udp::socket> message_sockets_;
-    std::vector<tcp::socket> content_sockets_;
+    std::vector< udp::socket > message_sockets_;
 };
 
 session::session
-    ( std::vector<endpoint> const& endpoints
+    ( std::vector< endpoint > const& endpoints
     , endpoint const& initial_peer )
     : impl_{ new impl{ endpoints, initial_peer } }
 { }
@@ -145,21 +141,16 @@ session::~session
 
 void
 session::async_save
-    ( std::string const& key 
-    , std::string const& data
+    ( key_type const& key 
+    , data_type const& data
     , save_handler_type handler )
 { impl_->async_save( key, data, handler ); }
 
 void
 session::async_load
-    ( std::string const& key
+    ( key_type const& key
     , load_handler_type handler )
 { impl_->async_load( key, handler ); }
-
-std::error_code
-session::run_one
-        ( void ) 
-{ return impl_->run_one(); }
 
 std::error_code
 session::run
@@ -168,7 +159,7 @@ session::run
     std::error_code failure;
     do 
     {
-        failure = run_one();
+        failure = impl_->run_one();
     }
     while ( ! failure );
 

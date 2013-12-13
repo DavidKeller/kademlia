@@ -1,4 +1,4 @@
-// Copyright (c) 2010, David Keller
+// Copyright (c) 2013, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 #   pragma once
 #endif
 
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <memory>
@@ -48,18 +49,24 @@ namespace kademlia {
 class session final
 {
 public:
+    ///
+    using key_type = std::vector< std::uint8_t >;
+ 
+    ///
+    using data_type = std::vector< std::uint8_t >;
+ 
     //
-    typedef std::function 
+    using save_handler_type = std::function 
             < void 
                 ( std::error_code const& error )
-            > save_handler_type;
+            >;
     //
-    typedef std::function 
+    using load_handler_type = std::function 
             < void 
                 ( std::error_code const& error
-                , std::string const& data )
-            > load_handler_type;
- 
+                , data_type const& data )
+            >;
+
 public:
     /**
      *
@@ -97,8 +104,8 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     void
     async_save
-        ( std::string const& key 
-        , std::string const& data
+        ( key_type const& key 
+        , data_type const& data
         , save_handler_type handler );
 
     /**
@@ -107,16 +114,8 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     void
     async_load
-        ( std::string const& key
+        ( key_type const& key
         , load_handler_type handler );
-
-    /**
-     *
-     */
-    KADEMLIA_SYMBOL_VISIBILITY
-    std::error_code
-    run_one
-            ( void );
 
     /**
      *
