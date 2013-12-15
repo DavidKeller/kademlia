@@ -37,9 +37,12 @@
 #include <kademlia/endpoint.hpp>
 
 namespace kademlia {
+namespace detail {
 
+///
 using message_socket = boost::asio::ip::udp::socket;
-using message_sockets = std::vector< message_socket >;
+///
+using message_sockets = std::vector<message_socket>;
 
 /**
  *
@@ -47,12 +50,16 @@ using message_sockets = std::vector< message_socket >;
 message_sockets
 create_sockets
     ( boost::asio::io_service & io_service
-    , std::vector< endpoint > const& es );
+    , std::vector<endpoint> const& es );
 
+/**
+ *
+ */
 void
-graceful_close_sockets
-    ( message_sockets & sockets );
+graceful_close_socket
+    ( message_socket & s );
 
+} // namespace detail
 } // namespace kademlia
 
 #endif

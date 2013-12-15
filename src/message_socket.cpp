@@ -26,6 +26,7 @@
 #include "message_socket.hpp"
 
 namespace kademlia {
+namespace detail {
 
 namespace {
 
@@ -39,8 +40,8 @@ resolve_endpoint
     ( boost::asio::io_service & io_service
     , endpoint const& e )
 {
-    udp::resolver r(io_service);
-    udp::resolver::query q(e.address(), e.service());
+    udp::resolver r{ io_service };
+    udp::resolver::query q{ e.address(), e.service() };
     return r.resolve(q);
 }
 
@@ -74,18 +75,7 @@ message_socket
 create_socket
     ( boost::asio::io_service & io_service
     , message_socket::endpoint_type const& e )
-{ return message_socket( io_service, e ); }
-
-/**
- *
- */
-void
-graceful_close_socket
-    ( message_socket & s )
-{
-    boost::system::error_code error_discared;
-    s.close( error_discared );
-}
+{ return message_socket{ io_service, e }; }
 
 } // anonymous namespace 
 
@@ -114,12 +104,13 @@ create_sockets
  *
  */
 void
-graceful_close_sockets
-    ( message_sockets & sockets )
-{ 
-    for ( auto & s : sockets )
-        graceful_close_socket(s);
+graceful_close_socket
+    ( message_socket & s )
+{
+    boost::system::error_code error_discared;
+    s.close( error_discared );
 }
 
+} // namespace detail
 } // namespace kademlia
 

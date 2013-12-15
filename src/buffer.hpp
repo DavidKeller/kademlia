@@ -36,7 +36,7 @@
 namespace kademlia {
 namespace detail {
 
-using buffer = std::vector< std::uint8_t >;
+using buffer = std::vector<std::uint8_t>;
 
 } // namespace detail
 } // namespace kademlia

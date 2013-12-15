@@ -37,8 +37,14 @@
 #endif
 
 #include <string>
-#include <boost/filesystem/path.hpp>
+#include <cstdint>
 
-std::string get_capture_path( std::string const & capture_name ); 
+std::string 
+get_capture_path
+    ( std::string const & capture_name ); 
+
+std::uint16_t
+get_temporary_listening_port
+    ( std::uint16_t previously_allocated_port = 1234 );
 
 #endif

@@ -41,8 +41,8 @@
 #include <kademlia/error.hpp>
 
 #include "message_socket.hpp"
-
-namespace ao = boost::asio;
+#include "routing_table.hpp"
+#include "subnet.hpp"
 
 namespace kademlia {
 
@@ -52,6 +52,10 @@ namespace kademlia {
 class session::impl
 {
 public:
+    ///
+    using subnets = std::vector<detail::subnet>;
+
+public:
     /**
      *
      */
@@ -60,30 +64,10 @@ public:
         ( std::vector< endpoint > const& endpoints
         , endpoint const& initial_peer )
         : io_service_{}
-        , message_sockets_{ create_sockets( io_service_, endpoints ) }
+        , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
+        , routing_table_{}
     {
         init( initial_peer );
-    }
-
-    /**
-     *
-     */
-    ~impl
-        ( void )
-    {
-        graceful_close_sockets( message_sockets_ );
-        // Stop is_service, this will break the run_loop.
-        io_service_.stop();
-    }
-
-    /**
-     *
-     */
-    void
-    init
-        ( endpoint const& initial_peer  )
-    {
-
     }
 
     /**
@@ -111,7 +95,10 @@ public:
     std::error_code
     run_one
         ( void ) 
-    { return make_error_code( UNIMPLEMENTED ); }
+    { 
+        io_service_.run_one();
+        return std::error_code{};
+    }
 
     /**
      *
@@ -122,8 +109,42 @@ public:
     { return make_error_code( UNIMPLEMENTED ); }
 
 private:
-    ao::io_service io_service_;
-    message_sockets message_sockets_;
+    static subnets
+    create_subnets
+        ( detail::message_sockets sockets ) 
+    {
+        subnets new_subnets;
+
+        for ( auto & s : sockets )
+            new_subnets.emplace_back( std::move( s ) );
+
+        return new_subnets;
+    }
+
+    /**
+     *
+     */
+    void
+    init
+        ( endpoint const& initial_peer )
+    {
+    }
+
+    /**
+     *
+     */
+    void
+    handle_new_message
+        ( boost::system::error_code const& failure
+        , std::size_t bytes_read )
+    {
+
+    }
+
+private:
+    boost::asio::io_service io_service_;
+    subnets subnets_;
+    detail::routing_table routing_table_;
 };
 
 session::session

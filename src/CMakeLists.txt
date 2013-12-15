@@ -34,6 +34,7 @@ add_library(kademlia SHARED
     peer.cpp
     id.hpp
     id.cpp
+    subnet.hpp
     routing_table.hpp
     routing_table.cpp
     message_socket.hpp

@@ -23,71 +23,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdint>
-#include <boost/asio/ip/udp.hpp>
-#include <boost/system/system_error.hpp>
-#include <kademlia/session.hpp>
+#include "message_socket.hpp"
 
 #include "helpers/common.hpp"
 
 namespace k = kademlia;
-namespace bo = boost::asio;
-
-using bo::ip::udp;
-
-namespace {
-
-template< typename Socket >
-boost::system::error_code
-create_socket
-    ( std::string const& ip
-    , std::uint16_t port )
-{
-    auto const a = bo::ip::address::from_string( ip );
-    bo::io_service io_service;
-
-    // Try to create a socket.
-    typename Socket::endpoint_type endpoint( a, port );
-    Socket socket( io_service, endpoint.protocol() );
-
-    boost::system::error_code failure;
-    socket.bind( endpoint, failure );
-
-    return failure;
-}
-
-void
-check_listening
-    ( std::string const& ip
-    , std::uint16_t port )
-{
-    auto udp_failure = create_socket< udp::socket >( ip, port ); 
-    BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, udp_failure );
-}
-
-} // namespace
 
 /**
- *  Test routing_table::routing_table()
+ *
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
-BOOST_AUTO_TEST_CASE( session_opens_sockets )
+BOOST_AUTO_TEST_CASE( one_socket_per_address_is_created )
 {
-    // Create listening socket.
-    std::vector< k::endpoint > es;
-    std::uint16_t const port1 = get_temporary_listening_port();
-    es.push_back( k::endpoint( "127.0.0.1", port1 ) );
-    std::uint16_t const port2 = get_temporary_listening_port( port1 );
-    es.push_back( k::endpoint( "127.0.0.1", port2 ) );
+    auto const port = get_temporary_listening_port();
     
-    // Create Dummy initial peer.
-    k::endpoint const initial_peer( "127.0.0.1", "22222" );
+    std::vector<k::endpoint> endpoints; 
+    endpoints.emplace_back( "127.0.0.1", port );
+    endpoints.emplace_back( "::1", port );
     
-    k::session s( es, initial_peer );
-    
-    check_listening( "127.0.0.1", port1 );
-    check_listening( "127.0.0.1", port2 );
+    boost::asio::io_service io_service;
+    auto sockets = k::detail::create_sockets( io_service, endpoints );
+    BOOST_REQUIRE_EQUAL( 2, sockets.size() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

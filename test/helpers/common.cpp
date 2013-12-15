@@ -26,8 +26,14 @@
 #define BOOST_TEST_MAIN
 #include "common.hpp"
 
+#include <boost/system/system_error.hpp>
+#include <boost/filesystem.hpp>
+
+#include "message_socket.hpp"
+
 namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;
+namespace detail = kademlia::detail;
 
 namespace {
 
@@ -42,6 +48,27 @@ struct test_arguments {
 std::string get_capture_path( std::string const & capture_name )
 {
     return (captures_directory_ / capture_name).string();
+}
+
+std::uint16_t
+get_temporary_listening_port
+    ( std::uint16_t port )
+{
+    boost::system::error_code failure;
+
+    do  
+    {
+        ++ port;
+        detail::message_socket::endpoint_type const e
+                { detail::message_socket::protocol_type::v4() , port }; 
+
+        boost::asio::io_service io_service;
+        // Try to open a socket at this address.
+        detail::message_socket{ io_service, e.protocol() }.bind( e, failure );
+    }
+    while ( failure == boost::system::errc::address_in_use ); 
+
+    return port;
 }
 
 BOOST_GLOBAL_FIXTURE( test_arguments );
