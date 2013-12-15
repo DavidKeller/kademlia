@@ -129,7 +129,7 @@ public:
      *
      */
     KADEMLIA_SYMBOL_VISIBILITY
-    std::error_code
+    void
     abort
             ( void );
 

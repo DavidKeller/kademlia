@@ -109,12 +109,12 @@ public:
     /**
      *
      */
-    std::error_code
+    void
     abort
         ( void )
     { 
         io_service_.stop();
-        return std::error_code{}; 
+        failure_ = make_error_code( RUN_ABORTED );
     }
 
 private:
@@ -227,10 +227,10 @@ session::run
         ( void )
 { return impl_->run(); }
 
-std::error_code
+void
 session::abort
         ( void )
-{ return impl_->abort(); }
+{ impl_->abort(); }
 
 } // namespace kademlia
 
