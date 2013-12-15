@@ -30,12 +30,12 @@
 #   pragma once
 #endif
 
-namespace kademlia {
-namespace detail {
-
 #include <system_error>
 #include <utility>
 #include <type_traits>
+
+namespace kademlia {
+namespace detail {
 
 /**
  *  @brief Designed to return a value <b>or</b> an error code.
