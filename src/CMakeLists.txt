@@ -39,6 +39,7 @@ add_library(kademlia SHARED
     routing_table.cpp
     message_socket.hpp
     message_socket.cpp
+    boost_to_std_error.hpp
     buffer.hpp)
 
 add_definitions(-DKADEMLIA_BUILDING)

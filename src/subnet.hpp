@@ -30,10 +30,9 @@
 #   pragma once
 #endif
 
-#include <boost/system/error_code.hpp>
-
 #include "buffer.hpp"
 #include "message_socket.hpp"
+#include "boost_to_std_error.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -59,7 +58,8 @@ public:
      *
      */
     explicit
-    subnet( subnet && o ) = default;
+    subnet
+        ( subnet && o ) = default;
 
     /**
      *
@@ -123,7 +123,7 @@ subnet::async_receive
         else
             this->reception_buffer_.resize( bytes_received );
 
-        callback( failure
+        callback( boost_to_std_error( failure )
                 , this->current_message_sender_
                 , this->reception_buffer_ );
     };
@@ -143,13 +143,13 @@ subnet::async_send
     , SendCallback const& callback )
 {
     if ( message.size() > INPUT_BUFFER_SIZE )
-        callback( make_error_code( boost::system::errc::value_too_large ) );
+        callback( make_error_code( std::errc::value_too_large ) );
     else {
         auto on_completion = [ this, callback ]
             ( boost::system::error_code const& failure
-            , std::size_t bytes_sent )
+            , std::size_t /* bytes_sent */ )
         {
-            callback( failure );
+            callback( boost_to_std_error( failure ) );
         };
 
         this->socket_.async_send_to( boost::asio::buffer( message )

@@ -23,49 +23,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_MESSAGE_SOCKET_HPP
-#define KADEMLIA_MESSAGE_SOCKET_HPP
+#ifndef KADEMLIA_BOOST_TO_STD_ERROR_HPP
+#define KADEMLIA_BOOST_TO_STD_ERROR_HPP
 
 #if defined(_MSC_VER)
 #   pragma once
 #endif
 
-#include <vector>
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <system_error>
+#include <boost/system/error_code.hpp>
 
-#include <kademlia/endpoint.hpp>
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-///
-using message_socket = boost::asio::ip::udp::socket;
-///
-using message_sockets = std::vector<message_socket>;
-
 /**
  *
  */
-message_sockets
-create_sockets
-    ( boost::asio::io_service & io_service
-    , std::vector<endpoint> const& es );
-
-/**
- *
- */
-void
-graceful_close_socket
-    ( message_socket & s );
-
-/**
- *
- */
-std::vector<message_socket::endpoint_type>
-resolve_endpoint
-    ( boost::asio::io_service & io_service
-    , endpoint const& e );
+inline std::error_code
+boost_to_std_error
+    ( boost::system::error_code const& failure )
+{
+    if ( failure.category() == boost::system::generic_category() )
+        return std::error_code{ failure.value(), std::generic_category() };
+    else if ( failure.category() == boost::system::system_category() )
+        return std::error_code{ failure.value(), std::system_category() };
+    else
+        return make_error_code( UNKNOWN );
+}
 
 } // namespace detail
 } // namespace kademlia

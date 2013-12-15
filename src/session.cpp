@@ -35,7 +35,6 @@
 #include <stdexcept>
 #include <thread>
 #include <functional>
-#include <boost/throw_exception.hpp>
 #include <boost/asio/io_service.hpp>
 
 #include <kademlia/error.hpp>
@@ -49,7 +48,7 @@ namespace kademlia {
 /**
  *
  */
-class session::impl
+class session::impl final
 {
 public:
     ///
@@ -61,11 +60,12 @@ public:
      */
     explicit 
     impl
-        ( std::vector< endpoint > const& endpoints
+        ( std::vector<endpoint > const& endpoints
         , endpoint const& initial_peer )
-        : io_service_{}
-        , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
-        , routing_table_{}
+            : io_service_{}
+            , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
+            , routing_table_{}
+            , failure_{}
     {
         init( initial_peer );
     }
@@ -93,11 +93,17 @@ public:
      *
      */
     std::error_code
-    run_one
+    run
         ( void ) 
     { 
-        io_service_.run_one();
-        return std::error_code{};
+        failure_.clear();
+        io_service_.reset();
+
+        schedule_initial_receive_on_each_subnet();
+
+        while ( ! failure_ && io_service_.run_one() );
+
+        return failure_;
     }
 
     /**
@@ -106,17 +112,23 @@ public:
     std::error_code
     abort
         ( void )
-    { return make_error_code( UNIMPLEMENTED ); }
+    { 
+        io_service_.stop();
+        return std::error_code{}; 
+    }
 
 private:
+    /**
+     *
+     */
     static subnets
     create_subnets
         ( detail::message_sockets sockets ) 
     {
         subnets new_subnets;
 
-        for ( auto & s : sockets )
-            new_subnets.emplace_back( std::move( s ) );
+        for ( auto & current_socket : sockets )
+            new_subnets.emplace_back( std::move( current_socket ) );
 
         return new_subnets;
     }
@@ -127,16 +139,55 @@ private:
     void
     init
         ( endpoint const& initial_peer )
-    {
+    { 
+        for ( auto & current_endpoint : detail::resolve_endpoint( io_service_, initial_peer ) )
+            // XXX: Sens a FIND_NODE with our own id to this endpoint.
+            (void)current_endpoint;
     }
 
     /**
      *
      */
     void
-    handle_new_message
-        ( boost::system::error_code const& failure
-        , std::size_t bytes_read )
+    schedule_initial_receive_on_each_subnet
+        ( void )
+    {
+        for ( auto & current_subnet : subnets_ )
+            schedule_receive_on_subnet( current_subnet );
+    }
+
+    /**
+     *
+     */
+    void
+    schedule_receive_on_subnet
+        ( detail::subnet & current_subnet )
+    {
+        auto on_new_message = [ this, &current_subnet ]
+            ( std::error_code const& failure
+            , detail::message_socket::endpoint_type const& sender
+            , detail::buffer const& message )
+        {
+            if ( failure )
+                failure_ = failure;
+            else
+            {
+                process_new_message( current_subnet, sender, message );
+                schedule_receive_on_subnet( current_subnet );
+            }
+        };
+
+        current_subnet.async_receive( on_new_message );
+    }
+
+    /**
+     *
+     */
+    void
+    process_new_message
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::buffer const& message )
     {
 
     }
@@ -145,6 +196,7 @@ private:
     boost::asio::io_service io_service_;
     subnets subnets_;
     detail::routing_table routing_table_;
+    std::error_code failure_;
 };
 
 session::session
@@ -173,16 +225,7 @@ session::async_load
 std::error_code
 session::run
         ( void )
-{ 
-    std::error_code failure;
-    do 
-    {
-        failure = impl_->run_one();
-    }
-    while ( ! failure );
-
-    return failure;
-}
+{ return impl_->run(); }
 
 std::error_code
 session::abort

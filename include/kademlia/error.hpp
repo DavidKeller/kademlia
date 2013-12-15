@@ -39,8 +39,9 @@ namespace kademlia {
  */
 enum error_type 
 {
-    RUN_ABORTED = 1,
-    UNIMPLEMENTED
+    UNKNOWN = 1,
+    RUN_ABORTED,
+    UNIMPLEMENTED,
 };
 
 /**

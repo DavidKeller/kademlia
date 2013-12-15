@@ -30,39 +30,22 @@ namespace detail {
 
 namespace {
 
-using udp = boost::asio::ip::udp;
-
 /**
  *
  */
-udp::resolver::iterator
-resolve_endpoint
-    ( boost::asio::io_service & io_service
-    , endpoint const& e )
-{
-    udp::resolver r{ io_service };
-    udp::resolver::query q{ e.address(), e.service() };
-    return r.resolve(q);
-}
-
-/**
- *
- */
-std::vector<udp::endpoint>
+std::vector<message_socket::endpoint_type>
 convert_endpoints
     ( boost::asio::io_service & io_service
     , std::vector<endpoint> const& es )
 {
-    std::vector< udp::endpoint > resolved_endpoints;
+    std::vector<message_socket::endpoint_type> resolved_endpoints;
 
     for ( endpoint const& e : es ) {
-        // One raw endpoint (e.g. localhost) can be resolved to
-        // multiple endpoints (e.g. IPv4 / IPv6 address).
-        // Use iterator to handle this case.
-        auto begin = resolve_endpoint( io_service, e );
-        static udp::resolver::iterator const end;
+        auto const new_endpoints = resolve_endpoint( io_service, e );
 
-        resolved_endpoints.insert( resolved_endpoints.end(), begin, end );
+        resolved_endpoints.insert( resolved_endpoints.end()
+                                 , new_endpoints.begin()
+                                 , new_endpoints.end() );
     }
 
     return std::move( resolved_endpoints );
@@ -85,7 +68,7 @@ create_socket
 message_sockets
 create_sockets
     ( boost::asio::io_service & io_service
-    , std::vector< endpoint > const& es )
+    , std::vector<endpoint> const& es )
 {
     // Get resolved endpoints from raw endpoints.
     auto const endpoints = convert_endpoints( io_service, es );
@@ -109,6 +92,23 @@ graceful_close_socket
 {
     boost::system::error_code error_discared;
     s.close( error_discared );
+}
+
+/**
+ *
+ */
+std::vector<message_socket::endpoint_type>
+resolve_endpoint
+    ( boost::asio::io_service & io_service
+    , endpoint const& e )
+{
+    message_socket::protocol_type::resolver r{ io_service };
+    message_socket::protocol_type::resolver::query q{ e.address(), e.service() };
+    // One raw endpoint (e.g. localhost) can be resolved to
+    // multiple endpoints (e.g. IPv4 / IPv6 address).
+    message_socket::protocol_type::resolver::iterator i = r.resolve(q), end;
+
+    return std::vector<message_socket::endpoint_type>{ i, end };
 }
 
 } // namespace detail

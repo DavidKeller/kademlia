@@ -53,6 +53,8 @@ struct kademlia_error_category : std::error_category
         {
             case RUN_ABORTED:
                 return "run aborted";
+            case UNIMPLEMENTED:
+                return "unimplemented";
             default:
                 return "unknown error";
         }
