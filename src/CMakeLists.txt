@@ -53,5 +53,5 @@ add_library(kademlia SHARED
     ${kademlia_interface_sources}
     ${kademlia_impl_sources})
 
-target_link_libraries(kademlia ${Boost_LIBRARIES})
+target_link_libraries(kademlia ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 

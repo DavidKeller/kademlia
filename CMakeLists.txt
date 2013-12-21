@@ -47,6 +47,7 @@ else()
 endif()
 
 # Check environment.
+find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS 
     system
     filesystem 
