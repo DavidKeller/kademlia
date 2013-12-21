@@ -25,7 +25,15 @@
 
 add_definitions(-DKADEMLIA_BUILDING)
 
-add_library(kademlia_impl STATIC
+set(kademlia_interface_sources
+    ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
+    session.cpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
+    endpoint.cpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
+    error.cpp)
+
+set(kademlia_impl_sources
     peer.hpp
     peer.cpp
     id.hpp
@@ -38,13 +46,12 @@ add_library(kademlia_impl STATIC
     boost_to_std_error.hpp
     buffer.hpp)
 
-add_library(kademlia SHARED
-    ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
-    session.cpp
-    ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
-    endpoint.cpp
-    ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
-    error.cpp)
+add_library(kademlia_convenience STATIC
+    ${kademlia_impl_sources})
 
-target_link_libraries(kademlia kademlia_impl ${Boost_LIBRARIES})
+add_library(kademlia SHARED
+    ${kademlia_interface_sources}
+    ${kademlia_impl_sources})
+
+target_link_libraries(kademlia ${Boost_LIBRARIES})
 

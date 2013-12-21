@@ -24,6 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <kademlia/error.hpp>
+#include <kademlia/detail/cxx11_macros.hpp>
 
 #include <string>
 
@@ -39,7 +40,7 @@ struct kademlia_error_category : std::error_category
     char const* 
     name
         ( void ) 
-        const noexcept override
+        const CXX11_NOEXCEPT override
     {
         return "kademlia";
     }
@@ -47,7 +48,7 @@ struct kademlia_error_category : std::error_category
     std::string 
     message
         ( int condition ) 
-        const noexcept override 
+        const CXX11_NOEXCEPT override 
     {
         switch ( condition )
         {
