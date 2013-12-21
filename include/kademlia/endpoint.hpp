@@ -35,6 +35,7 @@
 #include <iosfwd>
 #include <sstream>
 
+#include <kademlia/detail/symbol_visibility.hpp>
 #include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
@@ -42,7 +43,7 @@ namespace kademlia {
 /**
  *
  */
-class endpoint final
+class endpoint CXX11_FINAL
 {
 public:
     ///
@@ -55,6 +56,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     endpoint
         ( address_type const& address
         , service_type const& service )
@@ -64,6 +66,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     endpoint
         ( address_type const& address
         , service_numeric_type const& service )
@@ -77,6 +80,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     address_type const&
     address
         ( void )
@@ -86,6 +90,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     void
     address
         ( address_type const& address )
@@ -94,6 +99,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     service_type const&
     service
         ( void )
@@ -103,6 +109,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     void
     service
         ( service_type const& service )
@@ -111,6 +118,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     bool
     operator==
         ( endpoint const& o )
@@ -120,6 +128,7 @@ public:
     /**
      *
      */
+    KADEMLIA_SYMBOL_VISIBILITY
     bool
     operator!=
         ( endpoint const& o )
@@ -133,6 +142,7 @@ private:
     service_type service_;
 };
 
+KADEMLIA_SYMBOL_VISIBILITY
 std::ostream&
 operator<<
     ( std::ostream & out

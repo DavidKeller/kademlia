@@ -30,6 +30,8 @@
 #   pragma once
 #endif
 
+#include <kademlia/detail/cxx11_macros.hpp>
+
 #include "buffer.hpp"
 #include "message_socket.hpp"
 #include "boost_to_std_error.hpp"
@@ -44,7 +46,7 @@ class subnet final
 {
 public:
     /// Consider we won't receive IPv6 jumbo datagram.
-    static constexpr std::size_t INPUT_BUFFER_SIZE = std::numeric_limits<std::uint16_t>::max();
+    static CXX11_CONSTEXPR std::size_t INPUT_BUFFER_SIZE = UINT16_MAX;
 
 public:
     /**
@@ -59,7 +61,15 @@ public:
      */
     explicit
     subnet
+#ifdef _MSC_VER
+        ( subnet && o )
+        : reception_buffer_{ std::move( o.reception_buffer_ ) }
+        , current_message_sender_{ std::move( o.current_message_sender_ ) }
+        , socket_{ std::move( o.socket_ ) }
+    { }
+#else
         ( subnet && o ) = default;
+#endif
 
     /**
      *
