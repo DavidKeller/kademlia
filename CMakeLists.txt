@@ -25,28 +25,35 @@
 cmake_minimum_required(VERSION 2.8) 
 project(kademlia) 
 
+# Configure compilers.
+if (WIN32)
+    if (NOT MSVC12)
+        message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
+    endif()
+else()
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
+    if (IS_CXX11_SUPPORTED)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+    else()
+        message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
+    endif()
+    check_cxx_compiler_flag(-stdlib=libc++ IS_CLANG_STL_PRESENT)
+    if (IS_CLANG_STL_PRESENT)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    endif()
+endif()
+
 # Check environment.
 find_package(Boost REQUIRED COMPONENTS 
     system
     filesystem 
     unit_test_framework)
 
-# Configure compilers.
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
-if (IS_CXX11_SUPPORTED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
-else()
-    message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
-endif()
-check_cxx_compiler_flag(-stdlib=libc++ IS_CLANG_STL_PRESENT)
-if (IS_CLANG_STL_PRESENT)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
 add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
 add_definitions(-DBOOST_ASIO_HAS_MOVE)
+add_definitions(-DBOOST_ALL_NO_LIB)
 
 # Setup includes directories.
 include_directories(include)
