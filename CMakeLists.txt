@@ -58,7 +58,6 @@ add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
 add_definitions(-DBOOST_ASIO_HAS_MOVE)
 add_definitions(-DBOOST_ALL_NO_LIB)
-add_definitions(-DKADEMLIA_ENABLE_EXPORT)
 
 # Setup includes directories.
 include_directories(include)

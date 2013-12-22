@@ -34,7 +34,7 @@
 #   define KADEMLIA_IMPORT __attribute__ ((visibility ("default")))
 #endif
 
-#ifdef KADEMLIA_ENABLE_EXPORT
+#ifdef KADEMLIA_AS_SHARED
 #   ifdef KADEMLIA_BUILDING_AS_SHARED
 #       define KADEMLIA_SYMBOL_VISIBILITY KADEMLIA_EXPORT
 #   else

@@ -46,7 +46,8 @@ add_library(kademlia SHARED
     ${kademlia_sources})
 
 set_target_properties(kademlia 
-    PROPERTIES COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED")
+    PROPERTIES 
+        COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
 
 add_library(kademlia_convenience STATIC
     ${kademlia_sources})
