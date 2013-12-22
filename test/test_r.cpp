@@ -84,28 +84,28 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
     using type = kd::r< int >;
 
     type::value_type value{ 42 };
+    static type::error_type const NO_ERROR;
 
     {
         type r{ value };
         BOOST_REQUIRE( r );
         BOOST_REQUIRE_EQUAL( value, r.v() );
-        BOOST_REQUIRE_EQUAL( type::error_type{}, r.e() );
+        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
     }
 
     {
         const type r{ value };
         BOOST_REQUIRE( r );
         BOOST_REQUIRE_EQUAL( value, r.v() );
-        BOOST_REQUIRE_EQUAL( type::error_type{}, r.e() );
+        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
     }
 
     {
         type r{ 42 };
         BOOST_REQUIRE( r );
         BOOST_REQUIRE_EQUAL( 42, r.v() );
-        BOOST_REQUIRE_EQUAL( type::error_type{}, r.e() );
+        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
     }
-
 }
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_emplace )
