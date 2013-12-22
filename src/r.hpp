@@ -70,7 +70,7 @@ public:
     r
         ( Args &&... args) 
         : error_{ }
-    { construct_value( args... ); }
+    { construct_value( std::forward< Args >( args )... ); }
 
     /**
      *  @brief Construct this initialized with an error.
@@ -199,7 +199,7 @@ public:
     { 
         destruct_value_if_present();
         error_.clear();
-        construct_value( std::forward< value_type >( value ) );
+        construct_value( std::move( value ) );
 
         return *this;
     }
