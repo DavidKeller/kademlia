@@ -23,16 +23,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(kademlia_interface_sources
+set(kademlia_sources
     ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
     session.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
     endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
-    error.cpp)
-
-
-set(kademlia_implementation_sources
+    error.cpp
     peer.hpp
     peer.cpp
     id.hpp
@@ -46,15 +43,13 @@ set(kademlia_implementation_sources
     buffer.hpp)
 
 add_library(kademlia SHARED
-    ${kademlia_interface_sources}
-    ${kademlia_implementation_sources})
+    ${kademlia_sources})
 
 set_target_properties(kademlia 
     PROPERTIES COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED")
 
 add_library(kademlia_convenience STATIC
-    ${kademlia_implementation_sources})
+    ${kademlia_sources})
 
 target_link_libraries(kademlia ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(kademlia_convenience kademlia)
 
