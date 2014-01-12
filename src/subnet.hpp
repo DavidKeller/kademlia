@@ -103,6 +103,14 @@ public:
         , message_socket::endpoint_type const& to
         , SendCallback const& callback );
 
+    /**
+     *
+     */
+    message_socket::endpoint_type
+    local_endpoint 
+        ( void ) 
+        const;
+
 private:
     ///
     buffer reception_buffer_;
@@ -167,6 +175,12 @@ subnet::async_send
                                    , on_completion );
     }
 }
+
+inline message_socket::endpoint_type
+subnet::local_endpoint
+    ( void )
+    const
+{ return socket_.local_endpoint(); }
 
 } // namespace detail
 } // namespace kademlia

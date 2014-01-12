@@ -97,7 +97,7 @@ graceful_close_socket
 /**
  *
  */
-std::vector<message_socket::endpoint_type>
+resolved_endpoints
 resolve_endpoint
     ( boost::asio::io_service & io_service
     , endpoint const& e )
@@ -108,7 +108,7 @@ resolve_endpoint
     // multiple endpoints (e.g. IPv4 / IPv6 address).
     message_socket::protocol_type::resolver::iterator i = r.resolve(q), end;
 
-    return std::vector<message_socket::endpoint_type>{ i, end };
+    return resolved_endpoints{ i, end };
 }
 
 } // namespace detail

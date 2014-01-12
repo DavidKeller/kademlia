@@ -54,6 +54,8 @@ struct kademlia_error_category : std::error_category
         {
             case RUN_ABORTED:
                 return "run aborted";
+            case INITIAL_PEER_FAILED_TO_RESPOND:
+                return "initial peer failed to respond";
             case UNIMPLEMENTED:
                 return "unimplemented";
             default:

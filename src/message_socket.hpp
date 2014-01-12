@@ -43,6 +43,8 @@ namespace detail {
 using message_socket = boost::asio::ip::udp::socket;
 ///
 using message_sockets = std::vector<message_socket>;
+///
+using resolved_endpoints = std::vector<message_socket::endpoint_type>;
 
 /**
  *
@@ -62,7 +64,7 @@ graceful_close_socket
 /**
  *
  */
-std::vector<message_socket::endpoint_type>
+resolved_endpoints
 resolve_endpoint
     ( boost::asio::io_service & io_service
     , endpoint const& e );
