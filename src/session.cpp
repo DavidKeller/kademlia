@@ -82,7 +82,7 @@ public:
             , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
             , routing_table_{}
             , tasks_{}
-            , failure_{}
+            , main_failure_{}
     { }
     
     /**
@@ -129,13 +129,13 @@ public:
     run
         ( void ) 
     {
-        failure_.clear();
+        main_failure_.clear();
         init();
         
-        while ( ! failure_ && io_service_.run_one() ) 
+        while ( ! main_failure_ && io_service_.run_one() ) 
             execute_tasks();
 
-        return failure_;
+        return main_failure_;
     }
 
     /**
@@ -147,22 +147,12 @@ public:
     { 
         io_service_.stop();
 
-        failure_ = make_error_code( RUN_ABORTED );
+        main_failure_ = make_error_code( RUN_ABORTED );
     }
 
 private:
-    /**
-     *
-     */
-    enum task_status
-    {
-        RUNNING,
-        COMPLETED,
-        FAILED_WITH_TIMEOUT,
-    };
-
     ///
-    using task = std::function<task_status ( void )>;
+    using task = std::function<std::error_code ( void )>;
 
 private:
     /**
@@ -189,7 +179,7 @@ private:
         auto is_task_finished = [ this ]
             ( task & current_task )
         { 
-            return current_task() != RUNNING; 
+            return current_task() != std::errc::operation_in_progress; 
         };
 
         tasks_.remove_if( is_task_finished );
@@ -221,44 +211,42 @@ private:
         auto current_subnet = subnets_.begin();
         auto endpoints_to_try = detail::resolve_endpoint( io_service_, initial_peer_ );
         auto new_task = [ this, last_request_sending_time, current_subnet, endpoints_to_try ] 
-            ( void ) mutable -> task_status
+            ( void ) mutable -> std::error_code
         { 
             // If the routing_table has been filled, we can leave this method.
             if ( routing_table_.peer_count() != 0 )
-                return COMPLETED;
+                return std::error_code{};
 
+            // If timeout is not yet elasped, return without trying another endpoint/subnet.
             auto const timeout = boost::chrono::steady_clock::now() - last_request_sending_time; 
             if ( timeout <= INITIAL_CONTACT_RECEIVE_TIMEOUT )
-                return RUNNING;
+                return make_error_code( std::errc::operation_in_progress );
 
-            // Iterate over each remaining subnet.
-            for ( 
-                ; current_subnet != subnets_.end()
-                ; ++ current_subnet )
-            {
-                // Ensure we can access to the current peer address
-                // on the current subnet (i.e. we don't try
-                // to reach an IPv4 peer from an IPv6 socket).
-                if ( endpoints_to_try.back().protocol() != current_subnet->local_endpoint().protocol() )
-                    continue;
+            // Current endpoint didn't respond after timeout,
+            // hence try with another one.
+            for (
+                ; ! endpoints_to_try.empty()
+                ; endpoints_to_try.pop_back() )
+                // Try first compatible subnet.
+                for ( 
+                    ; current_subnet != subnets_.end()
+                    ; ++ current_subnet )
+                {
+                    // Try to send the request, returning a non zero std::error_code on error.
+                    if ( send_initial_request( endpoints_to_try.back(), *current_subnet ) )
+                        continue;
 
-                last_request_sending_time = boost::chrono::steady_clock::now();
-                // XXX: Send FIND_NODE using our own ID.
+                    last_request_sending_time = boost::chrono::steady_clock::now();
 
-                return RUNNING;
-            }
+                    // And exit.
+                    return make_error_code( std::errc::operation_in_progress );
+                }
+                
+                current_subnet = subnets_.begin();
 
-            endpoints_to_try.pop_back();
-
-            if ( endpoints_to_try.empty() )
-            {
-                failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
-                return FAILED_WITH_TIMEOUT; 
-            }
-
-            current_subnet = subnets_.begin();
-
-            return RUNNING; 
+            // No responsive endpoint has been found.
+            main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
+            return make_error_code( std::errc::timed_out ); 
         };
 
         tasks_.emplace_back( std::move( new_task ) );
@@ -288,7 +276,7 @@ private:
             , detail::buffer const& message )
         {
             if ( failure )
-                failure_ = failure;
+                main_failure_ = failure;
             else
             {
                 process_new_message( current_subnet, sender, message );
@@ -298,6 +286,23 @@ private:
 
         current_subnet.async_receive( on_new_message );
     }
+
+    /**
+     *
+     */
+    std::error_code 
+    send_initial_request
+        ( detail::message_socket::endpoint_type const& endpoint_to_try
+        , detail::subnet & current_subnet )
+    {
+        // Ensure we can access to the current peer address
+        // on the current subnet (i.e. we don't try
+        // to reach an IPv4 peer from an IPv6 socket).
+        if ( endpoint_to_try.protocol() != current_subnet.local_endpoint().protocol() )
+            make_error_code( std::errc::address_family_not_supported );
+
+        return std::error_code{};
+    } 
 
     /**
      *
@@ -318,7 +323,7 @@ private:
     subnets subnets_;
     detail::routing_table routing_table_;
     std::list<task> tasks_;
-    std::error_code failure_;
+    std::error_code main_failure_;
 };
 
 session::session
