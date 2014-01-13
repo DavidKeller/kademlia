@@ -37,9 +37,9 @@
 #include <stdexcept>
 #include <thread>
 #include <functional>
-#include <boost/chrono/chrono.hpp>
+#include <chrono>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/basic_waitable_timer.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 #include <kademlia/error.hpp>
 
@@ -52,8 +52,8 @@ namespace kademlia {
 
 namespace {
 
-CXX11_CONSTEXPR boost::chrono::milliseconds TICK_TIMER_RESOLUTION{ 1 };
-CXX11_CONSTEXPR boost::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+CXX11_CONSTEXPR std::chrono::milliseconds TICK_TIMER_RESOLUTION{ 1 };
+CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 
 } // anonymous namespace
 
@@ -65,8 +65,6 @@ class session::impl final
 public:
     ///
     using subnets = std::vector<detail::subnet>;
-    ///
-    using timer = boost::asio::basic_waitable_timer<boost::chrono::steady_clock>;
 
 public:
     /**
@@ -207,7 +205,7 @@ private:
     contact_initial_peer
         ( void )
     {
-        auto last_request_sending_time = boost::chrono::steady_clock::now();
+        auto last_request_sending_time = std::chrono::steady_clock::now();
         auto current_subnet = subnets_.begin();
         auto endpoints_to_try = detail::resolve_endpoint( io_service_, initial_peer_ );
         auto new_task = [ this, last_request_sending_time, current_subnet, endpoints_to_try ] 
@@ -218,7 +216,7 @@ private:
                 return std::error_code{};
 
             // If timeout is not yet elasped, return without trying another endpoint/subnet.
-            auto const timeout = boost::chrono::steady_clock::now() - last_request_sending_time; 
+            auto const timeout = std::chrono::steady_clock::now() - last_request_sending_time; 
             if ( timeout <= INITIAL_CONTACT_RECEIVE_TIMEOUT )
                 return make_error_code( std::errc::operation_in_progress );
 
@@ -236,7 +234,7 @@ private:
                     if ( send_initial_request( endpoints_to_try.back(), *current_subnet ) )
                         continue;
 
-                    last_request_sending_time = boost::chrono::steady_clock::now();
+                    last_request_sending_time = std::chrono::steady_clock::now();
 
                     // And exit.
                     return make_error_code( std::errc::operation_in_progress );
@@ -319,7 +317,7 @@ private:
 private:
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
-    timer tick_timer_;
+    boost::asio::steady_timer tick_timer_;
     subnets subnets_;
     detail::routing_table routing_table_;
     std::list<task> tasks_;
