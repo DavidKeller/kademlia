@@ -33,11 +33,11 @@
 
 #include <list>
 #include <iostream>
-#include <chrono>
 #include <algorithm>
 #include <stdexcept>
 #include <thread>
 #include <functional>
+#include <chrono>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 
@@ -90,7 +90,7 @@ public:
     start_tick_timer
         ( void )
     {
-        tick_timer_.expires_from_now( TICK_TIMER_RESOLUTION );
+        tick_timer_.expires_from_now( std::chrono::nanoseconds( TICK_TIMER_RESOLUTION ) );
         auto on_fire = [ this ]
             ( boost::system::error_code const& failure )
         { 
