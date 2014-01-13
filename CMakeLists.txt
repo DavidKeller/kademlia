@@ -51,6 +51,7 @@ endif()
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS 
     system
+    chrono
     filesystem 
     unit_test_framework)
 

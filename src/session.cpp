@@ -37,9 +37,9 @@
 #include <stdexcept>
 #include <thread>
 #include <functional>
-#include <chrono>
+#include <boost/chrono/chrono.hpp>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/basic_waitable_timer.hpp>
 
 #include <kademlia/error.hpp>
 
@@ -52,8 +52,8 @@ namespace kademlia {
 
 namespace {
 
-CXX11_CONSTEXPR std::chrono::milliseconds TICK_TIMER_RESOLUTION{ 1 };
-CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+CXX11_CONSTEXPR boost::chrono::milliseconds TICK_TIMER_RESOLUTION{ 1 };
+CXX11_CONSTEXPR boost::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 
 } // anonymous namespace
 
@@ -65,6 +65,8 @@ class session::impl final
 public:
     ///
     using subnets = std::vector<detail::subnet>;
+    ///
+    using timer = boost::asio::basic_waitable_timer<boost::chrono::steady_clock>;
 
 public:
     /**
@@ -90,7 +92,7 @@ public:
     start_tick_timer
         ( void )
     {
-        tick_timer_.expires_from_now( std::chrono::nanoseconds( TICK_TIMER_RESOLUTION ) );
+        tick_timer_.expires_from_now( TICK_TIMER_RESOLUTION );
         auto on_fire = [ this ]
             ( boost::system::error_code const& failure )
         { 
@@ -215,7 +217,7 @@ private:
     contact_initial_peer
         ( void )
     {
-        auto last_request_sending_time = std::chrono::steady_clock::now();
+        auto last_request_sending_time = boost::chrono::steady_clock::now();
         auto current_subnet = subnets_.begin();
         auto endpoints_to_try = detail::resolve_endpoint( io_service_, initial_peer_ );
         auto new_task = [ this, last_request_sending_time, current_subnet, endpoints_to_try ] 
@@ -225,7 +227,7 @@ private:
             if ( routing_table_.peer_count() != 0 )
                 return COMPLETED;
 
-            auto const timeout = std::chrono::steady_clock::now() - last_request_sending_time; 
+            auto const timeout = boost::chrono::steady_clock::now() - last_request_sending_time; 
             if ( timeout <= INITIAL_CONTACT_RECEIVE_TIMEOUT )
                 return RUNNING;
 
@@ -240,7 +242,7 @@ private:
                 if ( endpoints_to_try.back().protocol() != current_subnet->local_endpoint().protocol() )
                     continue;
 
-                last_request_sending_time = std::chrono::steady_clock::now();
+                last_request_sending_time = boost::chrono::steady_clock::now();
                 // XXX: Send FIND_NODE using our own ID.
 
                 return RUNNING;
@@ -312,7 +314,7 @@ private:
 private:
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
-    boost::asio::steady_timer tick_timer_;
+    timer tick_timer_;
     subnets subnets_;
     detail::routing_table routing_table_;
     std::list<task> tasks_;
