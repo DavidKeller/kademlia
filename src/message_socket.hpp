@@ -1,4 +1,4 @@
-// Copyright (c) 2013, David Keller
+// Copyright (c) 2013-2014, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 #ifndef KADEMLIA_MESSAGE_SOCKET_HPP
 #define KADEMLIA_MESSAGE_SOCKET_HPP
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #   pragma once
 #endif
 

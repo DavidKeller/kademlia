@@ -1,4 +1,4 @@
-// Copyright (c) 2013, David Keller
+// Copyright (c) 2013-2014, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -23,9 +23,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if defined(_MSC_VER)
-#   pragma warning(push)
-#   pragma warning(disable:4996)
+#ifdef _MSC_VER
+#   pragma warning( push )
+#   pragma warning( disable : 4996 )
 #endif
 
 #include <kademlia/session.hpp>
@@ -359,6 +359,6 @@ session::abort
 
 } // namespace kademlia
 
-#if defined(_MSC_VER)
-#   pragma warning(pop)
+#ifdef _MSC_VER
+#   pragma warning( pop )
 #endif
