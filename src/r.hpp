@@ -28,6 +28,8 @@
 
 #if defined(_MSC_VER)
 #   pragma once
+#   pragma warning( push )
+#   pragma warning( disable : 4521 )
 #endif
 
 #include <system_error>
@@ -295,6 +297,10 @@ private:
 
 } // namespace detail
 } // namespace kademlia
+
+#if defined(_MSC_VER)
+#   pragma warning( pop )
+#endif
 
 #endif
 
