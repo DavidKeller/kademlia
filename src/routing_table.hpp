@@ -63,7 +63,7 @@ public:
      *  Construct the routing_table implementation.
      */
     routing_table
-        ( id const& my_id = generate_id()
+        ( id const& my_id
         , std::size_t k_bucket_size = DEFAULT_K_BUCKET_SIZE );
 
     /**

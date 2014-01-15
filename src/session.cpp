@@ -74,11 +74,12 @@ public:
     impl
         ( std::vector<endpoint> const& endpoints
         , endpoint const& initial_peer )
-            : io_service_{}
+            : my_id_{ detail::generate_id() }
+            , io_service_{}
             , initial_peer_{ initial_peer }
             , tick_timer_{ io_service_ }
             , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
-            , routing_table_{}
+            , routing_table_{ my_id_ }
             , tasks_{}
             , main_failure_{}
     { }
@@ -315,6 +316,7 @@ private:
     }
 
 private:
+    detail::id my_id_;
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
     boost::asio::steady_timer tick_timer_;
