@@ -175,7 +175,7 @@ private:
     execute_tasks
         ( void )
     {
-        auto is_task_finished = [ this ]
+        auto is_task_finished = []
             ( task & current_task )
         { 
             return current_task() != std::errc::operation_in_progress; 
@@ -300,8 +300,25 @@ private:
         if ( endpoint_to_try.protocol() != current_subnet.local_endpoint().protocol() )
             make_error_code( std::errc::address_family_not_supported );
 
+        auto message = generate_initial_request();
+
+        auto on_message_sent = [ message ]
+            ( std::error_code const& /* failure */ )
+        { };
+        current_subnet.async_send( *message, endpoint_to_try, on_message_sent );
+
         return std::error_code{};
     } 
+
+    /**
+     *
+     */
+    std::shared_ptr<detail::buffer>
+    generate_initial_request
+        ( void )
+    {
+        return std::make_shared<detail::buffer>();
+    }
 
     /**
      *
