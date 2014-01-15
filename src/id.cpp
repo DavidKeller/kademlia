@@ -26,7 +26,6 @@
 #include "id.hpp"
 
 #include <cstdint>
-#include <random>
 #include <utility>
 
 namespace kademlia {
@@ -34,18 +33,14 @@ namespace detail {
 
 id
 generate_id
-    ( void )
+    ( std::default_random_engine & random_engine )
 {
-    // This random device will generate a unique seed.
-    static std::random_device random_device_;
-    // The seed is used by a generator.
-    static std::mt19937 generator_( random_device_() );
     // The output of the generator is treated as boolean value.
-    static std::uniform_int_distribution<> distribution_( 0, 1 ); 
+    std::uniform_int_distribution<> distribution( 0, 1 ); 
     
     id random_id;
     for ( std::uint8_t i = 0; i < random_id.size(); ++ i )
-        random_id[i] =  distribution_( generator_ ) != 0;
+        random_id[i] =  distribution( random_engine ) != 0;
 
     return std::move( random_id );
 }

@@ -38,8 +38,10 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( is_empty_on_construction )
 {
+    std::default_random_engine random_engine;
+
     // Create an empty routing_table.
-    kd::routing_table rt{ kd::generate_id() };
+    kd::routing_table rt{ kd::generate_id( random_engine ) };
     // Doesn't contain any peer.
     BOOST_REQUIRE_EQUAL( rt.peer_count(), 0 );
 }
@@ -98,7 +100,9 @@ BOOST_AUTO_TEST_CASE( fill_buckets_and_split_them )
 
 BOOST_AUTO_TEST_CASE( discards_already_pushed_ids )
 {
-    kd::routing_table rt{ kd::generate_id() };
+    std::default_random_engine random_engine;
+
+    kd::routing_table rt{ kd::generate_id( random_engine ) };
     kd::peer test_peer( create_peer() );
     kd::id test_id;
     

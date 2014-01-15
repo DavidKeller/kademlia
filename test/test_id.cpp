@@ -38,15 +38,11 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( generated_id_are_different )
 {
-    // This is the result of a previous call to kd::generate_id()
-    std::string const my_id( "0000000000000000000000000000000011000011100110101001001001011001101110111000000001111001101110101001101111111001010100111110110011011110000000001000100101001110" );
-    // Test that the values are different between process executions
-    // i.e. test the seed.
-    // FIXME: Should find a better way to check cross process seed.
-    BOOST_REQUIRE_NE( kd::generate_id() , kd::id( my_id ) );
-    
+    std::default_random_engine random_engine;
+
     // Test the generator.
-    BOOST_REQUIRE_NE( kd::generate_id(), kd::generate_id() );
+    BOOST_REQUIRE_NE( kd::generate_id( random_engine )
+                    , kd::generate_id( random_engine ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

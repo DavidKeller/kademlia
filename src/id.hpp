@@ -32,6 +32,7 @@
 
 #include <bitset>
 #include <iosfwd>
+#include <random>
 
 namespace kademlia {
 namespace detail {
@@ -47,7 +48,7 @@ using id = std::bitset< ID_SIZE >;
  */
 id
 generate_id
-    ( void );
+    ( std::default_random_engine & random_engine );
 
 } // namespace detail
 } // namespace kademlia

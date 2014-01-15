@@ -29,7 +29,6 @@
 #endif
 
 #include <kademlia/session.hpp>
-#include <kademlia/error.hpp>
 
 #include <list>
 #include <iostream>
@@ -38,6 +37,7 @@
 #include <thread>
 #include <functional>
 #include <chrono>
+#include <random>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 
@@ -74,7 +74,8 @@ public:
     impl
         ( std::vector<endpoint> const& endpoints
         , endpoint const& initial_peer )
-            : my_id_{ detail::generate_id() }
+            : random_engine_{ std::random_device{}() }
+            , my_id_{ detail::generate_id( random_engine_ ) }
             , io_service_{}
             , initial_peer_{ initial_peer }
             , tick_timer_{ io_service_ }
@@ -302,9 +303,12 @@ private:
 
         auto message = generate_initial_request();
 
+        // The purpose of this object is to ensure
+        // the message buffer lives long enought.
         auto on_message_sent = [ message ]
             ( std::error_code const& /* failure */ )
         { };
+
         current_subnet.async_send( *message, endpoint_to_try, on_message_sent );
 
         return std::error_code{};
@@ -333,6 +337,7 @@ private:
     }
 
 private:
+    std::default_random_engine random_engine_;
     detail::id my_id_;
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
