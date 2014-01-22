@@ -25,7 +25,8 @@
 
 #include "helpers/common.hpp"
 
-#include <sstream>
+#include <functional>
+
 #include "id.hpp"
 
 namespace k = kademlia;
@@ -36,13 +37,142 @@ namespace kd = k::detail;
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
-BOOST_AUTO_TEST_CASE( generated_id_are_different )
+BOOST_AUTO_TEST_CASE( random_generated_id_are_different )
 {
     std::default_random_engine random_engine;
 
-    // Test the generator.
-    BOOST_REQUIRE_NE( kd::generate_id( random_engine )
-                    , kd::generate_id( random_engine ) );
+    BOOST_REQUIRE_NE( kd::id{ random_engine } 
+                    , kd::id{ random_engine } );
+}
+
+BOOST_AUTO_TEST_CASE( emptry_string_generated_id_is_valid )
+{
+    kd::id const new_id{ "" };
+    
+    auto equal_to_zero = [] ( kd::id::block_type v ) 
+    { return ! v; };
+
+    BOOST_REQUIRE( std::all_of( new_id.begin_block()
+                              , new_id.end_block()
+                              , equal_to_zero ) );
+}
+
+BOOST_AUTO_TEST_CASE( invalid_string_cannot_generate_id )
+{
+    BOOST_REQUIRE_THROW( kd::id{ "?" }, std::system_error );
+    BOOST_REQUIRE_THROW( kd::id{ "1?2" }, std::system_error );
+    BOOST_REQUIRE_THROW( kd::id{ "x" }, std::system_error );
+    BOOST_REQUIRE_THROW( kd::id{ " " }, std::system_error );
+}
+
+BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
+{
+    {
+        kd::id const new_id{ "fedcba9876543210" };
+
+        std::cout << new_id << std::endl;
+
+        std::size_t i = 0;
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+    }
+    {
+        kd::id const new_id{ "8000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0000"
+                             "0001" };
+
+        std::cout << new_id << std::endl;
+
+        BOOST_REQUIRE_EQUAL( 1, new_id[0] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[1] );
+        BOOST_REQUIRE_EQUAL( 0, new_id[158] );
+        BOOST_REQUIRE_EQUAL( 1, new_id[159] );
+    }
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -57,7 +187,7 @@ BOOST_AUTO_TEST_CASE( id_is_printable )
 {
     boost::test_tools::output_test_stream out( get_capture_path( "pattern_id.out" ), true );
 
-    out << kd::id( "0000000000000000000000000000000011000011100110101001001001011001101110111000000001111001101110101001101111111001010100111110110011011110000000001000100101001110" );
+    out << kd::id{ "0123456789abcdef" };
 
     BOOST_REQUIRE( out.match_pattern() );
 }

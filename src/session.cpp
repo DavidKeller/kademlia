@@ -75,7 +75,7 @@ public:
         ( std::vector<endpoint> const& endpoints
         , endpoint const& initial_peer )
             : random_engine_{ std::random_device{}() }
-            , my_id_{ detail::generate_id( random_engine_ ) }
+            , my_id_( random_engine_ )
             , io_service_{}
             , initial_peer_{ initial_peer }
             , tick_timer_{ io_service_ }

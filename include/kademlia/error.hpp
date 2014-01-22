@@ -42,6 +42,7 @@ enum error_type
     UNKNOWN = 1,
     RUN_ABORTED,
     INITIAL_PEER_FAILED_TO_RESPOND,
+    INVALID_ID,
     UNIMPLEMENTED,
 };
 

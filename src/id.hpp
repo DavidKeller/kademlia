@@ -30,25 +30,152 @@
 #   pragma once
 #endif
 
-#include <bitset>
+#include <array>
 #include <iosfwd>
+#include <string>
 #include <random>
+
+#include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
 namespace detail {
 
 ///
-enum { ID_SIZE = 160 };
+class id
+{
+public:
+    ///
+    static CXX11_CONSTEXPR std::size_t SIZE = 160;
 
-///
-using id = std::bitset< ID_SIZE >;
+    ///
+    using block_type = std::uint8_t;
+
+    ///
+    static CXX11_CONSTEXPR std::size_t BYTE_PER_BLOCK = sizeof( block_type );
+
+    ///
+    static CXX11_CONSTEXPR std::size_t BIT_PER_BLOCK = BYTE_PER_BLOCK * 8;
+
+    ///
+    static CXX11_CONSTEXPR std::size_t BLOCKS_COUNT = SIZE / BIT_PER_BLOCK;
+
+    ///
+    using blocks_type = std::array< block_type, BLOCKS_COUNT >;
+
+    template<typename BlockType>
+    struct abstract_reference
+    {
+        operator bool
+            ( void )
+            const
+        { return current_block_ & mask_; }
+
+        abstract_reference &
+        operator=
+            ( bool value )
+        { 
+            if ( value )
+                current_block_ |= mask_;
+            else
+                current_block_ &= ~mask_;
+
+            return *this;
+        }
+
+        template<typename OtherBlockType>
+        bool
+        operator==
+            ( abstract_reference<OtherBlockType> const& o )
+        { return static_cast< bool >( o ) == static_cast< bool >( *this ); }
+
+        ///
+        BlockType & current_block_;
+        ///
+        block_type const mask_;
+    };
+
+    ///
+    using reference = abstract_reference< block_type >;
+
+    ///
+    using const_reference = abstract_reference< block_type const >;
+
+    id 
+        ( void )
+        : blocks_{ }
+    { }
+
+    explicit
+    id
+        ( std::default_random_engine & random_engine );
+    
+    explicit
+    id 
+        ( std::string const& value );
+
+    blocks_type::const_reverse_iterator
+    begin_block
+        ( void )
+        const
+    { return blocks_.rbegin(); }
+
+    blocks_type::const_reverse_iterator
+    end_block
+        ( void )
+        const
+    { return blocks_.rend(); }
+
+    bool
+    operator==
+        ( id const& o )
+        const
+    { return o.blocks_ == blocks_; }
+
+    bool
+    operator!=
+        ( id const& o )
+        const
+    { return ! (o == *this); }
+
+    const_reference
+    operator[]
+        ( std::size_t index )
+        const
+    { return const_reference{ block( index ), mask( index ) }; }
+
+    reference
+    operator[]
+        ( std::size_t index )
+    { return reference{ block( index ), mask( index ) }; }
+
+private:
+    block_type &
+    block
+        ( std::size_t index )
+    { return blocks_[ index / BIT_PER_BLOCK ]; }
+
+    const block_type &
+    block
+        ( std::size_t index )
+        const
+    { return blocks_[ index / BIT_PER_BLOCK ]; }
+
+    static block_type 
+    mask
+        ( std::size_t index )
+    { return 1 << index % BIT_PER_BLOCK; }
+
+private:
+    blocks_type blocks_;
+};
 
 /**
  *
  */
-id
-generate_id
-    ( std::default_random_engine & random_engine );
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , id const& i );
 
 } // namespace detail
 } // namespace kademlia

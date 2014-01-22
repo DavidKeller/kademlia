@@ -25,24 +25,102 @@
 
 #include "id.hpp"
 
+#include <iostream>
+#include <cassert>
 #include <cstdint>
+#include <algorithm>
 #include <utility>
+#include <sstream>
+#include <iomanip>
+
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-id
-generate_id
+static CXX11_CONSTEXPR std::size_t HEX_CHAR_PER_BLOCK = id::BYTE_PER_BLOCK * 2;
+
+namespace {
+
+id::block_type
+to_block
+    ( std::string const& value )
+{
+    std::stringstream converter{ value };
+
+    std::uint64_t result;
+    converter >> std::hex >> result;
+
+    if ( converter.fail() )
+        throw std::system_error{ make_error_code( INVALID_ID ) };
+
+    return static_cast< id::block_type >( result );
+}
+
+} // namespace
+
+id::id
     ( std::default_random_engine & random_engine )
 {
     // The output of the generator is treated as boolean value.
     std::uniform_int_distribution<> distribution( 0, 1 ); 
     
-    id random_id;
-    for ( std::uint8_t i = 0; i < random_id.size(); ++ i )
-        random_id[i] =  distribution( random_engine ) != 0;
+    for ( std::size_t i = 0; i < BLOCKS_COUNT; ++ i )
+        blocks_[i] = distribution( random_engine ) != 0;
+}
 
-    return std::move( random_id );
+id::id
+    ( std::string const& s )
+    : blocks_{ }
+{
+    if ( s.size() > BLOCKS_COUNT * HEX_CHAR_PER_BLOCK )
+        throw std::system_error{ make_error_code( INVALID_ID ) };
+
+    // Parse string from MSB to LSB.
+    std::size_t i = 0, e = s.size();
+
+    // Check if the first block contains less than HEX_CHAR_PER_BLOCK.
+    std::size_t const first_block_char_count = e % HEX_CHAR_PER_BLOCK; 
+    if ( first_block_char_count != 0 )
+    {
+        auto const value = to_block( s.substr( i, first_block_char_count ) );
+        i += first_block_char_count;
+        auto remaining_char_count = e - i;
+        blocks_[ remaining_char_count / HEX_CHAR_PER_BLOCK ] = value;
+    }
+
+    // Parse any remaining complete block.
+    while ( i != e )
+    {
+        auto const value = to_block( s.substr( i, HEX_CHAR_PER_BLOCK ) );
+        i += HEX_CHAR_PER_BLOCK;
+        auto remaining_char_count = e - i;
+        blocks_[ remaining_char_count / HEX_CHAR_PER_BLOCK ] = value;
+    }
+}
+
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , id const& id_to_print )
+{
+    auto i = id_to_print.begin_block(), e = id_to_print.end_block();
+
+    // Skip leading 0.
+    while ( i != e && *i == 0 )
+        ++ i;
+
+    auto const previous_flags = out.flags();
+
+    out << std::hex 
+        << std::setfill( '0' ) 
+        << std::setw( HEX_CHAR_PER_BLOCK );
+
+    std::copy( i, e, std::ostream_iterator< std::uint64_t >{ out } );
+
+    out.flags( previous_flags );
+
+    return out;
 }
 
 } // namespace detail

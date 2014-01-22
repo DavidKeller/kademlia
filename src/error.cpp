@@ -58,6 +58,8 @@ struct kademlia_error_category : std::error_category
                 return "initial peer failed to respond";
             case UNIMPLEMENTED:
                 return "unimplemented";
+            case INVALID_ID:
+                return "invalid id";
             default:
                 return "unknown error";
         }
