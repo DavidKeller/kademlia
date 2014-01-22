@@ -44,9 +44,10 @@
 #include <kademlia/error.hpp>
 
 #include "message_socket.hpp"
-//#include "task.hpp"
+#include "messages.hpp"
 #include "routing_table.hpp"
 #include "subnet.hpp"
+#include "serialization.hpp"
 
 namespace kademlia {
 
@@ -321,7 +322,19 @@ private:
     generate_initial_request
         ( void )
     {
-        return std::make_shared<detail::buffer>();
+        auto new_message = std::make_shared<detail::buffer>();
+
+        detail::header const find_node_header
+        {
+            detail::header::V1,
+            detail::header::FIND_NODE,
+            my_id_,
+            detail::id{ random_engine_ }
+        };
+
+        serialize( find_node_header, *new_message );
+
+        return new_message;
     }
 
     /**

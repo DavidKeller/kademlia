@@ -42,7 +42,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-class id
+class id final
 {
 public:
     ///

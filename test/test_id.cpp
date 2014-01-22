@@ -172,7 +172,6 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
 
 BOOST_AUTO_TEST_SUITE_END()
 
-
 /**
  *  Test operator<<()
  */
