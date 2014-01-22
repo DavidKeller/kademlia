@@ -30,6 +30,7 @@
 #   pragma once
 #endif
 
+#include <cstdint>
 #include <array>
 #include <iosfwd>
 #include <string>
