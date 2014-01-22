@@ -71,85 +71,85 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
         kd::id const new_id{ "fedcba9876543210" };
 
         std::size_t i = 0;
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( ! new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
+        BOOST_REQUIRE( new_id[ i ++ ] );
     }
     {
         kd::id const new_id{ "8000"
@@ -163,12 +163,11 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
                              "0000"
                              "0001" };
 
-        BOOST_REQUIRE_EQUAL( 1, new_id[0] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[1] );
-        BOOST_REQUIRE_EQUAL( 0, new_id[158] );
-        BOOST_REQUIRE_EQUAL( 1, new_id[159] );
+        BOOST_REQUIRE( new_id[0] );
+        BOOST_REQUIRE( ! new_id[1] );
+        BOOST_REQUIRE( ! new_id[158] );
+        BOOST_REQUIRE( new_id[159] );
     }
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
