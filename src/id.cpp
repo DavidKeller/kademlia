@@ -26,6 +26,7 @@
 #include "id.hpp"
 
 #include <iostream>
+#include <iterator>
 #include <cassert>
 #include <cstdint>
 #include <algorithm>
