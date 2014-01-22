@@ -69,7 +69,7 @@ public:
         operator bool
             ( void )
             const
-        { return current_block_ & mask_; }
+        { return static_cast< bool >( current_block_ & mask_ ); }
 
         abstract_reference &
         operator=

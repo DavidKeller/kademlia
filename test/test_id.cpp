@@ -70,8 +70,6 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
     {
         kd::id const new_id{ "fedcba9876543210" };
 
-        std::cout << new_id << std::endl;
-
         std::size_t i = 0;
         BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
         BOOST_REQUIRE_EQUAL( 0, new_id[ i ++ ] );
@@ -164,8 +162,6 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
                              "0000"
                              "0000"
                              "0001" };
-
-        std::cout << new_id << std::endl;
 
         BOOST_REQUIRE_EQUAL( 1, new_id[0] );
         BOOST_REQUIRE_EQUAL( 0, new_id[1] );

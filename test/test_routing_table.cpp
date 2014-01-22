@@ -68,7 +68,9 @@ BOOST_AUTO_TEST_CASE( fill_buckets_and_split_them )
     kd::peer const test_peer( create_peer() );
     
     // FIXME: Okay, not my best test.
-    for ( auto bucket_index = 0; bucket_index < kd::id::SIZE; ++ bucket_index )
+    for ( std::size_t bucket_index = 0
+        ; bucket_index < kd::id::SIZE
+        ; ++ bucket_index )
     {
         kd::id current_id;
         // Fill 'current_depth' nth bucket.
