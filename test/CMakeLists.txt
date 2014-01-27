@@ -44,4 +44,5 @@ build_and_run_test(test_peer.cpp helpers/peer_factory.hpp)
 build_and_run_test(test_routing_table.cpp)
 build_and_run_test(test_session.cpp)
 build_and_run_test(test_message_socket.cpp)
+build_and_run_test(test_message.cpp)
 

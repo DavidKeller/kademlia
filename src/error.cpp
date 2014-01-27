@@ -60,6 +60,18 @@ struct kademlia_error_category : std::error_category
                 return "unimplemented";
             case INVALID_ID:
                 return "invalid id";
+            case TRUNCATED_ID:
+                return "truncated id";
+            case TRUNCATED_ENDPOINT:
+                return "truncated endpoint";
+            case TRUNCATED_ADDRESS:
+                return "truncated address";
+            case TRUNCATED_HEADER:
+                return "truncated header";
+            case CORRUPTED_HEADER:
+                return "corrupted header";
+            case UNKNOWN_PROTOCOL_VERSION:
+                return "unknown protocol version";
             default:
                 return "unknown error";
         }

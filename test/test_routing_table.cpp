@@ -69,12 +69,12 @@ BOOST_AUTO_TEST_CASE( fill_buckets_and_split_them )
     
     // FIXME: Okay, not my best test.
     for ( std::size_t bucket_index = 0
-        ; bucket_index < kd::id::SIZE
+        ; bucket_index < kd::id::BIT_SIZE
         ; ++ bucket_index )
     {
         kd::id current_id;
         // Fill 'current_depth' nth bucket.
-        for ( auto position = bucket_index; position < kd::id::SIZE; ++ position )
+        for ( auto position = bucket_index; position < kd::id::BIT_SIZE; ++ position )
         {
             // bucket_index => number of lower bit set to 0.
             // First iteration with depth equal to 2 : 00..0100

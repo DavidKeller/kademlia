@@ -31,11 +31,11 @@
 #include <kademlia/session.hpp>
 
 #include <list>
+#include <map>
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
 #include <thread>
-#include <functional>
 #include <chrono>
 #include <random>
 #include <boost/asio/io_service.hpp>
@@ -44,10 +44,9 @@
 #include <kademlia/error.hpp>
 
 #include "message_socket.hpp"
-#include "messages.hpp"
+#include "message.hpp"
 #include "routing_table.hpp"
 #include "subnet.hpp"
-#include "serialization.hpp"
 
 namespace kademlia {
 
@@ -82,8 +81,8 @@ public:
             , tick_timer_{ io_service_ }
             , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
             , routing_table_{ my_id_ }
-            , tasks_{}
             , main_failure_{}
+            , pending_requests_{} 
     { }
     
     /**
@@ -133,8 +132,8 @@ public:
         main_failure_.clear();
         init();
         
-        while ( ! main_failure_ && io_service_.run_one() ) 
-            execute_tasks();
+        while ( ! main_failure_ && io_service_.run_one() )
+            io_service_.poll();
 
         return main_failure_;
     }
@@ -152,8 +151,27 @@ public:
     }
 
 private:
+    /// 
+    using timer = boost::asio::steady_timer;
+
     ///
-    using task = std::function<std::error_code ( void )>;
+    struct task
+    {
+        virtual
+        ~task
+            ( void )
+            = default;
+
+        virtual std::error_code
+        handle_message
+            ( detail::header const& h
+            , detail::buffer::const_iterator i
+            , detail::buffer::const_iterator e )
+            = 0;
+    };
+
+    ///
+    typedef std::map< detail::id, std::weak_ptr< task > > pending_requests; 
 
 private:
     /**
@@ -168,22 +186,6 @@ private:
         start_tick_timer();
         start_receive_on_each_subnet();
         contact_initial_peer();
-    }
-
-    /**
-     *
-     */
-    void
-    execute_tasks
-        ( void )
-    {
-        auto is_task_finished = []
-            ( task & current_task )
-        { 
-            return current_task() != std::errc::operation_in_progress; 
-        };
-
-        tasks_.remove_if( is_task_finished );
     }
 
     /**
@@ -208,6 +210,7 @@ private:
     contact_initial_peer
         ( void )
     {
+#if 0
         auto last_request_sending_time = std::chrono::steady_clock::now();
         auto current_subnet = subnets_.begin();
         auto endpoints_to_try = detail::resolve_endpoint( io_service_, initial_peer_ );
@@ -249,8 +252,7 @@ private:
             main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
             return make_error_code( std::errc::timed_out ); 
         };
-
-        tasks_.emplace_back( std::move( new_task ) );
+#endif
     }
 
     /**
@@ -327,12 +329,18 @@ private:
         detail::header const find_node_header
         {
             detail::header::V1,
-            detail::header::FIND_NODE,
+            detail::header::FIND_NODE_REQUEST,
             my_id_,
             detail::id{ random_engine_ }
         };
 
+        detail::find_node_request_body const find_node_request_body
+        {
+            my_id_
+        };
+
         serialize( find_node_header, *new_message );
+        serialize( find_node_request_body, *new_message );
 
         return new_message;
     }
@@ -346,7 +354,39 @@ private:
         , detail::message_socket::endpoint_type const& sender
         , detail::buffer const& message )
     {
+        auto i = message.begin(), e = message.end();
 
+        detail::header h;
+        if ( deserialize( i, e, h ) )
+            return;
+
+        switch ( h.type_ )
+        {
+        case detail::header::PING_REQUEST:
+        case detail::header::STORE_REQUEST:
+        case detail::header::FIND_NODE_REQUEST:
+        case detail::header::FIND_VALUE_REQUEST:
+            break;
+        default:
+#if 0
+            auto r = pending_requests_.find( h.random_token_ );
+            if ( r != pending_requests_.end() && ! r->second.expired() )
+                r->second.lock()->handle_message( h, i, e );
+#endif
+        break;
+        }
+    }
+
+    /**
+     *
+     */
+    template<typename Callback>
+    void
+    register_handler
+        ( detail::id & random_token
+        , Callback callback )
+    {
+        pending_requests_.emplace( random_token );
     }
 
 private:
@@ -354,11 +394,11 @@ private:
     detail::id my_id_;
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
-    boost::asio::steady_timer tick_timer_;
+    timer tick_timer_;
     subnets subnets_;
     detail::routing_table routing_table_;
-    std::list<task> tasks_;
     std::error_code main_failure_;
+    pending_requests pending_requests_;
 };
 
 session::session

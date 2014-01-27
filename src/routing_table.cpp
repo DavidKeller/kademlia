@@ -37,7 +37,7 @@ namespace detail {
 routing_table::routing_table
     ( id const& my_id
     , std::size_t k_bucket_size )
-    : k_buckets_( id::SIZE ), my_id_( my_id )
+    : k_buckets_( id::BIT_SIZE ), my_id_( my_id )
     , peer_count_( 0 ), k_bucket_size_( k_bucket_size )
 {
     assert( k_bucket_size_ > 0 && "k_bucket size must be > 0" );
@@ -126,7 +126,7 @@ routing_table::find_closer_k_bucket
     k_buckets::iterator current_k_bucket = k_buckets_.begin();
     
     std::size_t bit_index = 0; 
-    std::size_t const last_bit_index = id::SIZE - 1;
+    std::size_t const last_bit_index = id::BIT_SIZE - 1;
     // Find closest bucket from the peer id.
     // i.e. the index of the first different bit
     // in the id of the new peer vs our id is equal to the

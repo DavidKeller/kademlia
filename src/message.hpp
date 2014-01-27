@@ -23,39 +23,138 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_SERIALIZATION_HPP
-#define KADEMLIA_SERIALIZATION_HPP
+#ifndef KADEMLIA_MESSAGE_HPP
+#define KADEMLIA_MESSAGE_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
+#include <cstdint>
 #include <algorithm>
 
-#include "messages.hpp"
+#include <kademlia/detail/cxx11_macros.hpp>
+
+#include "message_socket.hpp"
+#include "id.hpp"
+#include "buffer.hpp"
 
 namespace kademlia {
 namespace detail {
 
-inline void
-serialize
-    ( id const& i
-    , buffer & b )
+/**
+ *
+ */
+struct header final
 {
-    std::copy( i.begin_block()
-             , i.end_block()
-             , std::back_inserter( b ) );
-}
+    enum version : std::uint8_t
+    {
+        ///
+        V1 = 1,
+    } version_;
 
-inline void
+    ///
+    enum type : std::uint8_t
+    {
+        ///
+        PING_REQUEST,
+        ///
+        PING_RESPONSE,
+        ///
+        STORE_REQUEST,
+        ///
+        FIND_NODE_REQUEST,
+        ///
+        FIND_NODE_RESPONSE,
+        ///
+        FIND_VALUE_REQUEST,
+        ///
+        FIND_VALUE_RESPONSE,
+    } type_;
+
+    ///
+    id source_id_;
+    ///
+    id random_token_;
+};
+
+/**
+ *
+ */
+void
 serialize
     ( header const& h
-    , buffer & b )
+    , buffer & b );
+
+/**
+ *
+ */
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , header & h );
+
+/**
+ *
+ */
+struct find_node_request_body final
 {
-    b.push_back( h.version_ | h.type_ << 4 );
-    serialize( h.source_id_, b );
-    serialize( h.random_token_, b );
-}
+    ///
+    id node_to_find_id_;
+};
+
+/**
+ *
+ */
+void
+serialize
+    ( find_node_request_body const& body
+    , buffer & b );
+
+/**
+ *
+ */
+inline std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_node_request_body & body );
+
+/**
+ *
+ */
+struct node
+{
+    id id_;
+    message_socket::endpoint_type endpoint_;
+};
+
+/**
+ *
+ */
+struct find_node_response_body final
+{
+    ///
+    std::vector<node> nodes_;
+};
+
+/**
+ *
+ */
+void
+serialize
+    ( find_node_response_body const& body
+    , buffer & b );
+
+/**
+ *
+ */
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_node_response_body & body );
 
 } // namespace detail
 } // namespace kademlia

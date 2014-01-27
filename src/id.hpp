@@ -114,6 +114,16 @@ public:
     id 
         ( std::string const& value );
 
+    blocks_type::reverse_iterator
+    begin_block
+        ( void )
+    { return blocks_.rbegin(); }
+
+    blocks_type::reverse_iterator
+    end_block
+        ( void )
+    { return blocks_.rend(); }
+
     blocks_type::const_reverse_iterator
     begin_block
         ( void )
@@ -148,6 +158,11 @@ public:
     operator[]
         ( std::size_t index )
     { return reference{ block( index ), mask( index ) }; }
+
+    bool
+    operator<
+        ( id const& o )
+    { return blocks_ < o.blocks_; }
 
 private:
     block_type &

@@ -23,64 +23,50 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_ERROR_HPP
-#define KADEMLIA_ERROR_HPP
+#include "message.hpp"
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
+#include "helpers/common.hpp"
 
-#include <system_error>
+#include <random>
 
-namespace kademlia {
+namespace k = kademlia;
+namespace kd = k::detail;
 
 /**
- *
  */
-enum error_type 
+BOOST_AUTO_TEST_SUITE( test_message )
+
+BOOST_AUTO_TEST_CASE( can_serialize_message  )
 {
-    UNKNOWN = 1,
-    RUN_ABORTED,
-    INITIAL_PEER_FAILED_TO_RESPOND,
-    INVALID_ID,
-    TRUNCATED_ID,
-    TRUNCATED_HEADER,
-    TRUNCATED_ENDPOINT,
-    TRUNCATED_ADDRESS,
-    UNKNOWN_PROTOCOL_VERSION,
-    CORRUPTED_HEADER,
-    UNIMPLEMENTED,
-};
+    std::default_random_engine random_engine;
 
-/**
- *
- */
-std::error_category const&
-error_category
-    ( void );
+    kd::header const header_to_serialize =
+        { kd::header::V1
+        , kd::header::FIND_VALUE_RESPONSE
+        , kd::id{ random_engine }
+        , kd::id{ random_engine } };
 
-/**
- *
- */
-std::error_condition
-make_error_condition
-    ( error_type condition );
+    kd::buffer buffer;
+    kd::serialize( header_to_serialize, buffer );
 
-/**
- *
- */
-std::error_code
-make_error_code
-    ( error_type code );
+    kd::header deserialized_header;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, deserialized_header ) );
+    BOOST_REQUIRE( i == e );
 
-} // namespace kademlia
+    BOOST_REQUIRE_EQUAL( header_to_serialize.version_, deserialized_header.version_ );
+    BOOST_REQUIRE_EQUAL( header_to_serialize.type_, deserialized_header.type_);
 
-namespace std {
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_to_serialize.source_id_.begin_block()
+                                   , header_to_serialize.source_id_.end_block()
+                                   , deserialized_header.source_id_.begin_block()
+                                   , deserialized_header.source_id_.end_block() );
 
-template <>
-struct is_error_condition_enum<kademlia::error_type> : true_type {};
-
-} // namespace std
-
-#endif
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_to_serialize.random_token_.begin_block()
+                                   , header_to_serialize.random_token_.end_block()
+                                   , deserialized_header.random_token_.begin_block()
+                                   , deserialized_header.random_token_.end_block() );
+}
+        
+BOOST_AUTO_TEST_SUITE_END()
 
