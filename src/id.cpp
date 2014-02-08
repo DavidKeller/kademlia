@@ -64,10 +64,12 @@ id::id
     ( std::default_random_engine & random_engine )
 {
     // The output of the generator is treated as boolean value.
-    std::uniform_int_distribution<> distribution( 0, 1 ); 
+    std::uniform_int_distribution<> distribution
+            ( std::numeric_limits< block_type >::min()
+            , std::numeric_limits< block_type >::max() ); 
     
     for ( std::size_t i = 0; i < BLOCKS_COUNT; ++ i )
-        blocks_[i] = distribution( random_engine ) != 0;
+        blocks_[i] = distribution( random_engine );
 }
 
 id::id

@@ -46,7 +46,7 @@ class id final
 {
 public:
     ///
-    static CXX11_CONSTEXPR std::size_t SIZE = 160;
+    static CXX11_CONSTEXPR std::size_t BIT_SIZE = 160;
 
     ///
     using block_type = std::uint8_t;
@@ -58,7 +58,7 @@ public:
     static CXX11_CONSTEXPR std::size_t BIT_PER_BLOCK = BYTE_PER_BLOCK * 8;
 
     ///
-    static CXX11_CONSTEXPR std::size_t BLOCKS_COUNT = SIZE / BIT_PER_BLOCK;
+    static CXX11_CONSTEXPR std::size_t BLOCKS_COUNT = BIT_SIZE / BIT_PER_BLOCK;
 
     ///
     using blocks_type = std::array< block_type, BLOCKS_COUNT >;
