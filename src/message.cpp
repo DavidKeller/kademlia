@@ -51,7 +51,7 @@ deserialize
     , buffer::const_iterator e
     , id & new_id )
 {
-    if ( std::distance( i, e ) < id::BLOCKS_COUNT )
+    if ( std::size_t( std::distance( i, e ) ) < id::BLOCKS_COUNT )
         return make_error_code( TRUNCATED_ID );
 
     std::copy_n( i, id::BLOCKS_COUNT, new_id.begin_block() );
@@ -126,7 +126,7 @@ deserialize
     , Address & address )
 {
     typename Address::bytes_type buffer;
-    if ( std::distance( i, e ) < buffer.size() )
+    if ( std::size_t( std::distance( i, e ) ) < buffer.size() )
         return make_error_code( TRUNCATED_ADDRESS );
     
     std::copy_n( i, buffer.size(), buffer.begin() );
@@ -258,7 +258,7 @@ serialize
     ( find_node_response_body const& body
     , buffer & b )
 {
-    std::uint16_t const size = body.nodes_.size();
+    auto const size = static_cast< std::uint16_t >( body.nodes_.size() );
     b.push_back( size & 0xf );
     b.push_back( size >> 8 );
 

@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <system_error>
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
