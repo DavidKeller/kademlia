@@ -25,6 +25,7 @@
 
 #include "message.hpp"
 
+#include <iostream>
 #include <kademlia/error.hpp>
 
 namespace kademlia {
@@ -252,6 +253,12 @@ deserialize
 {
     return deserialize( i, e, body.node_to_find_id_ );
 }
+
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , node const& a )
+{ return out << a.id_ << "@" << a.endpoint_; }
 
 void
 serialize

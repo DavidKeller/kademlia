@@ -30,6 +30,7 @@
 #   pragma once
 #endif
 
+#include <iosfwd>
 #include <cstdint>
 #include <algorithm>
 #include <system_error>
@@ -116,7 +117,7 @@ serialize
 /**
  *
  */
-inline std::error_code
+std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
@@ -130,6 +131,32 @@ struct node
     id id_;
     message_socket::endpoint_type endpoint_;
 };
+
+/**
+ *
+ */
+inline bool
+operator==
+    ( node const& a
+    , node const& b )
+{ return a.id_ == b.id_ && a.endpoint_ == b.endpoint_; }
+
+/**
+ *
+ */
+inline bool
+operator!=
+    ( node const& a
+    , node const& b )
+{ return ! ( a == b ); }
+
+/**
+ *
+ */
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , node const& a );
 
 /**
  *

@@ -36,36 +36,93 @@ namespace kd = k::detail;
  */
 BOOST_AUTO_TEST_SUITE( test_message )
 
-BOOST_AUTO_TEST_CASE( can_serialize_message  )
+BOOST_AUTO_TEST_CASE( can_serialize_header )
 {
     std::default_random_engine random_engine;
 
-    kd::header const header_to_serialize =
+    kd::header const header_out =
         { kd::header::V1
         , kd::header::FIND_VALUE_RESPONSE
         , kd::id{ random_engine }
         , kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( header_to_serialize, buffer );
+    kd::serialize( header_out, buffer );
 
-    kd::header deserialized_header;
+    kd::header header_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, deserialized_header ) );
+    BOOST_REQUIRE( ! kd::deserialize( i, e, header_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL( header_to_serialize.version_, deserialized_header.version_ );
-    BOOST_REQUIRE_EQUAL( header_to_serialize.type_, deserialized_header.type_);
+    BOOST_REQUIRE_EQUAL( header_out.version_, header_in.version_ );
+    BOOST_REQUIRE_EQUAL( header_out.type_, header_in.type_);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_to_serialize.source_id_.begin_block()
-                                   , header_to_serialize.source_id_.end_block()
-                                   , deserialized_header.source_id_.begin_block()
-                                   , deserialized_header.source_id_.end_block() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.source_id_.begin_block()
+                                   , header_out.source_id_.end_block()
+                                   , header_in.source_id_.begin_block()
+                                   , header_in.source_id_.end_block() );
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_to_serialize.random_token_.begin_block()
-                                   , header_to_serialize.random_token_.end_block()
-                                   , deserialized_header.random_token_.begin_block()
-                                   , deserialized_header.random_token_.end_block() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.random_token_.begin_block()
+                                   , header_out.random_token_.end_block()
+                                   , header_in.random_token_.begin_block()
+                                   , header_in.random_token_.end_block() );
+}
+ 
+BOOST_AUTO_TEST_CASE( can_serialize_find_node_request_body )
+{
+    std::default_random_engine random_engine;
+
+    kd::find_node_request_body const body_out =
+            { kd::id{ random_engine } };
+
+    kd::buffer buffer;
+    kd::serialize( body_out, buffer );
+
+    kd::find_node_request_body body_in;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
+    BOOST_REQUIRE( i == e );
+
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.node_to_find_id_.begin_block()
+                                   , body_out.node_to_find_id_.end_block()
+                                   , body_in.node_to_find_id_.begin_block()
+                                   , body_in.node_to_find_id_.end_block() );
+}
+
+BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
+{
+    std::default_random_engine random_engine;
+
+    kd::find_node_response_body body_out;
+   
+    for ( std::size_t i = 0; i < 10; ++ i)
+    {
+        static std::string const IPS[2] =
+            { "::1"
+            , "127.0.0.1" };
+
+        kd::node new_node = 
+            { kd::id{ random_engine }
+            , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
+              , 1024 + i } };
+
+        body_out.nodes_.push_back( std::move( new_node ) );
+    } 
+
+    kd::buffer buffer;
+    kd::serialize( body_out, buffer );
+
+    kd::find_node_response_body body_in;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
+    BOOST_REQUIRE( i == e );
+
+    BOOST_REQUIRE_EQUAL( body_out.nodes_.size(), body_in.nodes_.size() );
+
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.nodes_.begin()
+                                   , body_out.nodes_.end()
+                                   , body_in.nodes_.begin()
+                                   , body_in.nodes_.end() );
 }
         
 BOOST_AUTO_TEST_SUITE_END()
