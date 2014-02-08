@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
 
     kd::find_node_response_body body_out;
    
-    for ( std::size_t i = 0; i < 10; ++ i)
+    for ( std::uint16_t i = 0; i < 10; ++ i)
     {
         static std::string const IPS[2] =
             { "::1"
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
         kd::node new_node = 
             { kd::id{ random_engine }
             , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
-              , 1024 + i } };
+              , 1024u + i } };
 
         body_out.nodes_.push_back( std::move( new_node ) );
     } 
