@@ -26,8 +26,6 @@
 # Include implementation headers.
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-#add_definitions(-DBOOST_TEST_DYN_LINK)
-
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
 macro(build_and_run_test source_file)

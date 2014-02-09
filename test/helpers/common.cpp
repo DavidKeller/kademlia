@@ -27,6 +27,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include "common.hpp"
 
+#include <iostream>
 #include <boost/system/system_error.hpp>
 #include <boost/filesystem.hpp>
 
