@@ -24,6 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define BOOST_TEST_MAIN
+#define BOOST_TEST_ALTERNATIVE_INIT_API
 #include "common.hpp"
 
 #include <boost/system/system_error.hpp>
@@ -38,10 +39,6 @@ namespace detail = kademlia::detail;
 namespace {
 
 filesystem::path captures_directory_;
-
-struct test_arguments {
-    test_arguments( void )   { captures_directory_ = unit_test::framework::master_test_suite().argv[1]; }
-};
 
 } // namespace
 
@@ -71,5 +68,20 @@ get_temporary_listening_port
     return port;
 }
 
-BOOST_GLOBAL_FIXTURE( test_arguments );
+int 
+main
+    ( int argc
+    , char* argv[] )
+{
+    if ( argc == 1 )
+    {
+        std::cerr << "usage: " << argv[ 0 ] 
+                  << " [test args] CAPTURE_DIR" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    captures_directory_ = argv[ argc - 1 ];
+
+    return boost::unit_test::unit_test_main( &init_unit_test, argc, argv );
+}
 
