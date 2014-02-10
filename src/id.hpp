@@ -162,6 +162,7 @@ public:
     bool
     operator<
         ( id const& o )
+        const
     { return blocks_ < o.blocks_; }
 
 private:

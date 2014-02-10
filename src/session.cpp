@@ -155,10 +155,10 @@ private:
     using timer = boost::asio::steady_timer;
 
     ///
-    struct task
+    struct task_base : std::enable_shared_from_this< task_base >
     {
         virtual
-        ~task
+        ~task_base
             ( void )
             = default;
 
@@ -171,7 +171,7 @@ private:
     };
 
     ///
-    typedef std::map< detail::id, std::weak_ptr< task > > pending_requests; 
+    typedef std::map< detail::id, std::weak_ptr< task_base > > pending_requests; 
 
 private:
     /**
@@ -362,31 +362,97 @@ private:
 
         switch ( h.type_ )
         {
-        case detail::header::PING_REQUEST:
-        case detail::header::STORE_REQUEST:
-        case detail::header::FIND_NODE_REQUEST:
-        case detail::header::FIND_VALUE_REQUEST:
-            break;
-        default:
-#if 0
-            auto r = pending_requests_.find( h.random_token_ );
-            if ( r != pending_requests_.end() && ! r->second.expired() )
-                r->second.lock()->handle_message( h, i, e );
-#endif
-        break;
+            case detail::header::PING_REQUEST: 
+                respond_to_ping( source_subnet, sender, h );
+                break;
+            case detail::header::STORE_REQUEST: 
+                throw std::system_error{ make_error_code( UNIMPLEMENTED ) };
+            case detail::header::FIND_NODE_REQUEST: 
+                respond_to_find_node( source_subnet, sender, h, i, e );
+                break;
+            case detail::header::FIND_VALUE_REQUEST:
+                respond_to_find_value( source_subnet, sender, h, i, e );
+                break;
+            default:
+                handle_response( source_subnet, sender, h, i, e );
         }
     }
 
     /**
      *
      */
-    template<typename Callback>
     void
-    register_handler
-        ( detail::id & random_token
-        , Callback callback )
+    handle_response 
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
     {
-        pending_requests_.emplace( random_token );
+        auto const r = pending_requests_.find( h.random_token_ );
+        // If the response is not associated with any task
+        // ignore it.
+        if ( r == pending_requests_.end() )
+            return;        
+
+        // Check if the associated task has already expired.
+        // e.g. because of a timeout.
+        if ( r->second.expired() )
+            return;
+
+        auto task_ptr = r->second.lock();
+        task_ptr->handle_message( h, i, e );
+    }
+
+    /**
+     *
+     */
+    void
+    respond_to_ping
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::header const& h )
+    {
+
+    }
+
+    /**
+     *
+     */
+    void
+    respond_to_find_node
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
+    {
+
+    }
+
+    /**
+     *
+     */
+    void
+    respond_to_find_value
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
+    {
+
+    }
+
+    /**
+     *
+     */
+    void
+    register_task
+        ( detail::id & random_token
+        , std::weak_ptr< task_base > task )
+    {
+        pending_requests_.emplace( random_token, task );
     }
 
 private:
