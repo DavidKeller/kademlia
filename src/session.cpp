@@ -64,7 +64,7 @@ class session::impl final
 {
 public:
     ///
-    using subnets = std::vector<detail::subnet>;
+    using subnets = std::vector< detail::subnet >;
 
 public:
     /**
@@ -72,7 +72,7 @@ public:
      */
     explicit 
     impl
-        ( std::vector<endpoint> const& endpoints
+        ( std::vector< endpoint > const& endpoints
         , endpoint const& initial_peer )
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
@@ -83,6 +83,7 @@ public:
             , routing_table_{ my_id_ }
             , main_failure_{}
             , pending_requests_{} 
+            , tasks_{}
     { }
     
     /**
@@ -133,7 +134,10 @@ public:
         init();
         
         while ( ! main_failure_ && io_service_.run_one() )
+        {
             io_service_.poll();
+            destroy_finished_tasks();
+        }
 
         return main_failure_;
     }
@@ -168,10 +172,22 @@ private:
             , detail::buffer::const_iterator i
             , detail::buffer::const_iterator e )
             = 0;
+
+        virtual bool
+        is_finished
+            ( void )
+            const
+            = 0;
     };
 
     ///
-    typedef std::map< detail::id, std::weak_ptr< task_base > > pending_requests; 
+    using task_ptr = std::shared_ptr< task_base >;
+
+    ///
+    using tasks = std::list< task_ptr >;
+
+    ///
+    using pending_requests = std::map< detail::id, task_base * >; 
 
 private:
     /**
@@ -282,7 +298,7 @@ private:
                 main_failure_ = failure;
             else
             {
-                process_new_message( current_subnet, sender, message );
+                handle_new_message( current_subnet, sender, message );
                 schedule_receive_on_subnet( current_subnet );
             }
         };
@@ -292,11 +308,13 @@ private:
 
     /**
      *
+     *  @note This method do not own the task.
      */
     std::error_code 
     send_initial_request
         ( detail::message_socket::endpoint_type const& endpoint_to_try
-        , detail::subnet & current_subnet )
+        , detail::subnet & current_subnet
+        , task_base * initial_request_task )
     {
         // Ensure we can access to the current peer address
         // on the current subnet (i.e. we don't try
@@ -304,7 +322,8 @@ private:
         if ( endpoint_to_try.protocol() != current_subnet.local_endpoint().protocol() )
             make_error_code( std::errc::address_family_not_supported );
 
-        auto message = generate_initial_request();
+        detail::id const request_id{ random_engine_ };
+        auto message = generate_initial_request( request_id );
 
         // The purpose of this object is to ensure
         // the message buffer lives long enought.
@@ -312,6 +331,7 @@ private:
             ( std::error_code const& /* failure */ )
         { };
 
+        associate_response_with_task( request_id, initial_request_task );
         current_subnet.async_send( *message, endpoint_to_try, on_message_sent );
 
         return std::error_code{};
@@ -320,9 +340,9 @@ private:
     /**
      *
      */
-    std::shared_ptr<detail::buffer>
+    std::shared_ptr< detail::buffer >
     generate_initial_request
-        ( void )
+        ( detail::id const& request_id )
     {
         auto new_message = std::make_shared<detail::buffer>();
 
@@ -331,13 +351,10 @@ private:
             detail::header::V1,
             detail::header::FIND_NODE_REQUEST,
             my_id_,
-            detail::id{ random_engine_ }
+            request_id
         };
 
-        detail::find_node_request_body const find_node_request_body
-        {
-            my_id_
-        };
+        detail::find_node_request_body const find_node_request_body{ my_id_ };
 
         serialize( find_node_header, *new_message );
         serialize( find_node_request_body, *new_message );
@@ -349,7 +366,7 @@ private:
      *
      */
     void
-    process_new_message
+    handle_new_message
         ( detail::subnet & source_subnet
         , detail::message_socket::endpoint_type const& sender
         , detail::buffer const& message )
@@ -357,21 +374,23 @@ private:
         auto i = message.begin(), e = message.end();
 
         detail::header h;
+        // Try to deserialize header.
         if ( deserialize( i, e, h ) )
             return;
 
         switch ( h.type_ )
         {
             case detail::header::PING_REQUEST: 
-                respond_to_ping( source_subnet, sender, h );
+                handle_ping_request( source_subnet, sender, h );
                 break;
             case detail::header::STORE_REQUEST: 
-                throw std::system_error{ make_error_code( UNIMPLEMENTED ) };
+                handle_store_request( source_subnet, sender, h, i, e );
+                break;
             case detail::header::FIND_NODE_REQUEST: 
-                respond_to_find_node( source_subnet, sender, h, i, e );
+                handle_find_node_request( source_subnet, sender, h, i, e );
                 break;
             case detail::header::FIND_VALUE_REQUEST:
-                respond_to_find_value( source_subnet, sender, h, i, e );
+                handle_find_value_request( source_subnet, sender, h, i, e );
                 break;
             default:
                 handle_response( source_subnet, sender, h, i, e );
@@ -393,22 +412,20 @@ private:
         // If the response is not associated with any task
         // ignore it.
         if ( r == pending_requests_.end() )
-            return;        
-
-        // Check if the associated task has already expired.
-        // e.g. because of a timeout.
-        if ( r->second.expired() )
             return;
 
-        auto task_ptr = r->second.lock();
-        task_ptr->handle_message( h, i, e );
+        // Pop the associated binding.
+        auto task = r->second;
+        pending_requests_.erase( r );
+
+        task->handle_message( h, i, e );
     }
 
     /**
      *
      */
     void
-    respond_to_ping
+    handle_ping_request
         ( detail::subnet & source_subnet
         , detail::message_socket::endpoint_type const& sender
         , detail::header const& h )
@@ -420,7 +437,7 @@ private:
      *
      */
     void
-    respond_to_find_node
+    handle_store_request
         ( detail::subnet & source_subnet
         , detail::message_socket::endpoint_type const& sender
         , detail::header const& h
@@ -434,7 +451,22 @@ private:
      *
      */
     void
-    respond_to_find_value
+    handle_find_node_request
+        ( detail::subnet & source_subnet
+        , detail::message_socket::endpoint_type const& sender
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
+    {
+
+    }
+
+
+    /**
+     *
+     */
+    void
+    handle_find_value_request
         ( detail::subnet & source_subnet
         , detail::message_socket::endpoint_type const& sender
         , detail::header const& h
@@ -448,11 +480,34 @@ private:
      *
      */
     void
-    register_task
-        ( detail::id & random_token
-        , std::weak_ptr< task_base > task )
+    associate_response_with_task
+        ( detail::id const& request_id
+        , task_base * task )
+    { pending_requests_.emplace( request_id, task ); }
+
+    /**
+     *
+     */
+    template< typename Task, typename ... Args >
+    void 
+    create_new_task
+        ( Args ... args )
     {
-        pending_requests_.emplace( random_token, task );
+        auto t = std::make_shared< Task >( std::forward< Args >( args )... ); 
+        tasks_.push_back( t );
+    }
+
+    /**
+     *
+     */
+    void
+    destroy_finished_tasks
+        ( void )
+    {
+        auto is_task_finished = []( task_ptr const& t )
+
+        { return t->is_finished(); };
+        tasks_.remove_if( is_task_finished );
     }
 
 private:
@@ -465,6 +520,7 @@ private:
     detail::routing_table routing_table_;
     std::error_code main_failure_;
     pending_requests pending_requests_;
+    tasks tasks_;
 };
 
 session::session
