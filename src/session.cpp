@@ -39,7 +39,6 @@
 #include <chrono>
 #include <random>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
 
 #include <kademlia/error.hpp>
 
@@ -47,12 +46,12 @@
 #include "message.hpp"
 #include "routing_table.hpp"
 #include "subnet.hpp"
+#include "message_dispatcher.hpp"
 
 namespace kademlia {
 
 namespace {
 
-CXX11_CONSTEXPR std::chrono::milliseconds TICK_TIMER_RESOLUTION{ 1 };
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 
 } // anonymous namespace
@@ -78,32 +77,13 @@ public:
             , my_id_( random_engine_ )
             , io_service_{}
             , initial_peer_{ initial_peer }
-            , tick_timer_{ io_service_ }
             , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
             , routing_table_{ my_id_ }
-            , main_failure_{}
-            , pending_requests_{} 
+            , message_dispatcher_{ io_service_ }
             , tasks_{}
+            , main_failure_{}
     { }
     
-    /**
-     *
-     */
-    void
-    start_tick_timer
-        ( void )
-    {
-        tick_timer_.expires_from_now( TICK_TIMER_RESOLUTION );
-        auto on_fire = [ this ]
-            ( boost::system::error_code const& failure )
-        { 
-            if ( ! failure )
-                start_tick_timer();
-        };
-
-        tick_timer_.async_wait( on_fire );
-    }
-
     /**
      *
      */
@@ -155,39 +135,11 @@ public:
     }
 
 private:
-    /// 
-    using timer = boost::asio::steady_timer;
-
     ///
-    struct task_base : std::enable_shared_from_this< task_base >
-    {
-        virtual
-        ~task_base
-            ( void )
-            = default;
-
-        virtual std::error_code
-        handle_message
-            ( detail::header const& h
-            , detail::buffer::const_iterator i
-            , detail::buffer::const_iterator e )
-            = 0;
-
-        virtual bool
-        is_finished
-            ( void )
-            const
-            = 0;
-    };
-
-    ///
-    using task_ptr = std::shared_ptr< task_base >;
+    using task_ptr = std::shared_ptr< detail::task_base >;
 
     ///
     using tasks = std::list< task_ptr >;
-
-    ///
-    using pending_requests = std::map< detail::id, task_base * >; 
 
 private:
     /**
@@ -199,7 +151,6 @@ private:
     {
         io_service_.reset();
 
-        start_tick_timer();
         start_receive_on_each_subnet();
         contact_initial_peer();
     }
@@ -314,7 +265,7 @@ private:
     send_initial_request
         ( detail::message_socket::endpoint_type const& endpoint_to_try
         , detail::subnet & current_subnet
-        , task_base * initial_request_task )
+        , detail::task_base * initial_request_task )
     {
         // Ensure we can access to the current peer address
         // on the current subnet (i.e. we don't try
@@ -393,7 +344,7 @@ private:
                 handle_find_value_request( source_subnet, sender, h, i, e );
                 break;
             default:
-                handle_response( source_subnet, sender, h, i, e );
+                handle_response( h, i, e );
         }
     }
 
@@ -402,24 +353,10 @@ private:
      */
     void
     handle_response 
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
-        , detail::header const& h
+        ( detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
-    {
-        auto const r = pending_requests_.find( h.random_token_ );
-        // If the response is not associated with any task
-        // ignore it.
-        if ( r == pending_requests_.end() )
-            return;
-
-        // Pop the associated binding.
-        auto task = r->second;
-        pending_requests_.erase( r );
-
-        task->handle_message( h, i, e );
-    }
+    { message_dispatcher_.dispatch_message( h, i, e ); }
 
     /**
      *
@@ -482,8 +419,12 @@ private:
     void
     associate_response_with_task
         ( detail::id const& request_id
-        , task_base * task )
-    { pending_requests_.emplace( request_id, task ); }
+        , detail::task_base * task )
+    { 
+        message_dispatcher_.associate_task_with_id_for( request_id
+                                                      , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                                                      , task );
+    }
 
     /**
      *
@@ -515,12 +456,11 @@ private:
     detail::id my_id_;
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
-    timer tick_timer_;
     subnets subnets_;
     detail::routing_table routing_table_;
-    std::error_code main_failure_;
-    pending_requests pending_requests_;
+    detail::message_dispatcher message_dispatcher_;
     tasks tasks_;
+    std::error_code main_failure_;
 };
 
 session::session

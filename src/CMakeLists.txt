@@ -37,6 +37,9 @@ set(kademlia_sources
     subnet.hpp
     routing_table.hpp
     routing_table.cpp
+    message_dispatcher.hpp
+    message_dispatcher.cpp
+    task_base.hpp
     message.hpp
     message.cpp
     message_socket.hpp
