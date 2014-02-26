@@ -421,9 +421,9 @@ private:
         ( detail::id const& request_id
         , detail::task_base * task )
     { 
-        message_dispatcher_.associate_task_with_id_for( request_id
-                                                      , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                                                      , task );
+        message_dispatcher_.associate_message_with_task_for( request_id
+                                                           , task
+                                                           , INITIAL_CONTACT_RECEIVE_TIMEOUT );
     }
 
     /**

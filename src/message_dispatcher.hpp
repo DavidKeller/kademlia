@@ -31,9 +31,10 @@
 #endif
 
 #include <map>
-#include <algorithm>
+#include <chrono>
+#include <system_error>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/basic_waitable_timer.hpp>
 
 #include "id.hpp"
 #include "task_base.hpp"
@@ -45,11 +46,11 @@ namespace detail {
 class message_dispatcher final
 {
 public:
-    /// 
-    using timer = boost::asio::steady_timer;
+    ///
+    using clock = std::chrono::steady_clock;
 
     ///
-    using duration = timer::duration;
+    using duration = clock::duration;
 
 public:
     /**
@@ -63,15 +64,15 @@ public:
      *
      */
     void
-    associate_task_with_id_for
-        ( id const& request_id
-        , duration const& timeout
-        , task_base * task );
+    associate_message_with_task_for
+        ( id const& message_id
+        , task_base * task
+        , duration const& timeout );
 
     /**
      *
      */
-    void
+    std::error_code
     dispatch_message
         ( header const& h
         , buffer::const_iterator i
@@ -79,13 +80,16 @@ public:
 
 private:
     /// 
-    using time_point = timer::time_point;
+    using time_point = clock::time_point;
 
     ///
     using timeouts = std::map< time_point, id >;
 
     ///
     using associations = std::map< id, task_base * >;
+
+    /// 
+    using timer = boost::asio::basic_waitable_timer< clock >;
 
 private:
     /**

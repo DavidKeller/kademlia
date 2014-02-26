@@ -25,6 +25,10 @@
 
 #include "message_dispatcher.hpp"
 
+#include <algorithm>
+
+#include <kademlia/error.hpp>
+
 namespace kademlia {
 namespace detail {
 
@@ -36,18 +40,18 @@ message_dispatcher::message_dispatcher
 { }
 
 void
-message_dispatcher::associate_task_with_id_for
-    ( id const& request_id
-    , duration const& timeout
-    , task_base * task )
+message_dispatcher::associate_message_with_task_for
+    ( id const& message_id
+    , task_base * task
+    , duration const& timeout )
 {
-    associations_.insert( std::make_pair( request_id, task ) ); 
+    associations_.insert( std::make_pair( message_id, task ) ); 
 
-    auto const expiration_time = std::chrono::steady_clock::now() + timeout;
+    auto const expiration_time = clock::now() + timeout;
 
     // Insert the current expiration time to an ordered by
     // expiration map.
-    timeouts_.insert( std::make_pair( expiration_time, request_id ) );
+    timeouts_.insert( std::make_pair( expiration_time, message_id ) );
     
     // If the current expiration time will be the sooner to expires
     // then cancel any pending wait and schedule this one instead.
@@ -55,7 +59,7 @@ message_dispatcher::associate_task_with_id_for
         schedule_next_tick( expiration_time );
 }
 
-void
+std::error_code
 message_dispatcher::dispatch_message
     ( header const& h
     , buffer::const_iterator i
@@ -63,16 +67,18 @@ message_dispatcher::dispatch_message
 {
     auto task = pop_association( h.random_token_ );
     if ( task ) 
-        task->handle_message( h, i, e );
+        return task->handle_message( h, i, e );
+
+    return make_error_code( UNASSOCIATED_MESSAGE_ID ); 
 }
 
 task_base *
 message_dispatcher::pop_association
-    ( id const& request_id )
+    ( id const& message_id )
 {
     task_base * task = nullptr;
 
-    auto i = associations_.find( request_id );
+    auto i = associations_.find( message_id );
     if ( i != associations_.end() )
     {
         task = i->second;

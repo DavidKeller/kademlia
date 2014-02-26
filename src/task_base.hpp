@@ -30,6 +30,8 @@
 #   pragma once
 #endif
 
+#include <system_error>
+
 #include "message.hpp"
 #include "buffer.hpp"
 
@@ -43,7 +45,7 @@ struct task_base
         ( void )
         = default;
 
-    virtual void
+    virtual std::error_code
     handle_message
         ( header const& h
         , buffer::const_iterator i

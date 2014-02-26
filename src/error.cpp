@@ -72,6 +72,8 @@ struct kademlia_error_category : std::error_category
                 return "corrupted header";
             case UNKNOWN_PROTOCOL_VERSION:
                 return "unknown protocol version";
+            case UNASSOCIATED_MESSAGE_ID:
+                return "unassociated message id";
             default:
                 return "unknown error";
         }
