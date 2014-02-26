@@ -25,6 +25,7 @@
 
 #include "message_dispatcher.hpp"
 
+#include <cassert>
 #include <algorithm>
 
 #include <kademlia/error.hpp>
@@ -45,13 +46,15 @@ message_dispatcher::associate_message_with_task_for
     , task_base * task
     , duration const& timeout )
 {
-    associations_.insert( std::make_pair( message_id, task ) ); 
+    auto i = associations_.insert( std::make_pair( message_id, task ) ); 
+    assert( i.second && "an id can't be resitered twice" );
 
-    auto const expiration_time = clock::now() + timeout;
+    auto expiration_time = clock::now() + timeout;
 
     // Insert the current expiration time to an ordered by
     // expiration map.
-    timeouts_.insert( std::make_pair( expiration_time, message_id ) );
+    while ( ! timeouts_.insert( std::make_pair( expiration_time, message_id ) ).second )
+        expiration_time += duration::min(); 
     
     // If the current expiration time will be the sooner to expires
     // then cancel any pending wait and schedule this one instead.
