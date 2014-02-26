@@ -98,28 +98,41 @@ BOOST_FIXTURE_TEST_CASE( unknown_message_are_dropped , fixture )
 
 BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
 {
-    kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST };
-    kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST
+    kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST 
                        , kd::id{}, kd::id{ "1" } };
+    kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
     auto const infinite = kd::message_dispatcher::duration::max();
+
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Create the association.
     dispatcher_.associate_message_with_task_for( h1.random_token_
                                                , this
                                                , infinite );
 
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
+
     // Send an unexpected message.
     auto result = dispatcher_.dispatch_message( h2, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Send the expected message.
     result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
+    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Send the previously expected message again.
     result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
+    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 }
 
 BOOST_FIXTURE_TEST_CASE( associations_can_be_timeouted, fixture )
@@ -128,15 +141,22 @@ BOOST_FIXTURE_TEST_CASE( associations_can_be_timeouted, fixture )
     kd::buffer const b;
     auto const immediate = kd::message_dispatcher::duration::zero();
 
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
     // Create the association.
     dispatcher_.associate_message_with_task_for( h.random_token_
                                                , this
                                                , immediate );
     BOOST_REQUIRE_EQUAL( 1, io_service_.poll() );
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
+    BOOST_REQUIRE_EQUAL( h.random_token_, timeouts_received_.front() );
 
     // Send the expected message.
     auto result = dispatcher_.dispatch_message( h, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
+    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
