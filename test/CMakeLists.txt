@@ -24,7 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Include implementation headers.
-include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 
@@ -37,11 +37,11 @@ macro(build_and_run_test source_file)
 endmacro()
 
 build_and_run_test(test_id.cpp)
-build_and_run_test(test_r.cpp)
-build_and_run_test(test_peer.cpp helpers/peer_factory.hpp)
-build_and_run_test(test_routing_table.cpp)
-build_and_run_test(test_session.cpp)
-build_and_run_test(test_message_socket.cpp)
 build_and_run_test(test_message.cpp)
 build_and_run_test(test_message_dispatcher.cpp)
+build_and_run_test(test_message_socket.cpp)
+build_and_run_test(test_peer.cpp helpers/peer_factory.hpp)
+build_and_run_test(test_r.cpp)
+build_and_run_test(test_routing_table.cpp)
+build_and_run_test(test_session.cpp)
 

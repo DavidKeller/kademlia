@@ -67,7 +67,7 @@ add_definitions(-DBOOST_ALL_NO_LIB
     -DBOOST_ASIO_HAS_STD_CHRONO)
 
 # Setup includes directories.
-include_directories(include)
+include_directories(BEFORE include)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Build everything.
