@@ -46,15 +46,15 @@ message_dispatcher::associate_message_with_task_for
     , task_base * task
     , duration const& timeout )
 {
-    auto i = associations_.insert( std::make_pair( message_id, task ) ); 
-    assert( i.second && "an id can't be resitered twice" );
+    auto i = associations_.emplace( message_id, task ); 
+    assert( i.second && "an id can't be registered twice" );
 
     auto expiration_time = clock::now() + timeout;
 
-    // Insert the current expiration time to an ordered by
-    // expiration map.
-    while ( ! timeouts_.insert( std::make_pair( expiration_time, message_id ) ).second )
-        expiration_time += duration::min(); 
+    while ( ! timeouts_.emplace( expiration_time, message_id ).second )
+        // If an equivalent expiration exists, 
+        // modify the current to make it unique.
+        expiration_time += std::chrono::nanoseconds( 1 ); 
     
     // If the current expiration time will be the sooner to expires
     // then cancel any pending wait and schedule this one instead.
@@ -114,7 +114,8 @@ message_dispatcher::schedule_next_tick
         auto task = pop_association( expired_id );
         // If the association has not already been
         // removed by a call to handle_message.
-        if ( task ) task->handle_message_timeout( expired_id );
+        if ( task ) 
+            task->handle_message_timeout( expired_id );
     };
 
     timer_.async_wait( fire );
