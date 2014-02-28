@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #include <kademlia/error.hpp>
+#include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
 namespace detail {
@@ -53,8 +54,8 @@ message_dispatcher::associate_message_with_task_for
 
     while ( ! timeouts_.emplace( expiration_time, message_id ).second )
         // If an equivalent expiration exists, 
-        // modify the current to make it unique.
-        expiration_time += std::chrono::nanoseconds( 1 ); 
+        // increment the current expiration of 1 tick to make it unique.
+        expiration_time += duration{ 1 }; 
     
     // If the current expiration time will be the sooner to expires
     // then cancel any pending wait and schedule this one instead.
