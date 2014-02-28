@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include <kademlia/error.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
 namespace detail {
