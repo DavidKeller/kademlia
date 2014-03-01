@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "message_dispatcher.hpp"
+#include "response_dispatcher.hpp"
 
 #include <cassert>
 #include <algorithm>
@@ -33,7 +33,7 @@
 namespace kademlia {
 namespace detail {
 
-message_dispatcher::message_dispatcher
+response_dispatcher::response_dispatcher
     ( boost::asio::io_service & io_service )
     : timer_{ io_service }
     , timeouts_{}
@@ -41,7 +41,7 @@ message_dispatcher::message_dispatcher
 { }
 
 void
-message_dispatcher::associate_message_with_task_for
+response_dispatcher::associate_response_with_task_for
     ( id const& message_id
     , task_base * task
     , duration const& timeout )
@@ -63,7 +63,7 @@ message_dispatcher::associate_message_with_task_for
 }
 
 std::error_code
-message_dispatcher::dispatch_message
+response_dispatcher::dispatch_message
     ( header const& h
     , buffer::const_iterator i
     , buffer::const_iterator e )
@@ -76,7 +76,7 @@ message_dispatcher::dispatch_message
 }
 
 task_base *
-message_dispatcher::pop_association
+response_dispatcher::pop_association
     ( id const& message_id )
 {
     task_base * task = nullptr;
@@ -92,7 +92,7 @@ message_dispatcher::pop_association
 }
 
 void
-message_dispatcher::schedule_next_tick
+response_dispatcher::schedule_next_tick
     ( time_point const& expiration_time )
 {
     timer_.expires_at( expiration_time );
@@ -122,7 +122,7 @@ message_dispatcher::schedule_next_tick
 }
 
 std::size_t
-message_dispatcher::count_associations
+response_dispatcher::count_associations
     ( void ) 
     const
 { return associations_.size(); }

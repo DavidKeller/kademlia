@@ -46,7 +46,7 @@
 #include "message.hpp"
 #include "routing_table.hpp"
 #include "subnet.hpp"
-#include "message_dispatcher.hpp"
+#include "response_dispatcher.hpp"
 
 namespace kademlia {
 
@@ -79,7 +79,7 @@ public:
             , initial_peer_{ initial_peer }
             , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
             , routing_table_{ my_id_ }
-            , message_dispatcher_{ io_service_ }
+            , response_dispatcher_{ io_service_ }
             , tasks_{}
             , main_failure_{}
     { }
@@ -356,7 +356,7 @@ private:
         ( detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
-    { message_dispatcher_.dispatch_message( h, i, e ); }
+    { response_dispatcher_.dispatch_message( h, i, e ); }
 
     /**
      *
@@ -421,9 +421,9 @@ private:
         ( detail::id const& request_id
         , detail::task_base * task )
     { 
-        message_dispatcher_.associate_message_with_task_for( request_id
-                                                           , task
-                                                           , INITIAL_CONTACT_RECEIVE_TIMEOUT );
+        response_dispatcher_.associate_response_with_task_for( request_id
+                                                             , task
+                                                             , INITIAL_CONTACT_RECEIVE_TIMEOUT );
     }
 
     /**
@@ -458,7 +458,7 @@ private:
     endpoint initial_peer_;
     subnets subnets_;
     detail::routing_table routing_table_;
-    detail::message_dispatcher message_dispatcher_;
+    detail::response_dispatcher response_dispatcher_;
     tasks tasks_;
     std::error_code main_failure_;
 };

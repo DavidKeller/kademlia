@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_MESSAGE_DISPATCHER_HPP
-#define KADEMLIA_MESSAGE_DISPATCHER_HPP
+#ifndef KADEMLIA_RESPONSE_DISPATCHER_HPP
+#define KADEMLIA_RESPONSE_DISPATCHER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -43,7 +43,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-class message_dispatcher final
+class response_dispatcher final
 {
 public:
     ///
@@ -57,14 +57,14 @@ public:
      *
      */
     explicit 
-    message_dispatcher
+    response_dispatcher
         ( boost::asio::io_service & io_service );
 
     /**
      *
      */
     void
-    associate_message_with_task_for
+    associate_response_with_task_for
         ( id const& message_id
         , task_base * task
         , duration const& timeout );

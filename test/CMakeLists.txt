@@ -38,7 +38,7 @@ endmacro()
 
 build_and_run_test(test_id.cpp)
 build_and_run_test(test_message.cpp)
-build_and_run_test(test_message_dispatcher.cpp)
+build_and_run_test(test_response_dispatcher.cpp)
 build_and_run_test(test_message_socket.cpp)
 build_and_run_test(test_peer.cpp helpers/peer_factory.hpp)
 build_and_run_test(test_r.cpp)

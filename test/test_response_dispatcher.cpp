@@ -28,7 +28,7 @@
 #include <vector>
 #include <kademlia/error.hpp>
 
-#include "message_dispatcher.hpp"
+#include "response_dispatcher.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
 {
     boost::asio::io_service io_service;
-    BOOST_REQUIRE_NO_THROW( kd::message_dispatcher{ io_service } );
+    BOOST_REQUIRE_NO_THROW( kd::response_dispatcher{ io_service } );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -79,7 +79,7 @@ struct fixture : kd::task_base
     { return false; }
 
     boost::asio::io_service io_service_;
-    kd::message_dispatcher dispatcher_;
+    kd::response_dispatcher dispatcher_;
     std::vector< kd::id > timeouts_received_;
     std::vector< kd::id > messages_received_;
 };
@@ -108,9 +108,9 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
     BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Create the association.
-    dispatcher_.associate_message_with_task_for( h1.random_token_
-                                               , this
-                                               , infinite );
+    dispatcher_.associate_response_with_task_for( h1.random_token_
+                                                , this
+                                                , infinite );
     BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
@@ -139,14 +139,14 @@ BOOST_FIXTURE_TEST_CASE( associations_can_be_timeouted, fixture )
 {
     kd::header const h{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
-    auto const immediate = kd::message_dispatcher::duration::zero();
+    auto const immediate = kd::response_dispatcher::duration::zero();
 
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
     // Create the association.
-    dispatcher_.associate_message_with_task_for( h.random_token_
-                                               , this
-                                               , immediate );
+    dispatcher_.associate_response_with_task_for( h.random_token_
+                                                , this
+                                                , immediate );
     BOOST_REQUIRE_EQUAL( 1, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
@@ -166,18 +166,18 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST
                        , kd::id{}, kd::id{ "2" } };
     kd::buffer const b;
-    auto const immediate = kd::message_dispatcher::duration::zero();
+    auto const immediate = kd::response_dispatcher::duration::zero();
     auto const infinite = std::chrono::hours( 1 );
 
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
     // Create the association.
-    dispatcher_.associate_message_with_task_for( h1.random_token_
-                                               , this
-                                               , infinite );
-    dispatcher_.associate_message_with_task_for( h2.random_token_
-                                               , this
-                                               , immediate );
+    dispatcher_.associate_response_with_task_for( h1.random_token_
+                                                , this
+                                                , infinite );
+    dispatcher_.associate_response_with_task_for( h2.random_token_
+                                                , this
+                                                , immediate );
     BOOST_REQUIRE_EQUAL( 2, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
