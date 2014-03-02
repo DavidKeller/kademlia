@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
 #include <kademlia/session.hpp>
 
@@ -49,6 +50,9 @@ create_socket
     // Try to create a socket.
     typename Socket::endpoint_type endpoint( a, port );
     Socket socket( io_service, endpoint.protocol() );
+
+    if ( endpoint.address().is_v6() )
+        socket.set_option( boost::asio::ip::v6_only{ true } );
 
     boost::system::error_code failure;
     socket.bind( endpoint, failure );
