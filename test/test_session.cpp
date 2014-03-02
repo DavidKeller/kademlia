@@ -72,7 +72,18 @@ check_listening
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
-BOOST_AUTO_TEST_CASE( session_opens_sockets )
+BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
+{
+    // Create Dummy initial peer.
+    k::endpoint const initial_peer( "127.0.0.1", "22222" );
+    
+    k::session s( initial_peer );
+    
+    check_listening( "0.0.0.0", k::session::DEFAULT_PORT );
+    check_listening( "::", k::session::DEFAULT_PORT );
+}
+
+BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
 {
     // Create listening socket.
     std::uint16_t const port1 = get_temporary_listening_port();
@@ -89,6 +100,40 @@ BOOST_AUTO_TEST_CASE( session_opens_sockets )
     
     check_listening( "127.0.0.1", port1 );
     check_listening( "::1", port2 );
+}
+
+BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
+{
+    // Create listening socket.
+    std::uint16_t const port1 = get_temporary_listening_port();
+    std::uint16_t const port2 = get_temporary_listening_port( port1 );
+    k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
+    k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
+    
+    // Create Dummy initial peer.
+    k::endpoint const initial_peer( "127.0.0.1", "22222" );
+    
+    BOOST_REQUIRE_THROW( k::session s( initial_peer
+                                     , ipv4_endpoint
+                                     , ipv6_endpoint )
+                       , std::exception );
+}
+
+BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
+{
+    // Create listening socket.
+    std::uint16_t const port1 = get_temporary_listening_port();
+    std::uint16_t const port2 = get_temporary_listening_port( port1 );
+    k::endpoint ipv4_endpoint{ "::", port1 };
+    k::endpoint ipv6_endpoint{ "::1", port2 };
+    
+    // Create Dummy initial peer.
+    k::endpoint const initial_peer( "127.0.0.1", "22222" );
+    
+    BOOST_REQUIRE_THROW( k::session s( initial_peer
+                                     , ipv4_endpoint
+                                     , ipv6_endpoint )
+                       , std::exception );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

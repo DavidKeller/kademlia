@@ -35,6 +35,15 @@ namespace kd = kademlia::detail;
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
+BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
+{
+    boost::asio::io_service io_service;
+
+    auto const port = get_temporary_listening_port();
+    BOOST_REQUIRE_THROW( kd::resolve_endpoint( io_service, { "error", port } )
+                       , std::exception );
+}
+
 BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
 {
     boost::asio::io_service io_service;
