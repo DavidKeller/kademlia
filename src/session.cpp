@@ -62,22 +62,20 @@ CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 
 class session::impl final
 {
 public:
-    ///
-    using subnets = std::vector< detail::subnet >;
-
-public:
     /**
      *
      */
     explicit 
     impl
-        ( std::vector< endpoint > const& endpoints
-        , endpoint const& initial_peer )
+        ( endpoint const& initial_peer
+        , endpoint const& listen_on_ipv4
+        , endpoint const& listen_on_ipv6 )
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
             , io_service_{}
             , initial_peer_{ initial_peer }
-            , subnets_{ create_subnets( detail::create_sockets( io_service_, endpoints ) ) }
+            , ipv4_subnet_{ create_ipv4_subnet( io_service_, listen_on_ipv4 ) }
+            , ipv6_subnet_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
             , routing_table_{ my_id_ }
             , response_dispatcher_{ io_service_ }
             , tasks_{}
@@ -158,16 +156,35 @@ private:
     /**
      *
      */
-    static subnets
-    create_subnets
-        ( detail::message_sockets sockets ) 
+    static detail::subnet
+    create_ipv4_subnet
+        ( boost::asio::io_service & io_service
+        , endpoint const& ipv4_endpoint )
     {
-        subnets new_subnets;
+        auto endpoints = detail::resolve_endpoint( io_service, ipv4_endpoint );
 
-        for ( auto & current_socket : sockets )
-            new_subnets.emplace_back( std::move( current_socket ) );
+        for ( auto const & i : endpoints )
+            if ( i.address().is_v4() )
+                return detail::subnet{ detail::create_socket( io_service, i ) };
 
-        return new_subnets;
+        throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
+    }
+
+    /**
+     *
+     */
+    static detail::subnet
+    create_ipv6_subnet
+        ( boost::asio::io_service & io_service
+        , endpoint const& ipv6_endpoint )
+    {
+        auto endpoints = detail::resolve_endpoint( io_service, ipv6_endpoint );
+
+        for ( auto const& i : endpoints )
+            if ( i.address().is_v6() )
+                return detail::subnet{ detail::create_socket( io_service, i ) };
+
+        throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
     }
 
     /**
@@ -229,8 +246,8 @@ private:
     start_receive_on_each_subnet
         ( void )
     {
-        for ( auto & current_subnet : subnets_ )
-            schedule_receive_on_subnet( current_subnet );
+        schedule_receive_on_subnet( ipv4_subnet_ );
+        schedule_receive_on_subnet( ipv6_subnet_ );
     }
 
     /**
@@ -295,7 +312,7 @@ private:
     generate_initial_request
         ( detail::id const& request_id )
     {
-        auto new_message = std::make_shared<detail::buffer>();
+        auto new_message = std::make_shared< detail::buffer >();
 
         detail::header const find_node_header
         {
@@ -456,7 +473,8 @@ private:
     detail::id my_id_;
     boost::asio::io_service io_service_;
     endpoint initial_peer_;
-    subnets subnets_;
+    detail::subnet ipv4_subnet_;
+    detail::subnet ipv6_subnet_;
     detail::routing_table routing_table_;
     detail::response_dispatcher response_dispatcher_;
     tasks tasks_;
@@ -464,9 +482,10 @@ private:
 };
 
 session::session
-    ( std::vector< endpoint > const& endpoints
-    , endpoint const& initial_peer )
-    : impl_{ new impl{ endpoints, initial_peer } }
+    ( endpoint const& initial_peer
+    , endpoint const& listen_on_ipv4
+    , endpoint const& listen_on_ipv6 )
+    : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
 { }
 
 session::~session

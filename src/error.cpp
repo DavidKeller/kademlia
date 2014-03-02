@@ -74,6 +74,10 @@ struct kademlia_error_category : std::error_category
                 return "unknown protocol version";
             case UNASSOCIATED_MESSAGE_ID:
                 return "unassociated message id";
+            case INVALID_IPV4_ADDRESS:
+                return "invalid IPv4 address";
+            case INVALID_IPV6_ADDRESS:
+                return "invalid IPv6 address";
             default:
                 return "unknown error";
         }

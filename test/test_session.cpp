@@ -75,19 +75,20 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 BOOST_AUTO_TEST_CASE( session_opens_sockets )
 {
     // Create listening socket.
-    std::vector< k::endpoint > es;
     std::uint16_t const port1 = get_temporary_listening_port();
-    es.push_back( k::endpoint( "127.0.0.1", port1 ) );
     std::uint16_t const port2 = get_temporary_listening_port( port1 );
-    es.push_back( k::endpoint( "127.0.0.1", port2 ) );
+    k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
+    k::endpoint ipv6_endpoint{ "::1", port2 };
     
     // Create Dummy initial peer.
     k::endpoint const initial_peer( "127.0.0.1", "22222" );
     
-    k::session s( es, initial_peer );
+    k::session s( initial_peer
+                , ipv4_endpoint
+                , ipv6_endpoint );
     
     check_listening( "127.0.0.1", port1 );
-    check_listening( "127.0.0.1", port2 );
+    check_listening( "::1", port2 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

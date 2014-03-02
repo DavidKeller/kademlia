@@ -42,17 +42,15 @@ namespace detail {
 ///
 using message_socket = boost::asio::ip::udp::socket;
 ///
-using message_sockets = std::vector<message_socket>;
-///
-using resolved_endpoints = std::vector<message_socket::endpoint_type>;
+using resolved_endpoints = std::vector< message_socket::endpoint_type >;
 
 /**
  *
  */
-message_sockets
-create_sockets
+message_socket
+create_socket
     ( boost::asio::io_service & io_service
-    , std::vector<endpoint> const& es );
+    , message_socket::endpoint_type const& e );
 
 /**
  *

@@ -55,17 +55,20 @@ public:
     ///
     using data_type = std::vector< std::uint8_t >;
  
-    //
+    ///
     using save_handler_type = std::function 
             < void 
                 ( std::error_code const& error )
             >;
-    //
+    ///
     using load_handler_type = std::function 
             < void 
                 ( std::error_code const& error
                 , data_type const& data )
             >;
+
+    ///
+    enum { DEFAULT_PORT = 27980 };
 
 public:
     /**
@@ -73,8 +76,9 @@ public:
      */
     KADEMLIA_SYMBOL_VISIBILITY
     session
-        ( std::vector< endpoint > const& listening_endpoints
-        , endpoint const& initial_peer );
+        ( endpoint const& initial_peer
+        , endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
+        , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
     /**
      *

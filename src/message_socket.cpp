@@ -28,29 +28,6 @@
 namespace kademlia {
 namespace detail {
 
-namespace {
-
-/**
- *
- */
-std::vector<message_socket::endpoint_type>
-convert_endpoints
-    ( boost::asio::io_service & io_service
-    , std::vector<endpoint> const& es )
-{
-    std::vector<message_socket::endpoint_type> resolved_endpoints;
-
-    for ( endpoint const& e : es ) {
-        auto const new_endpoints = resolve_endpoint( io_service, e );
-
-        resolved_endpoints.insert( resolved_endpoints.end()
-                                 , new_endpoints.begin()
-                                 , new_endpoints.end() );
-    }
-
-    return std::move( resolved_endpoints );
-}
-
 /**
  *
  */
@@ -59,29 +36,6 @@ create_socket
     ( boost::asio::io_service & io_service
     , message_socket::endpoint_type const& e )
 { return message_socket{ io_service, e }; }
-
-} // anonymous namespace 
-
-/**
- *
- */
-message_sockets
-create_sockets
-    ( boost::asio::io_service & io_service
-    , std::vector<endpoint> const& es )
-{
-    // Get resolved endpoints from raw endpoints.
-    auto const endpoints = convert_endpoints( io_service, es );
-
-    std::vector<message_socket> sockets;
-    sockets.reserve( endpoints.size() );
-    
-    // Create one socket per resolved_endpoint.
-    for( auto const& e : endpoints ) 
-        sockets.push_back( create_socket( io_service, e ) );
-
-    return std::move( sockets );
-}
 
 /**
  *

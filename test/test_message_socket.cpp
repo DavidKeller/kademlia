@@ -28,23 +28,33 @@
 #include "helpers/common.hpp"
 
 namespace k = kademlia;
+namespace kd = kademlia::detail;
 
 /**
  *
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
-BOOST_AUTO_TEST_CASE( one_socket_per_address_is_created )
+BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
 {
-    auto const port = get_temporary_listening_port();
-    
-    std::vector<k::endpoint> endpoints; 
-    endpoints.emplace_back( "127.0.0.1", port );
-    endpoints.emplace_back( "::1", port );
-    
     boost::asio::io_service io_service;
-    auto sockets = k::detail::create_sockets( io_service, endpoints );
-    BOOST_REQUIRE_EQUAL( 2, sockets.size() );
+
+    auto const port = get_temporary_listening_port();
+    auto e = kd::resolve_endpoint( io_service, { "127.0.0.1", port } );
+    BOOST_REQUIRE_EQUAL( 1, e.size() );
+
+    BOOST_REQUIRE_NO_THROW( k::detail::create_socket( io_service, e.front() ) );
+}
+
+BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
+{
+    boost::asio::io_service io_service;
+
+    auto const port = get_temporary_listening_port();
+    auto e = kd::resolve_endpoint( io_service, { "::1", port } );
+    BOOST_REQUIRE_EQUAL( 1, e.size() );
+    
+    BOOST_REQUIRE_NO_THROW( k::detail::create_socket( io_service, e.front() ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

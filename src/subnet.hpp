@@ -59,7 +59,6 @@ public:
     /**
      *
      */
-    explicit
     subnet
 #ifdef _MSC_VER
         ( subnet && o )
@@ -124,7 +123,7 @@ inline subnet::subnet
     ( message_socket subnet_socket )
     : reception_buffer_{}
     , current_message_sender_{}
-    , socket_{ std::forward<message_socket>( subnet_socket ) }
+    , socket_{ std::move( subnet_socket ) }
 { }
 
 template<typename ReceiveCallback>
