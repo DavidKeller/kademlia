@@ -25,6 +25,8 @@
 
 #include "message_socket.hpp"
 
+#include <boost/asio/ip/v6_only.hpp>
+
 namespace kademlia {
 namespace detail {
 
@@ -35,7 +37,16 @@ message_socket
 create_socket
     ( boost::asio::io_service & io_service
     , message_socket::endpoint_type const& e )
-{ return message_socket{ io_service, e }; }
+{ 
+    message_socket new_socket{ io_service, e.protocol() };
+
+    if ( e.address().is_v6() )
+        new_socket.set_option( boost::asio::ip::v6_only{ true } );
+
+    new_socket.bind( e ); 
+
+    return std::move( new_socket );
+}
 
 /**
  *
