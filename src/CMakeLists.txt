@@ -39,6 +39,8 @@ set(kademlia_sources
     routing_table.cpp
     response_dispatcher.hpp
     response_dispatcher.cpp
+    timeout_manager.hpp
+    timeout_manager.cpp
     task_base.hpp
     message.hpp
     message.cpp

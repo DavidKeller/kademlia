@@ -39,48 +39,19 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
 {
-    boost::asio::io_service io_service;
-    BOOST_REQUIRE_NO_THROW( kd::response_dispatcher{ io_service } );
+    BOOST_REQUIRE_NO_THROW( kd::response_dispatcher{} );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
-struct fixture : kd::task_base
+struct fixture
 {
     fixture()
-        : io_service_{}
-        , dispatcher_{ io_service_ }
-        , timeouts_received_{}
+        : dispatcher_{}
         , messages_received_{}
     { }
 
-    virtual std::error_code
-    handle_message
-        ( kd::header const& h
-        , kd::buffer::const_iterator i
-        , kd::buffer::const_iterator e )
-        override
-    { 
-        messages_received_.push_back( h.random_token_ ); 
-        return std::error_code{};
-    }
-
-    virtual void
-    handle_message_timeout
-        ( kd::id const& h )
-        override
-    { timeouts_received_.push_back( h ); } 
-    
-    virtual bool
-    is_finished
-        ( void )
-        const
-        override
-    { return false; }
-
-    boost::asio::io_service io_service_;
     kd::response_dispatcher dispatcher_;
-    std::vector< kd::id > timeouts_received_;
     std::vector< kd::id > messages_received_;
 };
 
@@ -102,61 +73,37 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
                        , kd::id{}, kd::id{ "1" } };
     kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
-    auto const infinite = std::chrono::hours( 1 );
 
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Create the association.
-    dispatcher_.associate_response_with_task_for( h1.random_token_
-                                                , this
-                                                , infinite );
-    BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
+    auto on_message_received = [ this ] 
+            ( kd::header const& h
+            , kd::buffer::const_iterator
+            , kd::buffer::const_iterator )
+    { 
+        messages_received_.push_back( h.random_token_ ); 
+        return std::error_code{};
+    };
+    dispatcher_.associate_callback_with_response_id( h1.random_token_
+                                                   , on_message_received );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Send an unexpected message.
     auto result = dispatcher_.dispatch_message( h2, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Send the expected message.
     result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
 
     // Send the previously expected message again.
     result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
-}
-
-BOOST_FIXTURE_TEST_CASE( associations_can_be_timeouted, fixture )
-{
-    kd::header const h{ kd::header::V1, kd::header::PING_REQUEST };
-    kd::buffer const b;
-    auto const immediate = kd::response_dispatcher::duration::zero();
-
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
-    // Create the association.
-    dispatcher_.associate_response_with_task_for( h.random_token_
-                                                , this
-                                                , immediate );
-    BOOST_REQUIRE_EQUAL( 1, io_service_.poll() );
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
-    BOOST_REQUIRE_EQUAL( h.random_token_, timeouts_received_.front() );
-
-    // Send the expected message.
-    auto result = dispatcher_.dispatch_message( h, b.begin(), b.end() );
-    BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
 }
 
 BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
@@ -166,22 +113,30 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST
                        , kd::id{}, kd::id{ "2" } };
     kd::buffer const b;
-    auto const immediate = kd::response_dispatcher::duration::zero();
-    auto const infinite = std::chrono::hours( 1 );
 
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_.size() );
     // Create the association.
-    dispatcher_.associate_response_with_task_for( h1.random_token_
-                                                , this
-                                                , infinite );
-    dispatcher_.associate_response_with_task_for( h2.random_token_
-                                                , this
-                                                , immediate );
-    BOOST_REQUIRE_EQUAL( 2, io_service_.poll() );
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( 1, timeouts_received_.size() );
-    BOOST_REQUIRE_EQUAL( h2.random_token_, timeouts_received_.front() );
+    auto on_message_received = [ this ] 
+            ( kd::header const& h
+            , kd::buffer::const_iterator
+            , kd::buffer::const_iterator )
+    { 
+        messages_received_.push_back( h.random_token_ ); 
+        return std::error_code{};
+    };
+    dispatcher_.associate_callback_with_response_id( h1.random_token_
+                                                   , on_message_received );
+    dispatcher_.associate_callback_with_response_id( h2.random_token_
+                                                   , on_message_received ); 
+    auto result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
+    BOOST_REQUIRE( ! result );
+    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
+
+    result = dispatcher_.dispatch_message( h2, b.begin(), b.end() );
+    BOOST_REQUIRE( ! result );
+    BOOST_REQUIRE_EQUAL( 2, messages_received_.size() );
+    BOOST_REQUIRE_EQUAL( h2.random_token_, messages_received_.back() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

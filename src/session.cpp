@@ -47,6 +47,7 @@
 #include "routing_table.hpp"
 #include "subnet.hpp"
 #include "response_dispatcher.hpp"
+#include "timeout_manager.hpp"
 
 namespace kademlia {
 
@@ -77,8 +78,8 @@ public:
             , ipv4_subnet_{ create_ipv4_subnet( io_service_, listen_on_ipv4 ) }
             , ipv6_subnet_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
             , routing_table_{ my_id_ }
-            , response_dispatcher_{ io_service_ }
-            , tasks_{}
+            , response_dispatcher_{}
+            , timeout_manager_{ io_service_ }
             , main_failure_{}
     { }
     
@@ -112,10 +113,7 @@ public:
         init();
         
         while ( ! main_failure_ && io_service_.run_one() )
-        {
             io_service_.poll();
-            destroy_finished_tasks();
-        }
 
         return main_failure_;
     }
@@ -131,13 +129,6 @@ public:
 
         main_failure_ = make_error_code( RUN_ABORTED );
     }
-
-private:
-    ///
-    using task_ptr = std::shared_ptr< detail::task_base >;
-
-    ///
-    using tasks = std::list< task_ptr >;
 
 private:
     /**
@@ -163,11 +154,9 @@ private:
     {
         auto endpoints = detail::resolve_endpoint( io_service, ipv4_endpoint );
 
-        for ( auto const & i : endpoints )
-        {
+        for ( auto const& i : endpoints )
             if ( i.address().is_v4() )
                 return detail::subnet{ detail::create_socket( io_service, i ) };
-        }
 
         throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
     }
@@ -183,10 +172,8 @@ private:
         auto endpoints = detail::resolve_endpoint( io_service, ipv6_endpoint );
 
         for ( auto const& i : endpoints )
-        {
             if ( i.address().is_v6() )
                 return detail::subnet{ detail::create_socket( io_service, i ) };
-        }
 
         throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
     }
@@ -277,37 +264,6 @@ private:
 
         current_subnet.async_receive( on_new_message );
     }
-
-    /**
-     *
-     *  @note This method do not own the task.
-     */
-    std::error_code 
-    send_initial_request
-        ( detail::message_socket::endpoint_type const& endpoint_to_try
-        , detail::subnet & current_subnet
-        , detail::task_base * initial_request_task )
-    {
-        // Ensure we can access to the current peer address
-        // on the current subnet (i.e. we don't try
-        // to reach an IPv4 peer from an IPv6 socket).
-        if ( endpoint_to_try.protocol() != current_subnet.local_endpoint().protocol() )
-            make_error_code( std::errc::address_family_not_supported );
-
-        detail::id const request_id{ random_engine_ };
-        auto message = generate_initial_request( request_id );
-
-        // The purpose of this object is to ensure
-        // the message buffer lives long enought.
-        auto on_message_sent = [ message ]
-            ( std::error_code const& /* failure */ )
-        { };
-
-        associate_response_with_task( request_id, initial_request_task );
-        current_subnet.async_send( *message, endpoint_to_try, on_message_sent );
-
-        return std::error_code{};
-    } 
 
     /**
      *
@@ -419,7 +375,6 @@ private:
 
     }
 
-
     /**
      *
      */
@@ -434,44 +389,6 @@ private:
 
     }
 
-    /**
-     *
-     */
-    void
-    associate_response_with_task
-        ( detail::id const& request_id
-        , detail::task_base * task )
-    { 
-        response_dispatcher_.associate_response_with_task_for( request_id
-                                                             , task
-                                                             , INITIAL_CONTACT_RECEIVE_TIMEOUT );
-    }
-
-    /**
-     *
-     */
-    template< typename Task, typename ... Args >
-    void 
-    create_new_task
-        ( Args ... args )
-    {
-        auto t = std::make_shared< Task >( std::forward< Args >( args )... ); 
-        tasks_.push_back( t );
-    }
-
-    /**
-     *
-     */
-    void
-    destroy_finished_tasks
-        ( void )
-    {
-        auto is_task_finished = []( task_ptr const& t )
-
-        { return t->is_finished(); };
-        tasks_.remove_if( is_task_finished );
-    }
-
 private:
     std::default_random_engine random_engine_;
     detail::id my_id_;
@@ -481,7 +398,7 @@ private:
     detail::subnet ipv6_subnet_;
     detail::routing_table routing_table_;
     detail::response_dispatcher response_dispatcher_;
-    tasks tasks_;
+    detail::timeout_manager timeout_manager_;
     std::error_code main_failure_;
 };
 

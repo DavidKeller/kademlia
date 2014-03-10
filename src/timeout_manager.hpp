@@ -23,81 +23,95 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_RESPONSE_DISPATCHER_HPP
-#define KADEMLIA_RESPONSE_DISPATCHER_HPP
+#ifndef KADEMLIA_TIMEOUT_MANAGER_HPP
+#define KADEMLIA_TIMEOUT_MANAGER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
 #include <map>
-#include <cassert>
+#include <chrono>
 #include <functional>
-#include <system_error>
-
-#include "id.hpp"
-#include "message.hpp"
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/basic_waitable_timer.hpp>
 
 namespace kademlia {
 namespace detail {
 
 ///
-class response_dispatcher final
+class timeout_manager final
 {
 public:
+    ///
+    using clock = std::chrono::steady_clock;
+
+    ///
+    using duration = clock::duration;
+
+public:
+    /**
+     *
+     */
+    explicit 
+    timeout_manager
+        ( boost::asio::io_service & io_service );
+
     /**
      *
      */
     template< typename Callback >
     void
-    associate_callback_with_response_id
-        ( id const& message_id
-        , Callback const& on_message_received );
+    expires_from_now
+        ( duration const& timeout 
+        , Callback const& on_timer_expired );
 
+private:
+    /// 
+    using time_point = clock::time_point;
+
+    ///
+    using callback = std::function< void ( void ) >;
+
+    ///
+    using timeouts = std::map< time_point, callback >;
+
+    /// 
+    using timer = boost::asio::basic_waitable_timer< clock >;
+
+private:
     /**
      *
      */
     void
-    remove_association
-        ( id const& message_id );
-
-    /**
-     *
-     */
-    std::error_code
-    dispatch_message
-        ( header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e );
+    schedule_next_tick
+        ( time_point const& expiration_time );
 
 private:
     ///
-    using callback = std::function< std::error_code
-            ( header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e ) >;
+    timer timer_;
     ///
-    using associations = std::map< id, callback >;
-
-private:
-    ///
-    associations associations_;
+    timeouts timeouts_; 
 };
 
 template< typename Callback >
 void
-response_dispatcher::associate_callback_with_response_id
-    ( id const& message_id
-    , Callback const& on_message_received )
+timeout_manager::expires_from_now
+    ( duration const& timeout 
+    , Callback const& on_timer_expired )
 {
-    auto i = associations_.emplace( message_id, on_message_received ); 
-    assert( i.second && "an id can't be registered twice" );
-}
+    auto expiration_time = clock::now() + timeout;
 
-inline void
-response_dispatcher::remove_association
-    ( id const& message_id )
-{ associations_.erase( message_id ); }
+    while ( ! timeouts_.emplace( expiration_time, on_timer_expired ).second )
+        // If an equivalent expiration exists, 
+        // increment the current expiration of 1 tick to make it unique.
+        expiration_time += duration{ 1 }; 
+
+    // If the current expiration time will be the sooner to expires
+    // then cancel any pending wait and schedule this one instead.
+    if ( timeouts_.begin()->first == expiration_time )
+        schedule_next_tick( expiration_time );
+}
 
 } // namespace detail
 } // namespace kademlia

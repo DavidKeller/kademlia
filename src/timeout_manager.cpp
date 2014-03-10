@@ -23,29 +23,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "response_dispatcher.hpp"
-
-#include <algorithm>
-
-#include <kademlia/error.hpp>
+#include "timeout_manager.hpp"
 
 namespace kademlia {
 namespace detail {
 
-std::error_code
-response_dispatcher::dispatch_message
-    ( header const& h
-    , buffer::const_iterator i
-    , buffer::const_iterator e )
+timeout_manager::timeout_manager
+    ( boost::asio::io_service & io_service )
+    : timer_{ io_service }
+    , timeouts_{}
+{}
+
+void
+timeout_manager::schedule_next_tick
+    ( time_point const& expiration_time )
 {
-    auto association = associations_.find( h.random_token_ );
-    if ( association == associations_.end() ) 
-        return make_error_code( UNASSOCIATED_MESSAGE_ID );
+    // This will cancel any pending task.
+    timer_.expires_at( expiration_time );
 
-    std::error_code const failure = association->second( h, i, e );
-    associations_.erase( association );
+    auto fire = [ this ]( boost::system::error_code const& failure ) 
+    { 
+        // The current timeout has been canceled
+        // hence stop right there.
+        if ( failure )
+            return;
 
-    return failure; 
+        // The current expired timeout is the lowest in the map.
+        auto expired_timeout = timeouts_.begin();
+        // Call the user callback.
+        expired_timeout->second();
+        // And remove the timeout.
+        timeouts_.erase( expired_timeout );
+
+        // If there is a remaining timeout, schedule it.
+        if ( ! timeouts_.empty() ) 
+            schedule_next_tick( timeouts_.begin()->first );
+    };
+
+    timer_.async_wait( fire );
 }
 
 } // namespace detail
