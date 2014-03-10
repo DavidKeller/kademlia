@@ -155,8 +155,10 @@ private:
         auto endpoints = detail::resolve_endpoint( io_service, ipv4_endpoint );
 
         for ( auto const& i : endpoints )
+        {
             if ( i.address().is_v4() )
                 return detail::subnet{ detail::create_socket( io_service, i ) };
+        }
 
         throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
     }
@@ -172,8 +174,10 @@ private:
         auto endpoints = detail::resolve_endpoint( io_service, ipv6_endpoint );
 
         for ( auto const& i : endpoints )
+        {
             if ( i.address().is_v6() )
                 return detail::subnet{ detail::create_socket( io_service, i ) };
+        }
 
         throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
     }
