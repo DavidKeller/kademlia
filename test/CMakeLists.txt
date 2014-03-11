@@ -26,7 +26,8 @@
 # Include implementation headers.
 include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
+# Run all tests, timeouting if it takes more than 30 seconds.
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 
 macro(build_and_run_test source_file)
     get_filename_component(test_name ${source_file} NAME_WE)
