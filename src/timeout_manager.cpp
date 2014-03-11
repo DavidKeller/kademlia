@@ -48,12 +48,15 @@ timeout_manager::schedule_next_tick
         if ( failure )
             return;
 
-        // The current expired timeout is the lowest in the map.
-        auto expired_timeout = timeouts_.begin();
-        // Call the user callback.
-        expired_timeout->second();
+        // The callbacks to execute are the first
+        // n callbacks with the same keys.
+        auto begin = timeouts_.begin();
+        auto end = timeouts_.upper_bound( begin->first );
+        // Call the user callbacks.
+        for ( auto i = begin; i != end; ++ i)
+            i->second();
         // And remove the timeout.
-        timeouts_.erase( expired_timeout );
+        timeouts_.erase( begin, end );
 
         // If there is a remaining timeout, schedule it.
         if ( ! timeouts_.empty() ) 

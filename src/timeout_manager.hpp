@@ -74,7 +74,7 @@ private:
     using callback = std::function< void ( void ) >;
 
     ///
-    using timeouts = std::map< time_point, callback >;
+    using timeouts = std::multimap< time_point, callback >;
 
     /// 
     using timer = boost::asio::basic_waitable_timer< clock >;
@@ -102,15 +102,12 @@ timeout_manager::expires_from_now
 {
     auto expiration_time = clock::now() + timeout;
 
-    while ( ! timeouts_.emplace( expiration_time, on_timer_expired ).second )
-        // If an equivalent expiration exists, 
-        // increment the current expiration of 1 tick to make it unique.
-        expiration_time += duration{ 1 }; 
-
     // If the current expiration time will be the sooner to expires
     // then cancel any pending wait and schedule this one instead.
-    if ( timeouts_.begin()->first == expiration_time )
+    if ( timeouts_.empty() || expiration_time < timeouts_.begin()->first )
         schedule_next_tick( expiration_time );
+
+    timeouts_.emplace( expiration_time, on_timer_expired );
 }
 
 } // namespace detail

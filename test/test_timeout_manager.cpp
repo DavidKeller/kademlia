@@ -102,11 +102,7 @@ BOOST_FIXTURE_TEST_CASE( close_timeouts_can_be_added, fixture )
     auto const immediate = kd::timeout_manager::duration::zero();
     manager_.expires_from_now( immediate, on_expiration );
     manager_.expires_from_now( immediate, on_expiration );
-    std::size_t execute_tasks_count = io_service_.poll();
-    if ( execute_tasks_count == 1 )
-        execute_tasks_count += io_service_.run();
-
-    BOOST_REQUIRE_EQUAL( 2, execute_tasks_count );
+    BOOST_REQUIRE_GE( 2, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 2, timeouts_received_ );
 }
 
