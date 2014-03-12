@@ -30,8 +30,6 @@ set(kademlia_sources
     endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
     error.cpp
-    peer.hpp
-    peer.cpp
     id.hpp
     id.cpp
     subnet.hpp
@@ -41,7 +39,6 @@ set(kademlia_sources
     response_dispatcher.cpp
     timeout_manager.hpp
     timeout_manager.cpp
-    task_base.hpp
     message.hpp
     message.cpp
     message_socket.hpp

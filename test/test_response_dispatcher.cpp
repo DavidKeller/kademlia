@@ -61,9 +61,10 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_FIXTURE_TEST_CASE( unknown_message_are_dropped , fixture )
 {
+    kd::message_socket::endpoint_type const s;
     kd::header const h{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
-    auto result = dispatcher_.dispatch_message( h, b.begin(), b.end() );
+    auto result = dispatcher_.dispatch_message( s, h, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
 }
 
@@ -78,30 +79,30 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
 
     // Create the association.
     auto on_message_received = [ this ] 
-            ( kd::header const& h
+            ( kd::message_socket::endpoint_type const& s
+            , kd::header const& h
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
-    { 
-        messages_received_.push_back( h.random_token_ ); 
-        return std::error_code{};
-    };
+    { messages_received_.push_back( h.random_token_ ); };
     dispatcher_.associate_callback_with_response_id( h1.random_token_
                                                    , on_message_received );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
 
+    kd::message_socket::endpoint_type const s;
+
     // Send an unexpected message.
-    auto result = dispatcher_.dispatch_message( h2, b.begin(), b.end() );
+    auto result = dispatcher_.dispatch_message( s, h2, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
 
     // Send the expected message.
-    result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
+    result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
 
     // Send the previously expected message again.
-    result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
+    result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );
     BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
 }
@@ -117,23 +118,25 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     // Create the association.
     auto on_message_received = [ this ] 
-            ( kd::header const& h
+            ( kd::message_socket::endpoint_type const& s
+            , kd::header const& h
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
     { 
         messages_received_.push_back( h.random_token_ ); 
-        return std::error_code{};
     };
     dispatcher_.associate_callback_with_response_id( h1.random_token_
                                                    , on_message_received );
     dispatcher_.associate_callback_with_response_id( h2.random_token_
                                                    , on_message_received ); 
-    auto result = dispatcher_.dispatch_message( h1, b.begin(), b.end() );
+
+    kd::message_socket::endpoint_type const s;
+    auto result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
 
-    result = dispatcher_.dispatch_message( h2, b.begin(), b.end() );
+    result = dispatcher_.dispatch_message( s, h2, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
     BOOST_REQUIRE_EQUAL( 2, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( h2.random_token_, messages_received_.back() );

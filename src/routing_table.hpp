@@ -39,7 +39,7 @@
 #include <kademlia/detail/cxx11_macros.hpp>
 
 #include "id.hpp"
-#include "peer.hpp"
+#include "message_socket.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -47,7 +47,6 @@ namespace detail {
 /**
  *  This class keeps track of peers and find the known peer closed to an id.
  *  @note Current implementation use a discret symbol approach.
- *  @note Hide implementation behind a pimpl to speed up compilation.
  */
 class routing_table final
 {
@@ -56,7 +55,7 @@ public:
 
     class iterator;
     
-    using value_type = std::pair< id, peer >;
+    using value_type = std::pair< id, message_socket::endpoint_type >;
     
 public:
     /**
@@ -106,7 +105,7 @@ public:
     bool
     push
         ( id const& peer_id
-        , peer const& new_peer );
+        , message_socket::endpoint_type const& new_peer );
     
     /**
      *  Remove a peer from the routing table.

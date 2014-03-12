@@ -56,7 +56,7 @@ routing_table::peer_count
 bool
 routing_table::push
     ( id const& peer_id
-    , peer const& new_peer )
+    , message_socket::endpoint_type const& new_peer )
 {
     auto const target_k_bucket = find_closer_k_bucket( peer_id );
         

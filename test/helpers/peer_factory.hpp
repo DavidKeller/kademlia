@@ -26,16 +26,17 @@
 #ifndef KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP
 #define KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP
 
-#include "peer.hpp"
+#include "message_socket.hpp"
 
-inline kademlia::detail::peer
+inline kademlia::detail::message_socket::endpoint_type
 create_peer
-    ( std::string const& ip = std::string("localhost")
-    , std::string const& service = std::string("12345") )
+    ( std::string const& ip = std::string("127.0.0.1")
+    , std::uint16_t const& service = 12345 )
 {
-    kademlia::detail::peer::endpoints_type e;
-    e.push_back( kademlia::endpoint( ip, service ) );
-    return kademlia::detail::peer( e );
+    using endpoint_type = kademlia::detail::message_socket::endpoint_type;
+
+    return endpoint_type( boost::asio::ip::address::from_string( ip )
+                        , service );
 }
 
 #endif // KADEMLIA_TEST_HELPERS_PEER_FACTORY_HPP

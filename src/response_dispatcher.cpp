@@ -34,7 +34,8 @@ namespace detail {
 
 std::error_code
 response_dispatcher::dispatch_message
-    ( header const& h
+    ( message_socket::endpoint_type const& sender
+    , header const& h
     , buffer::const_iterator i
     , buffer::const_iterator e )
 {
@@ -42,10 +43,10 @@ response_dispatcher::dispatch_message
     if ( association == associations_.end() ) 
         return make_error_code( UNASSOCIATED_MESSAGE_ID );
 
-    std::error_code const failure = association->second( h, i, e );
+    association->second( sender, h, i, e );
     associations_.erase( association );
 
-    return failure; 
+    return std::error_code{}; 
 }
 
 } // namespace detail

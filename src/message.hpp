@@ -80,6 +80,14 @@ struct header final
     id random_token_;
 };
 
+
+/**
+ *
+ */
+template< typename MessageBodyType >
+struct message_traits;
+
+
 /**
  *
  */
@@ -105,6 +113,13 @@ struct find_node_request_body final
     ///
     id node_to_find_id_;
 };
+
+/**
+ *
+ */
+template<>
+struct message_traits< find_node_request_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_NODE_REQUEST; };
 
 /**
  *
@@ -164,7 +179,7 @@ operator<<
 struct find_node_response_body final
 {
     ///
-    std::vector<node> nodes_;
+    std::vector< node > nodes_;
 };
 
 /**

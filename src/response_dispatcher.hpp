@@ -45,19 +45,26 @@ namespace detail {
 class response_dispatcher final
 {
 public:
+    ///
+    using callback = std::function< void
+            ( message_socket::endpoint_type const& sender
+            , header const& h
+            , buffer::const_iterator i
+            , buffer::const_iterator e ) >;
+
+public:
     /**
      *
      */
-    template< typename Callback >
     void
     associate_callback_with_response_id
         ( id const& message_id
-        , Callback const& on_message_received );
+        , callback const& on_message_received );
 
     /**
      *
      */
-    void
+    bool
     remove_association
         ( id const& message_id );
 
@@ -66,16 +73,12 @@ public:
      */
     std::error_code
     dispatch_message
-        ( header const& h
+        ( message_socket::endpoint_type const& sender
+        , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e );
 
 private:
-    ///
-    using callback = std::function< std::error_code
-            ( header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e ) >;
     ///
     using associations = std::map< id, callback >;
 
@@ -84,20 +87,19 @@ private:
     associations associations_;
 };
 
-template< typename Callback >
-void
+inline void
 response_dispatcher::associate_callback_with_response_id
     ( id const& message_id
-    , Callback const& on_message_received )
+    , callback const& on_message_received )
 {
     auto i = associations_.emplace( message_id, on_message_received ); 
     assert( i.second && "an id can't be registered twice" );
 }
 
-inline void
+inline bool
 response_dispatcher::remove_association
     ( id const& message_id )
-{ associations_.erase( message_id ); }
+{ return associations_.erase( message_id ) > 0; }
 
 } // namespace detail
 } // namespace kademlia

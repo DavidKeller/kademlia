@@ -38,10 +38,12 @@
 #include <thread>
 #include <chrono>
 #include <random>
+#include <memory>
 #include <boost/asio/io_service.hpp>
 
 #include <kademlia/error.hpp>
 
+#include "member_to_functor.hpp"
 #include "message_socket.hpp"
 #include "message.hpp"
 #include "routing_table.hpp"
@@ -141,7 +143,7 @@ private:
         io_service_.reset();
 
         start_receive_on_each_subnet();
-        contact_initial_peer();
+        copy_initial_contact_routing_table();
     }
 
     /**
@@ -186,58 +188,6 @@ private:
      *
      */
     void
-    contact_initial_peer
-        ( void )
-    {
-#if 0
-        auto last_request_sending_time = std::chrono::steady_clock::now();
-        auto current_subnet = subnets_.begin();
-        auto endpoints_to_try = detail::resolve_endpoint( io_service_, initial_peer_ );
-        auto new_task = [ this, last_request_sending_time, current_subnet, endpoints_to_try ] 
-            ( void ) mutable -> std::error_code
-        { 
-            // If the routing_table has been filled, we can leave this method.
-            if ( routing_table_.peer_count() != 0 )
-                return std::error_code{};
-
-            // If timeout is not yet elasped, return without trying another endpoint/subnet.
-            auto const timeout = std::chrono::steady_clock::now() - last_request_sending_time; 
-            if ( timeout <= INITIAL_CONTACT_RECEIVE_TIMEOUT )
-                return make_error_code( std::errc::operation_in_progress );
-
-            // Current endpoint didn't respond after timeout,
-            // hence try with another one.
-            for (
-                ; ! endpoints_to_try.empty()
-                ; endpoints_to_try.pop_back() )
-                // Try first compatible subnet.
-                for ( 
-                    ; current_subnet != subnets_.end()
-                    ; ++ current_subnet )
-                {
-                    // Try to send the request, returning a non zero std::error_code on error.
-                    if ( send_initial_request( endpoints_to_try.back(), *current_subnet ) )
-                        continue;
-
-                    last_request_sending_time = std::chrono::steady_clock::now();
-
-                    // And exit.
-                    return make_error_code( std::errc::operation_in_progress );
-                }
-                
-                current_subnet = subnets_.begin();
-
-            // No responsive endpoint has been found.
-            main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
-            return make_error_code( std::errc::timed_out ); 
-        };
-#endif
-    }
-
-    /**
-     *
-     */
-    void
     start_receive_on_each_subnet
         ( void )
     {
@@ -272,31 +222,6 @@ private:
     /**
      *
      */
-    std::shared_ptr< detail::buffer >
-    generate_initial_request
-        ( detail::id const& request_id )
-    {
-        auto new_message = std::make_shared< detail::buffer >();
-
-        detail::header const find_node_header
-        {
-            detail::header::V1,
-            detail::header::FIND_NODE_REQUEST,
-            my_id_,
-            request_id
-        };
-
-        detail::find_node_request_body const find_node_request_body{ my_id_ };
-
-        serialize( find_node_header, *new_message );
-        serialize( find_node_request_body, *new_message );
-
-        return new_message;
-    }
-
-    /**
-     *
-     */
     void
     handle_new_message
         ( detail::subnet & source_subnet
@@ -325,7 +250,7 @@ private:
                 handle_find_value_request( source_subnet, sender, h, i, e );
                 break;
             default:
-                handle_response( h, i, e );
+                handle_response( sender, h, i, e );
         }
     }
 
@@ -334,10 +259,11 @@ private:
      */
     void
     handle_response 
-        ( detail::header const& h
+        ( detail::message_socket::endpoint_type const& sender
+        , detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
-    { response_dispatcher_.dispatch_message( h, i, e ); }
+    { response_dispatcher_.dispatch_message( sender, h, i, e ); }
 
     /**
      *
@@ -391,6 +317,220 @@ private:
         , detail::buffer::const_iterator e )
     {
 
+    }
+
+    /**
+     *
+     */
+    detail::subnet &
+    get_subnet_for
+        ( detail::message_socket::endpoint_type const& e )
+    {
+        if ( e.address().is_v4() )
+            return ipv4_subnet_;
+
+        return ipv6_subnet_;
+    }
+
+    /**
+     *
+     */
+    template< typename Callback >
+    void
+    forward_error
+        ( Callback const& callback
+        , std::error_code const& failure )
+    {
+        callback( failure
+                , detail::message_socket::endpoint_type{}
+                , detail::header{}
+                , detail::buffer::const_iterator{}
+                , detail::buffer::const_iterator{} );
+    }
+
+    /**
+     *
+     */
+    template< typename Callback >
+    void
+    forward_response
+        ( Callback const& callback
+        , detail::message_socket::endpoint_type const& s
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
+    {
+        callback( std::error_code{}, s, h, i, e );
+    }
+
+    /**
+     *
+     */
+    detail::header
+    generate_header
+        ( detail::header::type const& type
+        , detail::id const& random_id )
+    {
+        return detail::header
+                { detail::header::V1
+                , type
+                , my_id_
+                , detail::id{ random_engine_ } };
+    }
+
+    /**
+     *
+     */
+    template< typename Message >
+    std::shared_ptr< detail::buffer >
+    serialize_message
+        ( Message const& message
+        , detail::id const& response_id )
+    {
+        auto buffer = std::make_shared< detail::buffer >();
+
+        auto const type = detail::message_traits< Message >::TYPE_ID;
+        auto const header = generate_header( type, response_id );
+
+        detail::serialize( header, *buffer );
+        detail::serialize( message, *buffer );
+
+        return std::move( buffer );
+    }
+
+    /**
+     *
+     */
+    template< typename Message, typename Callback >
+    void
+    async_send_request
+        ( Message const& message
+        , detail::message_socket::endpoint_type const& e
+        , detail::timeout_manager::duration const& timeout
+        , Callback const& callback )
+    { 
+        detail::id const response_id{ random_engine_ }; 
+
+        associate_callback_with_response_id( response_id, callback );
+
+        auto on_timeout = [ this, callback, response_id ]
+            ( void )
+        {
+            // If an association has been removed, that mean
+            // the message has never been received
+            // hence report the timeout to the client.
+            if ( response_dispatcher_.remove_association( response_id ) )
+                forward_error( callback
+                             , make_error_code( std::errc::timed_out ) );
+        };
+
+        auto buffer = serialize_message( message, response_id );
+
+        auto on_request_sent = [ this, callback, timeout, on_timeout, buffer ] 
+            ( std::error_code const& failure )
+        {
+            if ( failure )
+                forward_error( callback, failure );
+            else 
+                timeout_manager_.expires_from_now( timeout, on_timeout );
+        };
+
+        // Serialize the message and send it.
+        get_subnet_for( e ).async_send( *buffer, e, on_request_sent );
+    }
+
+    /**
+     *
+     */
+    template< typename Callback >
+    void
+    associate_callback_with_response_id
+        ( detail::id const& response_id
+        , Callback const& callback )
+    {
+        auto on_response_received = [ this, callback ]
+            ( detail::message_socket::endpoint_type const& s
+            , detail::header const& h
+            , detail::buffer::const_iterator i
+            , detail::buffer::const_iterator e )
+        { return forward_response( callback, s, h , i, e ); };
+
+        response_dispatcher_.associate_callback_with_response_id( response_id
+                                                                , on_response_received );
+    }
+
+    /**
+     *
+     */
+    void
+    copy_initial_contact_routing_table
+        ( void )
+    {
+        query_next_initial_contact( std::make_shared< detail::resolved_endpoints >
+                ( detail::resolve_endpoint( io_service_, initial_peer_ ) ) );
+    }
+
+    /**
+     *
+     */
+    void
+    query_next_initial_contact
+        ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_try )
+    { 
+        // Check if we can send a message to another endpoint.
+        if ( endpoints_to_try->empty() )
+        {
+            main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
+            return;
+        }
+
+        // Retrieve the next endpoint to try then.
+        auto const endpoint_to_try = endpoints_to_try->back();
+        endpoints_to_try->pop_back();
+
+        // Associate endpoint future response with this endpoints_to_try.
+        auto on_response_received = [ this, endpoints_to_try ]
+                ( std::error_code const& failure
+                , detail::message_socket::endpoint_type const& s
+                , detail::header const& h
+                , detail::buffer::const_iterator i
+                , detail::buffer::const_iterator e )
+        {
+            if ( failure )
+                query_next_initial_contact( endpoints_to_try );
+            else
+                handle_initial_contact_response( s, h, i, e );
+        };
+
+        async_send_request( detail::find_node_request_body{ my_id_ }
+                          , endpoint_to_try
+                          , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                          , on_response_received );
+    }
+
+    /**
+     *
+     */
+    void
+    handle_initial_contact_response
+        ( detail::message_socket::endpoint_type const& s
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
+    { 
+        if ( h.type_ != detail::header::FIND_NODE_RESPONSE )
+            return ;
+
+        detail::find_node_response_body response;
+        if ( detail::deserialize( i, e, response ) )
+            return;
+
+        // Add the initial peer to the routing_table.
+        routing_table_.push( h.source_id_, s );
+
+        // And its known peers.
+        for ( auto const& node : response.nodes_ )
+            routing_table_.push( node.id_, node.endpoint_ );
     }
 
 private:
