@@ -43,7 +43,6 @@
 
 #include <kademlia/error.hpp>
 
-#include "member_to_functor.hpp"
 #include "message_socket.hpp"
 #include "message.hpp"
 #include "routing_table.hpp"
