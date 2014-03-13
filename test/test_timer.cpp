@@ -28,7 +28,7 @@
 #include <vector>
 #include <kademlia/error.hpp>
 
-#include "timeout_manager.hpp"
+#include "timer.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
 {
     boost::asio::io_service io_service;
-    BOOST_REQUIRE_NO_THROW( kd::timeout_manager{ io_service } );
+    BOOST_REQUIRE_NO_THROW( kd::timer{ io_service } );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -56,7 +56,7 @@ struct fixture
 
     boost::asio::io_service io_service_;
     boost::asio::io_service::work work_;
-    kd::timeout_manager manager_;
+    kd::timer manager_;
     std::size_t timeouts_received_;
 };
 
@@ -82,7 +82,7 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     // This new expiration should trigger a cancel of the current 
     // timeout (infinite), hence one task execution +
     // the execution of the new timeout (immediate).
-    auto const immediate = kd::timeout_manager::duration::zero();
+    auto const immediate = kd::timer::duration::zero();
     manager_.expires_from_now( immediate, on_expiration );
     BOOST_REQUIRE_EQUAL( 2, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 1, timeouts_received_ );
@@ -99,7 +99,7 @@ BOOST_FIXTURE_TEST_CASE( close_timeouts_can_be_added, fixture )
     auto on_expiration = [ this ] ( void )
     { ++ timeouts_received_; };
 
-    auto const immediate = kd::timeout_manager::duration::zero();
+    auto const immediate = kd::timer::duration::zero();
     manager_.expires_from_now( immediate, on_expiration );
     manager_.expires_from_now( immediate, on_expiration );
     BOOST_REQUIRE_GE( 2, io_service_.poll() );

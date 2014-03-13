@@ -23,19 +23,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "timeout_manager.hpp"
+#include "timer.hpp"
 
 namespace kademlia {
 namespace detail {
 
-timeout_manager::timeout_manager
+timer::timer
     ( boost::asio::io_service & io_service )
     : timer_{ io_service }
     , timeouts_{}
 {}
 
 void
-timeout_manager::schedule_next_tick
+timer::schedule_next_tick
     ( time_point const& expiration_time )
 {
     // This will cancel any pending task.

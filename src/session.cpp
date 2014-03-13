@@ -48,7 +48,7 @@
 #include "routing_table.hpp"
 #include "subnet.hpp"
 #include "response_dispatcher.hpp"
-#include "timeout_manager.hpp"
+#include "timer.hpp"
 
 namespace kademlia {
 
@@ -80,7 +80,7 @@ public:
             , ipv6_subnet_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
             , routing_table_{ my_id_ }
             , response_dispatcher_{}
-            , timeout_manager_{ io_service_ }
+            , timer_{ io_service_ }
             , main_failure_{}
     { }
     
@@ -405,7 +405,7 @@ private:
     async_send_request
         ( Message const& message
         , detail::message_socket::endpoint_type const& e
-        , detail::timeout_manager::duration const& timeout
+        , detail::timer::duration const& timeout
         , Callback const& callback )
     { 
         detail::id const response_id{ random_engine_ }; 
@@ -431,7 +431,7 @@ private:
             if ( failure )
                 forward_error( callback, failure );
             else 
-                timeout_manager_.expires_from_now( timeout, on_timeout );
+                timer_.expires_from_now( timeout, on_timeout );
         };
 
         // Serialize the message and send it.
@@ -541,7 +541,7 @@ private:
     detail::subnet ipv6_subnet_;
     detail::routing_table routing_table_;
     detail::response_dispatcher response_dispatcher_;
-    detail::timeout_manager timeout_manager_;
+    detail::timer timer_;
     std::error_code main_failure_;
 };
 

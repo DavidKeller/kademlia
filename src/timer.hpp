@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TIMEOUT_MANAGER_HPP
-#define KADEMLIA_TIMEOUT_MANAGER_HPP
+#ifndef KADEMLIA_TIMER_HPP
+#define KADEMLIA_TIMER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -40,7 +40,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-class timeout_manager final
+class timer final
 {
 public:
     ///
@@ -54,7 +54,7 @@ public:
      *
      */
     explicit 
-    timeout_manager
+    timer
         ( boost::asio::io_service & io_service );
 
     /**
@@ -77,7 +77,7 @@ private:
     using timeouts = std::multimap< time_point, callback >;
 
     /// 
-    using timer = boost::asio::basic_waitable_timer< clock >;
+    using deadline_timer = boost::asio::basic_waitable_timer< clock >;
 
 private:
     /**
@@ -89,14 +89,14 @@ private:
 
 private:
     ///
-    timer timer_;
+    deadline_timer timer_;
     ///
     timeouts timeouts_; 
 };
 
 template< typename Callback >
 void
-timeout_manager::expires_from_now
+timer::expires_from_now
     ( duration const& timeout 
     , Callback const& on_timer_expired )
 {
