@@ -334,37 +334,6 @@ private:
     /**
      *
      */
-    template< typename Callback >
-    void
-    forward_error
-        ( Callback const& callback
-        , std::error_code const& failure )
-    {
-        callback( failure
-                , detail::message_socket::endpoint_type{}
-                , detail::header{}
-                , detail::buffer::const_iterator{}
-                , detail::buffer::const_iterator{} );
-    }
-
-    /**
-     *
-     */
-    template< typename Callback >
-    void
-    forward_response
-        ( Callback const& callback
-        , detail::message_socket::endpoint_type const& s
-        , detail::header const& h
-        , detail::buffer::const_iterator i
-        , detail::buffer::const_iterator e )
-    {
-        callback( std::error_code{}, s, h, i, e );
-    }
-
-    /**
-     *
-     */
     detail::header
     generate_header
         ( detail::header::type const& type
@@ -400,36 +369,40 @@ private:
     /**
      *
      */
-    template< typename Message, typename Callback >
+    template< typename Message, typename OnResponseReceived, typename OnError >
     void
     async_send_request
         ( Message const& message
         , detail::message_socket::endpoint_type const& e
         , detail::timer::duration const& timeout
-        , Callback const& callback )
+        , OnResponseReceived const& on_response_received
+        , OnError const& on_error )
     { 
         detail::id const response_id{ random_engine_ }; 
 
-        associate_callback_with_response_id( response_id, callback );
+        // Associate the response id with the on_response_received callback.
+        response_dispatcher_.on_response( response_id
+                                        , on_response_received );
 
-        auto on_timeout = [ this, callback, response_id ]
+        auto on_timeout = [ this, on_error, response_id ]
             ( void )
         {
             // If an association has been removed, that mean
             // the message has never been received
             // hence report the timeout to the client.
             if ( response_dispatcher_.remove_association( response_id ) )
-                forward_error( callback
-                             , make_error_code( std::errc::timed_out ) );
+                on_error( make_error_code( std::errc::timed_out ) );
         };
 
+        // Generate the message buffer.
         auto buffer = serialize_message( message, response_id );
 
-        auto on_request_sent = [ this, callback, timeout, on_timeout, buffer ] 
+        // This lamba will keep the message buffer alive.
+        auto on_request_sent = [ this, timeout, on_timeout, buffer ] 
             ( std::error_code const& failure )
         {
             if ( failure )
-                forward_error( callback, failure );
+                on_timeout();
             else 
                 timer_.expires_from_now( timeout, on_timeout );
         };
@@ -441,31 +414,11 @@ private:
     /**
      *
      */
-    template< typename Callback >
-    void
-    associate_callback_with_response_id
-        ( detail::id const& response_id
-        , Callback const& callback )
-    {
-        auto on_response_received = [ this, callback ]
-            ( detail::message_socket::endpoint_type const& s
-            , detail::header const& h
-            , detail::buffer::const_iterator i
-            , detail::buffer::const_iterator e )
-        { return forward_response( callback, s, h , i, e ); };
-
-        response_dispatcher_.associate_callback_with_response_id( response_id
-                                                                , on_response_received );
-    }
-
-    /**
-     *
-     */
     void
     discover_neighbours
         ( void )
     {
-        discover_neighbours_using_initial_contact
+        search_ourselves
                 ( std::make_shared< detail::resolved_endpoints >
                 ( detail::resolve_endpoint( io_service_, initial_peer_ ) ) );
     }
@@ -474,7 +427,7 @@ private:
      *
      */
     void
-    discover_neighbours_using_initial_contact
+    search_ourselves
         ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_try )
     { 
         // Check if we can send a message to another endpoint.
@@ -488,24 +441,14 @@ private:
         auto const endpoint_to_try = endpoints_to_try->back();
         endpoints_to_try->pop_back();
 
-        // Associate endpoint future response with this endpoints_to_try.
-        auto on_response_received = [ this, endpoints_to_try ]
-                ( std::error_code const& failure
-                , detail::message_socket::endpoint_type const& s
-                , detail::header const& h
-                , detail::buffer::const_iterator i
-                , detail::buffer::const_iterator e )
-        {
-            if ( failure )
-                discover_neighbours_using_initial_contact( endpoints_to_try );
-            else
-                handle_initial_contact_response( s, h, i, e );
-        };
-
+        using namespace std::placeholders;
         async_send_request( detail::find_node_request_body{ my_id_ }
                           , endpoint_to_try
                           , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                          , on_response_received );
+                          , std::bind( &impl::handle_initial_contact_response
+                                     , this, _1, _2, _3, _4 )
+                          , std::bind( &impl::search_ourselves
+                                     , this, endpoints_to_try ) );
     }
 
     /**

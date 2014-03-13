@@ -84,8 +84,8 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
     { messages_received_.push_back( h.random_token_ ); };
-    dispatcher_.associate_callback_with_response_id( h1.random_token_
-                                                   , on_message_received );
+    dispatcher_.on_response( h1.random_token_
+                           , on_message_received );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
 
     kd::message_socket::endpoint_type const s;
@@ -125,10 +125,10 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     { 
         messages_received_.push_back( h.random_token_ ); 
     };
-    dispatcher_.associate_callback_with_response_id( h1.random_token_
-                                                   , on_message_received );
-    dispatcher_.associate_callback_with_response_id( h2.random_token_
-                                                   , on_message_received ); 
+    dispatcher_.on_response( h1.random_token_
+                           , on_message_received );
+    dispatcher_.on_response( h2.random_token_
+                           , on_message_received ); 
 
     kd::message_socket::endpoint_type const s;
     auto result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );

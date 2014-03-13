@@ -57,7 +57,7 @@ public:
      *
      */
     void
-    associate_callback_with_response_id
+    on_response
         ( id const& message_id
         , callback const& on_message_received );
 
@@ -88,7 +88,7 @@ private:
 };
 
 inline void
-response_dispatcher::associate_callback_with_response_id
+response_dispatcher::on_response
     ( id const& message_id
     , callback const& on_message_received )
 {
