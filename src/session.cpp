@@ -142,7 +142,7 @@ private:
         io_service_.reset();
 
         start_receive_on_each_subnet();
-        copy_initial_contact_routing_table();
+        discover_neighbours();
     }
 
     /**
@@ -462,10 +462,11 @@ private:
      *
      */
     void
-    copy_initial_contact_routing_table
+    discover_neighbours
         ( void )
     {
-        query_next_initial_contact( std::make_shared< detail::resolved_endpoints >
+        discover_neighbours_using_initial_contact
+                ( std::make_shared< detail::resolved_endpoints >
                 ( detail::resolve_endpoint( io_service_, initial_peer_ ) ) );
     }
 
@@ -473,7 +474,7 @@ private:
      *
      */
     void
-    query_next_initial_contact
+    discover_neighbours_using_initial_contact
         ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_try )
     { 
         // Check if we can send a message to another endpoint.
@@ -496,7 +497,7 @@ private:
                 , detail::buffer::const_iterator e )
         {
             if ( failure )
-                query_next_initial_contact( endpoints_to_try );
+                discover_neighbours_using_initial_contact( endpoints_to_try );
             else
                 handle_initial_contact_response( s, h, i, e );
         };
