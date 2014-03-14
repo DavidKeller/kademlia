@@ -385,7 +385,7 @@ private:
                                         , on_response_received );
 
         auto on_timeout = [ this, on_error, response_id ]
-            ( void )
+            ( void ) 
         {
             // If an association has been removed, that mean
             // the message has never been received
@@ -399,7 +399,7 @@ private:
 
         // This lamba will keep the message buffer alive.
         auto on_request_sent = [ this, timeout, on_timeout, buffer ] 
-            ( std::error_code const& failure )
+            ( std::error_code const& failure ) 
         {
             if ( failure )
                 on_timeout();
@@ -441,14 +441,24 @@ private:
         auto const endpoint_to_try = endpoints_to_try->back();
         endpoints_to_try->pop_back();
 
-        using namespace std::placeholders;
+        // On message received, process it.
+        auto on_message_received = [ this ]
+            ( detail::message_socket::endpoint_type const& s
+            , detail::header const& h
+            , detail::buffer::const_iterator i
+            , detail::buffer::const_iterator e )
+        { handle_initial_contact_response( s, h, i, e ); };
+
+        // On error, retry with another endpoint.
+        auto on_error = [ this, endpoints_to_try ]
+            ( std::error_code const& ) 
+        { search_ourselves( endpoints_to_try ); };
+
         async_send_request( detail::find_node_request_body{ my_id_ }
                           , endpoint_to_try
                           , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                          , std::bind( &impl::handle_initial_contact_response
-                                     , this, _1, _2, _3, _4 )
-                          , std::bind( &impl::search_ourselves
-                                     , this, endpoints_to_try ) );
+                          , on_message_received
+                          , on_error );
     }
 
     /**
