@@ -369,6 +369,35 @@ private:
     /**
      *
      */
+    template< typename OnResponseReceived, typename OnError >
+    void
+    register_temporary_association
+        ( detail::id const& response_id
+        , detail::timer::duration const& association_ttl
+        , OnResponseReceived const& on_response_received
+        , OnError const& on_error )
+    {
+        auto on_timeout = [ this, on_error, response_id ]
+            ( void ) 
+        {
+            // If an association has been removed, that means
+            // the message has never been received
+            // hence report the timeout to the client.
+            if ( response_dispatcher_.remove_association( response_id ) )
+                on_error( make_error_code( std::errc::timed_out ) );
+        };
+
+        // Associate the response id with the 
+        // on_response_received callback.
+        response_dispatcher_.push_association( response_id
+                                             , on_response_received );
+
+        timer_.expires_from_now( association_ttl, on_timeout );
+    }
+
+    /**
+     *
+     */
     template< typename Message, typename OnResponseReceived, typename OnError >
     void
     async_send_request
@@ -380,31 +409,22 @@ private:
     { 
         detail::id const response_id{ random_engine_ }; 
 
-        // Associate the response id with the on_response_received callback.
-        response_dispatcher_.on_response( response_id
-                                        , on_response_received );
-
-        auto on_timeout = [ this, on_error, response_id ]
-            ( void ) 
-        {
-            // If an association has been removed, that mean
-            // the message has never been received
-            // hence report the timeout to the client.
-            if ( response_dispatcher_.remove_association( response_id ) )
-                on_error( make_error_code( std::errc::timed_out ) );
-        };
-
         // Generate the message buffer.
         auto buffer = serialize_message( message, response_id );
 
         // This lamba will keep the message buffer alive.
-        auto on_request_sent = [ this, timeout, on_timeout, buffer ] 
+        auto on_request_sent = [ this, response_id
+                               , on_response_received, on_error
+                               , timeout, buffer ] 
             ( std::error_code const& failure ) 
         {
             if ( failure )
-                on_timeout();
+                on_error( failure );
             else 
-                timer_.expires_from_now( timeout, on_timeout );
+                register_temporary_association( response_id
+                                              , timeout
+                                              , on_response_received
+                                              , on_error );
         };
 
         // Serialize the message and send it.
@@ -418,9 +438,12 @@ private:
     discover_neighbours
         ( void )
     {
-        search_ourselves
-                ( std::make_shared< detail::resolved_endpoints >
-                ( detail::resolve_endpoint( io_service_, initial_peer_ ) ) );
+        // Initial peer should know our neighbours, hence ask 
+        // him which peers are close to our own id.
+        auto endoints_to_query = std::make_shared< detail::resolved_endpoints >
+                ( detail::resolve_endpoint( io_service_, initial_peer_ ) );
+
+        search_ourselves( std::move( endoints_to_query ) );
     }
 
     /**
@@ -428,18 +451,18 @@ private:
      */
     void
     search_ourselves
-        ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_try )
+        ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_query )
     { 
         // Check if we can send a message to another endpoint.
-        if ( endpoints_to_try->empty() )
+        if ( endpoints_to_query->empty() )
         {
             main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
             return;
         }
 
         // Retrieve the next endpoint to try then.
-        auto const endpoint_to_try = endpoints_to_try->back();
-        endpoints_to_try->pop_back();
+        auto const endpoint_to_query = endpoints_to_query->back();
+        endpoints_to_query->pop_back();
 
         // On message received, process it.
         auto on_message_received = [ this ]
@@ -450,12 +473,12 @@ private:
         { handle_initial_contact_response( s, h, i, e ); };
 
         // On error, retry with another endpoint.
-        auto on_error = [ this, endpoints_to_try ]
+        auto on_error = [ this, endpoints_to_query ]
             ( std::error_code const& ) 
-        { search_ourselves( endpoints_to_try ); };
+        { search_ourselves( endpoints_to_query ); };
 
         async_send_request( detail::find_node_request_body{ my_id_ }
-                          , endpoint_to_try
+                          , endpoint_to_query
                           , INITIAL_CONTACT_RECEIVE_TIMEOUT
                           , on_message_received
                           , on_error );

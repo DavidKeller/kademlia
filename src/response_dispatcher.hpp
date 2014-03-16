@@ -57,7 +57,7 @@ public:
      *
      */
     void
-    on_response
+    push_association
         ( id const& message_id
         , callback const& on_message_received );
 
@@ -88,7 +88,7 @@ private:
 };
 
 inline void
-response_dispatcher::on_response
+response_dispatcher::push_association
     ( id const& message_id
     , callback const& on_message_received )
 {
