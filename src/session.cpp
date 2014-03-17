@@ -142,7 +142,7 @@ private:
         io_service_.reset();
 
         start_receive_on_each_subnet();
-        discover_neighbours();
+        discover_neighbors();
     }
 
     /**
@@ -268,13 +268,21 @@ private:
      *
      */
     void
+    add_current_peer_to_routing_table
+        ( detail::id const& peer_id
+        , detail::message_socket::endpoint_type const& peer_endpoint )
+    { routing_table_.push( peer_id, peer_endpoint ); }
+
+    /**
+     *
+     */
+    void
     handle_ping_request
         ( detail::subnet & source_subnet
         , detail::message_socket::endpoint_type const& sender
         , detail::header const& h )
     {
-        // Save the current peer.
-        routing_table_.push( h.source_id_, sender );
+        add_current_peer_to_routing_table( h.source_id_, sender );
 
         // And respond to him.
         auto response = serialize_message( detail::header::PING_RESPONSE
@@ -312,8 +320,7 @@ private:
         if ( detail::deserialize( i, e, request ) )
             return;
 
-        // Save the current peer.
-        routing_table_.push( h.source_id_, sender );
+        add_current_peer_to_routing_table( h.source_id_, sender );
 
         // Find X closest peers and save
         // their location into the response..
@@ -492,10 +499,10 @@ private:
      *
      */
     void
-    discover_neighbours
+    discover_neighbors
         ( void )
     {
-        // Initial peer should know our neighbours, hence ask 
+        // Initial peer should know our neighbors, hence ask 
         // him which peers are close to our own id.
         auto endoints_to_query = std::make_shared< detail::resolved_endpoints >
                 ( detail::resolve_endpoint( io_service_, initial_peer_ ) );
