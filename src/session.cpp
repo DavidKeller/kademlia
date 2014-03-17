@@ -273,7 +273,12 @@ private:
         , detail::message_socket::endpoint_type const& sender
         , detail::header const& h )
     {
+        // Save the current peer.
+        routing_table_.push( h.source_id_, sender );
 
+        auto response = serialize_message( detail::header::PING_RESPONSE
+                                         , h.random_token_ );
+        async_send_response( response, sender ); 
     }
 
     /**
@@ -369,6 +374,23 @@ private:
     /**
      *
      */
+    std::shared_ptr< detail::buffer >
+    serialize_message
+        ( detail::header::type const& type
+        , detail::id const& response_id )
+    {
+        auto buffer = std::make_shared< detail::buffer >();
+
+        auto const header = generate_header( type, response_id );
+
+        detail::serialize( header, *buffer );
+
+        return std::move( buffer );
+    }
+
+    /**
+     *
+     */
     template< typename OnResponseReceived, typename OnError >
     void
     register_temporary_association
@@ -398,38 +420,54 @@ private:
     /**
      *
      */
-    template< typename Message, typename OnResponseReceived, typename OnError >
+    template< typename Request, typename OnResponseReceived, typename OnError >
     void
     async_send_request
-        ( Message const& message
+        ( detail::id const& response_id
+        , Request const& request
         , detail::message_socket::endpoint_type const& e
         , detail::timer::duration const& timeout
         , OnResponseReceived const& on_response_received
         , OnError const& on_error )
     { 
-        detail::id const response_id{ random_engine_ }; 
+        // Generate the request buffer.
+        auto message = serialize_message( request, response_id );
 
-        // Generate the message buffer.
-        auto buffer = serialize_message( message, response_id );
-
-        // This lamba will keep the message buffer alive.
+        // This lamba will keep the request message alive.
         auto on_request_sent = [ this, response_id
                                , on_response_received, on_error
-                               , timeout, buffer ] 
+                               , timeout, message ] 
             ( std::error_code const& failure ) 
         {
             if ( failure )
                 on_error( failure );
             else 
-                register_temporary_association( response_id
-                                              , timeout
+                register_temporary_association( response_id, timeout
                                               , on_response_received
                                               , on_error );
         };
 
-        // Serialize the message and send it.
-        get_subnet_for( e ).async_send( *buffer, e, on_request_sent );
+        // Serialize the request and send it.
+        get_subnet_for( e ).async_send( *message, e, on_request_sent );
     }
+
+    /**
+     *
+     */
+    void
+    async_send_response
+        ( std::shared_ptr< detail::buffer > const& response
+        , detail::message_socket::endpoint_type const& e )
+    { 
+        // This lamba will keep the response message alive.
+        auto on_response_sent = [ response ] 
+            ( std::error_code const& failure ) 
+        { };
+
+        // Serialize the message and send it.
+        get_subnet_for( e ).async_send( *response, e, on_response_sent );
+    }
+
 
     /**
      *
@@ -453,14 +491,13 @@ private:
     search_ourselves
         ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_query )
     { 
-        // Check if we can send a message to another endpoint.
         if ( endpoints_to_query->empty() )
         {
             main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
             return;
         }
 
-        // Retrieve the next endpoint to try then.
+        // Retrieve the next endpoint to query.
         auto const endpoint_to_query = endpoints_to_query->back();
         endpoints_to_query->pop_back();
 
@@ -477,7 +514,8 @@ private:
             ( std::error_code const& ) 
         { search_ourselves( endpoints_to_query ); };
 
-        async_send_request( detail::find_node_request_body{ my_id_ }
+        async_send_request( detail::id{ random_engine_ }
+                          , detail::find_node_request_body{ my_id_ }
                           , endpoint_to_query
                           , INITIAL_CONTACT_RECEIVE_TIMEOUT
                           , on_message_received
