@@ -185,6 +185,14 @@ struct find_node_response_body final
 /**
  *
  */
+template<>
+struct message_traits< find_node_response_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_NODE_RESPONSE; };
+
+
+/**
+ *
+ */
 void
 serialize
     ( find_node_response_body const& body

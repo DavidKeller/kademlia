@@ -276,6 +276,7 @@ private:
         // Save the current peer.
         routing_table_.push( h.source_id_, sender );
 
+        // And respond to him.
         auto response = serialize_message( detail::header::PING_RESPONSE
                                          , h.random_token_ );
         async_send_response( response, sender ); 
@@ -306,7 +307,25 @@ private:
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
     {
+        // Ensure the request is valid.
+        detail::find_node_request_body request;
+        if ( detail::deserialize( i, e, request ) )
+            return;
 
+        // Save the current peer.
+        routing_table_.push( h.source_id_, sender );
+
+        // Find X closest peers and save
+        // their location into the response..
+        detail::find_node_response_body response;
+        for ( auto i = routing_table_.find( request.node_to_find_id_ )
+                , e = routing_table_.end()
+            ; i != e; ++i )
+            response.nodes_.push_back( { i->first, i->second } );
+
+        // Now send the response.
+        async_send_response( serialize_message( response, h.random_token_ )
+                           , sender );
     }
 
     /**
