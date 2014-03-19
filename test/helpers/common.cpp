@@ -23,8 +23,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#define BOOST_TEST_MAIN
-#define BOOST_TEST_ALTERNATIVE_INIT_API
 #include "common.hpp"
 
 #include <iostream>
@@ -69,20 +67,76 @@ get_temporary_listening_port
     return port;
 }
 
-int 
-main
-    ( int argc
-    , char* argv[] )
+/**
+ *  The following methods deserve an explanation.
+ *  When boost is compiled as shared, BOOST_TEST_ALTERNATIVE_INIT_API
+ *  is defined by the boost build system. In this case, unit_test_main
+ *  accepts a bool (*)() init function while it uses a
+ *  test_suite * (*)(int, char *[]) when compiled as static.
+ *
+ *  When we are using boost as a shared, through BOOST_TEST_DYN_LINK
+ *  macro, BOOST_TEST_ALTERNATIVE_INIT_API macro is 
+ *  automatically defined by boost unit-test headers config.
+ *  Hence don't bother searching this macro definition in 
+ *  this project build or source files.
+ */
+#ifdef BOOST_TEST_ALTERNATIVE_INIT_API
+
+bool
+init_unit_test
+    ( void )
 {
-    if ( argc == 1 )
+    using boost::unit_test::framework::master_test_suite;
+    auto const argc = master_test_suite().argc;
+    auto const argv = master_test_suite().argv;
+    if ( argc != 2 )
     {
         std::cerr << "usage: " << argv[ 0 ] 
                   << " [test args] CAPTURE_DIR" << std::endl;
-        return EXIT_FAILURE;
+        return false;
     }
 
     captures_directory_ = argv[ argc - 1 ];
 
-    return boost::unit_test::unit_test_main( &init_unit_test, argc, argv );
+    return true;
 }
+
+#else
+
+boost::unit_test::test_suite *
+init_unit_test_suite
+    ( int argc
+    , char* argv[] )
+{ 
+    if ( argc != 2 )
+    {
+        std::ostringstream error;
+        error << "usage: " << argv[ 0 ] 
+              << " [test args] CAPTURE_DIR";
+
+        throw boost::unit_test::framework::setup_error{ error.str() };
+    }
+
+    captures_directory_ = argv[ argc - 1 ];
+
+    return nullptr; 
+}
+
+#endif
+
+/**
+ *  When using shared version of boost unit-test library, main
+ *  function is not defined, hence provide it.
+ */
+#ifdef BOOST_TEST_DYN_LINK
+int
+main
+    ( int argc
+    , char * argv[] )
+#   ifdef BOOST_TEST_ALTERNATIVE_INIT_API
+{ return boost::unit_test::unit_test_main( &init_unit_test, argc, argv ); }
+#   else
+{ return boost::unit_test::unit_test_main( &init_unit_test_suite, argc, argv ); }
+#   endif
+#endif
 

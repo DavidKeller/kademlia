@@ -47,13 +47,22 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 endif()
 
+
 # Check environment.
+# Threads
 find_package(Threads REQUIRED)
+# Boost
+if (WIN32)
+    set(Boost_USE_STATIC_LIBS ON)
+#elseif(APPLE)
+#    set(Boost_USE_STATIC_LIBS ON)
+endif()
 find_package(Boost REQUIRED COMPONENTS 
     system
     chrono
     filesystem 
     unit_test_framework)
+# OpenSSL
 find_package(OpenSSL REQUIRED)
 
 add_definitions(-DPACKAGE_VERSION="1.0.0")
@@ -66,6 +75,10 @@ add_definitions(-DBOOST_ALL_NO_LIB
     -DBOOST_ASIO_HAS_STD_SHARED_PTR 
     -DBOOST_ASIO_HAS_STD_ATOMIC 
     -DBOOST_ASIO_HAS_STD_CHRONO)
+if (${Boost_USE_STATIC_LIBS})
+else()
+    add_definitions(-DBOOST_ALL_DYN_LINK)
+endif()
 
 # Setup includes directories.
 include_directories(BEFORE include)
