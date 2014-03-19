@@ -33,8 +33,9 @@
 #include <cstdint>
 #include <array>
 #include <iosfwd>
-#include <string>
 #include <random>
+#include <string>
+#include <vector>
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
@@ -62,6 +63,9 @@ public:
 
     ///
     using blocks_type = std::array< block_type, BLOCKS_COUNT >;
+
+    ///
+    using value_to_hash_type = std::vector< std::uint8_t >;
 
     template<typename BlockType>
     struct abstract_reference
@@ -101,18 +105,34 @@ public:
     ///
     using const_reference = abstract_reference< block_type const >;
 
+    /**
+     *  @brief Construct a null id.
+     */
     id 
         ( void )
         : blocks_{ }
     { }
 
+    /**
+     *  @brief Construct a random id.
+     */
     explicit
     id
         ( std::default_random_engine & random_engine );
     
+    /**
+     *  @brief Construct an id from a string representation.
+     */
     explicit
     id 
         ( std::string const& value );
+
+    /**
+     *  @brief Construct an id by hashing a value.
+     */
+    explicit
+    id 
+        ( value_to_hash_type const& value );
 
     blocks_type::reverse_iterator
     begin_block

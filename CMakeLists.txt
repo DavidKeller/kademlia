@@ -54,6 +54,7 @@ find_package(Boost REQUIRED COMPONENTS
     chrono
     filesystem 
     unit_test_framework)
+find_package(OpenSSL REQUIRED)
 
 add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")

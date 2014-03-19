@@ -34,6 +34,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include <openssl/sha.h>
+
 #include <kademlia/error.hpp>
 
 namespace kademlia {
@@ -100,6 +102,15 @@ id::id
         auto remaining_char_count = e - i;
         blocks_[ remaining_char_count / HEX_CHAR_PER_BLOCK ] = value;
     }
+}
+    
+id::id 
+    ( value_to_hash_type const& value )
+{
+    static_assert( BIT_SIZE == SHA_DIGEST_LENGTH * 8
+                 , "An id can't be constructed from a sha1 result" );
+    // Use openssl SHA1 here.
+    ::SHA1( value.data(), value.size(), blocks_.data() );
 }
 
 std::ostream &

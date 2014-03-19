@@ -170,6 +170,21 @@ BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
     }
 }
 
+BOOST_AUTO_TEST_CASE( hash_generated_id_are_valid )
+{
+    kd::id::value_to_hash_type value_to_hash( 512 );
+    std::generate( value_to_hash.begin(), value_to_hash.end()
+                 , &std::rand );
+
+    kd::id const id{ value_to_hash };
+    BOOST_REQUIRE_EQUAL( id, kd::id{ value_to_hash } );
+
+    std::generate( value_to_hash.begin(), value_to_hash.end()
+                 , &std::rand );
+    BOOST_REQUIRE_NE( id, kd::id{ value_to_hash } );
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
 
 /**
