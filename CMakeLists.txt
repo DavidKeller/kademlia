@@ -69,7 +69,7 @@ add_definitions(-DBOOST_ALL_NO_LIB
 
 # Setup includes directories.
 include_directories(BEFORE include)
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 
 # Build everything.
 add_subdirectory(include)
