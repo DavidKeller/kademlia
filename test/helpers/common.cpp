@@ -68,17 +68,15 @@ get_temporary_listening_port
 }
 
 /**
- *  The following methods deserve an explanation.
- *  When boost is compiled as shared, BOOST_TEST_ALTERNATIVE_INIT_API
- *  is defined by the boost build system. In this case, unit_test_main
- *  accepts a bool (*)() init function while it uses a
- *  test_suite * (*)(int, char *[]) when compiled as static.
- *
- *  When we are using boost as a shared, through BOOST_TEST_DYN_LINK
- *  macro, BOOST_TEST_ALTERNATIVE_INIT_API macro is 
- *  automatically defined by boost unit-test headers config.
+ *  When we are using boost as a shared (i.e. BOOST_TEST_DYN_LINK
+ *  macro is defined), BOOST_TEST_ALTERNATIVE_INIT_API macro is 
+ *  automatically defined by boost unit-test config header.
  *  Hence don't bother searching this macro definition in 
  *  this project build or source files.
+ *
+ *  That means with shared version of unit-test library, unit_test_main
+ *  accepts a bool (*)() init function while it uses a
+ *  test_suite * (*)(int, char *[]) when compiled as static.
  */
 #ifdef BOOST_TEST_ALTERNATIVE_INIT_API
 
@@ -134,9 +132,13 @@ main
     ( int argc
     , char * argv[] )
 #   ifdef BOOST_TEST_ALTERNATIVE_INIT_API
+
 { return boost::unit_test::unit_test_main( &init_unit_test, argc, argv ); }
+
 #   else
+
 { return boost::unit_test::unit_test_main( &init_unit_test_suite, argc, argv ); }
+
 #   endif
 #endif
 
