@@ -34,6 +34,7 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <boost/functional/hash.hpp>
 
 namespace kademlia {
 namespace detail {
@@ -48,17 +49,7 @@ struct value_store_key_hasher
     operator()
         ( argument_type const& key )
         const
-    {
-        // Hash the size of the container.
-        result_type result = std::hash< result_type >{}( key.size() );
-
-        // Then XOR the size with each key character.
-        auto const hash = std::hash< typename argument_type::value_type >{};
-        for ( auto c : key )
-            result ^= hash( c ) << 1; 
-
-        return result;
-    }
+    { return boost::hash_range( key.begin(), key.end() ); }
 };
 
 ///
