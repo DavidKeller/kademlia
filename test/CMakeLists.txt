@@ -29,10 +29,19 @@ include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
 # Run all tests, timeouting if it takes more than 30 seconds.
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 
+add_library(test_helpers_common STATIC
+    helpers/common.cpp 
+    helpers/common.hpp)
+
 macro(build_and_run_test source_file)
     get_filename_component(test_name ${source_file} NAME_WE)
-    add_executable(${test_name} helpers/common.cpp helpers/common.hpp ${source_file} ${ARGN}) 
-    target_link_libraries(${test_name} kademlia_convenience ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    add_executable(${test_name} ${source_file} ${ARGN}) 
+    target_link_libraries(${test_name} 
+        test_helpers_common 
+        kademlia_convenience 
+        ${Boost_LIBRARIES} 
+        ${OPENSSL_LIBRARIES} 
+        ${CMAKE_THREAD_LIBS_INIT})
     add_dependencies(check ${test_name})
     add_test(${test_name} ${test_name} ${CMAKE_CURRENT_SOURCE_DIR}/captures)
 endmacro()

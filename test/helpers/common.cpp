@@ -77,6 +77,8 @@ get_temporary_listening_port
  *  That means with shared version of unit-test library, unit_test_main
  *  accepts a bool (*)() init function while it uses a
  *  test_suite * (*)(int, char *[]) when compiled as static.
+ *
+ *  See http://www.boost.org/doc/libs/1_55_0/libs/test/doc/html/utf/user-guide/test-runners.html
  */
 #ifdef BOOST_TEST_ALTERNATIVE_INIT_API
 
@@ -125,20 +127,18 @@ init_unit_test_suite
 /**
  *  When using shared version of boost unit-test library, main
  *  function is not defined, hence provide it.
+ *
+ *  We can assume that BOOST_TEST_ALTERNATIVE_INIT_API is defined
+ *  as the documentation says so when using shared library.
+ *  See http://www.boost.org/doc/libs/1_55_0/libs/test/doc/html/utf/user-guide/test-runners.html
  */
 #ifdef BOOST_TEST_DYN_LINK
+
 int
 main
     ( int argc
     , char * argv[] )
-#   ifdef BOOST_TEST_ALTERNATIVE_INIT_API
-
 { return boost::unit_test::unit_test_main( &init_unit_test, argc, argv ); }
 
-#   else
-
-{ return boost::unit_test::unit_test_main( &init_unit_test_suite, argc, argv ); }
-
-#   endif
 #endif
 
