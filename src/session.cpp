@@ -49,6 +49,7 @@
 #include "subnet.hpp"
 #include "response_dispatcher.hpp"
 #include "timer.hpp"
+#include "value_store.hpp"
 
 namespace kademlia {
 
@@ -81,6 +82,7 @@ public:
             , routing_table_{ my_id_ }
             , response_dispatcher_{}
             , timer_{ io_service_ }
+            , value_store_{}
             , main_failure_{}
     { }
     
@@ -583,6 +585,7 @@ private:
     detail::routing_table routing_table_;
     detail::response_dispatcher response_dispatcher_;
     detail::timer timer_;
+    detail::value_store< detail::id, data_type > value_store_;
     std::error_code main_failure_;
 };
 

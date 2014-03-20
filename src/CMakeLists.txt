@@ -44,6 +44,7 @@ set(kademlia_sources
     message_socket.hpp
     message_socket.cpp
     boost_to_std_error.hpp
+    value_store.hpp
     buffer.hpp)
 
 add_library(kademlia SHARED
