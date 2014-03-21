@@ -68,8 +68,12 @@ struct kademlia_error_category : std::error_category
                 return "truncated address";
             case TRUNCATED_HEADER:
                 return "truncated header";
+            case TRUNCATED_SIZE:
+                return "truncated size";
             case CORRUPTED_HEADER:
                 return "corrupted header";
+            case CORRUPTED_BODY:
+                return "corrupted body";
             case UNKNOWN_PROTOCOL_VERSION:
                 return "unknown protocol version";
             case UNASSOCIATED_MESSAGE_ID:

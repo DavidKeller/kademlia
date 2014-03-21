@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <system_error>
+#include <vector>
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
@@ -206,6 +207,73 @@ deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
     , find_node_response_body & body );
+
+/**
+ *
+ */
+struct find_value_request_body final
+{
+    ///
+    id node_to_find_id_;
+};
+
+/**
+ *
+ */
+template<>
+struct message_traits< find_value_request_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_VALUE_REQUEST; };
+
+/**
+ *
+ */
+void
+serialize
+    ( find_value_request_body const& body
+    , buffer & b );
+
+/**
+ *
+ */
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_value_request_body & body );
+
+/**
+ *
+ */
+struct find_value_response_body final
+{
+    ///
+    std::vector< uint8_t > data_;
+};
+
+/**
+ *
+ */
+template<>
+struct message_traits< find_value_response_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_VALUE_RESPONSE; };
+
+
+/**
+ *
+ */
+void
+serialize
+    ( find_value_response_body const& body
+    , buffer & b );
+
+/**
+ *
+ */
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_value_response_body & body );
 
 } // namespace detail
 } // namespace kademlia

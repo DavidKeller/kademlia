@@ -35,6 +35,34 @@ namespace {
 
 inline void
 serialize
+    ( std::uint64_t size
+    , buffer & b )
+{
+    for ( auto i = 0u; i < sizeof( size ); ++i )
+        b.push_back( size >> 8 * i & 0xff );
+}
+
+/**
+ *
+ */
+inline std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , std::uint64_t & size )
+{
+    if ( std::size_t( std::distance( i, e ) ) < sizeof( size ) )
+        return make_error_code( TRUNCATED_SIZE );
+
+    size = 0;
+    for ( auto j = 0u; j < sizeof( size ); ++j )
+        size |= std::uint64_t{ *i++ } << 8 * j;
+
+    return std::error_code{};
+}
+
+inline void
+serialize
     ( id const& i
     , buffer & b )
 {
@@ -265,9 +293,7 @@ serialize
     ( find_node_response_body const& body
     , buffer & b )
 {
-    auto const size = static_cast< std::uint16_t >( body.nodes_.size() );
-    b.push_back( size & 0xf );
-    b.push_back( size >> 8 );
+    serialize( body.nodes_.size(), b );
 
     for ( auto const & n : body.nodes_ )
         serialize( n, b );
@@ -279,14 +305,8 @@ deserialize
     , buffer::const_iterator e
     , find_node_response_body & body )
 {
-    if ( std::distance( i, e ) < 2 )
-        return make_error_code( TRUNCATED_ENDPOINT ); 
-
-    std::uint16_t size;
-    size = *i++;
-    size |= *i++ << 8;
-   
-    std::error_code failure;
+    std::uint64_t size;
+    auto failure = deserialize( i, e, size );
 
     for ( 
         ; size > 0 && ! failure
@@ -297,6 +317,54 @@ deserialize
     }
 
     return failure;
+}
+
+void
+serialize
+    ( find_value_request_body const& body
+    , buffer & b )
+{
+    serialize( body.node_to_find_id_, b );
+}
+
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_value_request_body & body )
+{
+    return deserialize( i, e, body.node_to_find_id_ );
+}
+
+void
+serialize
+    ( find_value_response_body const& body
+    , buffer & b )
+{
+    serialize( body.data_.size(), b );
+
+    for ( auto const & d : body.data_ )
+        b.push_back( d );
+}
+
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , find_value_response_body & body )
+{
+    std::uint64_t size;
+    auto failure = deserialize( i, e, size );
+    if ( failure )
+        return failure;
+
+    if ( std::size_t( std::distance( i, e ) ) < size )
+        return make_error_code( CORRUPTED_BODY );
+
+    for ( ; size > 0 ; -- size )
+        body.data_.push_back( *i++ );
+
+    return std::error_code{};
 }
 
 } // namespace detail
