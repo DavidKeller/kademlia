@@ -160,12 +160,41 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_value_response_body )
     BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL( body_out.data_.size(), body_in.data_.size() );
-
     BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_.begin()
                                    , body_out.data_.end()
                                    , body_in.data_.begin()
                                    , body_in.data_.end() );
+}
+
+BOOST_AUTO_TEST_CASE( can_serialize_store_value_request_body )
+{
+    std::default_random_engine random_engine;
+
+    kd::store_value_request_body body_out
+            { kd::id{ random_engine }
+            , std::vector< std::uint8_t >( 4096 ) };
+   
+    std::generate( body_out.data_value_.begin()
+                 , body_out.data_value_.end()
+                 , std::rand );
+
+    kd::buffer buffer;
+    kd::serialize( body_out, buffer );
+
+    kd::store_value_request_body body_in;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
+    BOOST_REQUIRE( i == e );
+
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_key_hash_.begin()
+                                   , body_out.data_key_hash_.end()
+                                   , body_in.data_key_hash_.begin()
+                                   , body_in.data_key_hash_.end() );
+
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_value_.begin()
+                                   , body_out.data_value_.end()
+                                   , body_in.data_value_.begin()
+                                   , body_in.data_value_.end() );
 }
         
 BOOST_AUTO_TEST_SUITE_END()

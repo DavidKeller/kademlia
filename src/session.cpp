@@ -300,7 +300,14 @@ private:
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
     {
+        detail::store_value_request_body request;
+        if ( detail::deserialize( i, e, request ) )
+            return;
 
+        add_current_peer_to_routing_table( h.source_id_, sender );
+
+        value_store_[ request.data_key_hash_ ] 
+                = std::move( request.data_value_ );
     }
 
     /**
