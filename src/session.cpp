@@ -113,10 +113,13 @@ public:
         ( void ) 
     {
         main_failure_.clear();
+
         init();
         
         while ( ! main_failure_ && io_service_.run_one() )
             io_service_.poll();
+        
+        io_service_.stop();
 
         return main_failure_;
     }
@@ -128,9 +131,10 @@ public:
     abort
         ( void )
     { 
-        io_service_.stop();
+        auto set_abort_flag = [ this ] ( void )
+        { main_failure_ = make_error_code( RUN_ABORTED ); };
 
-        main_failure_ = make_error_code( RUN_ABORTED );
+        io_service_.post( set_abort_flag );
     }
 
 private:
