@@ -124,6 +124,49 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
                                    , body_in.nodes_.begin()
                                    , body_in.nodes_.end() );
 }
+ 
+BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )
+{
+    std::default_random_engine random_engine;
+
+    kd::find_value_request_body const body_out{ kd::id{ random_engine } };
+   
+    kd::buffer buffer;
+    kd::serialize( body_out, buffer );
+
+    kd::find_value_request_body body_in;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
+    BOOST_REQUIRE( i == e );
+
+    BOOST_REQUIRE_EQUAL( body_out.node_to_find_id_
+                       , body_in.node_to_find_id_ );
+}
+ 
+BOOST_AUTO_TEST_CASE( can_serialize_find_value_response_body )
+{
+    kd::find_value_response_body body_out
+    { std::vector< std::uint8_t >( 4096 ) };
+   
+    std::generate( body_out.data_.begin()
+                 , body_out.data_.end()
+                 , std::rand );
+
+    kd::buffer buffer;
+    kd::serialize( body_out, buffer );
+
+    kd::find_value_response_body body_in;
+    auto i = buffer.cbegin(), e = buffer.cend();
+    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
+    BOOST_REQUIRE( i == e );
+
+    BOOST_REQUIRE_EQUAL( body_out.data_.size(), body_in.data_.size() );
+
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_.begin()
+                                   , body_out.data_.end()
+                                   , body_in.data_.begin()
+                                   , body_in.data_.end() );
+}
         
 BOOST_AUTO_TEST_SUITE_END()
 

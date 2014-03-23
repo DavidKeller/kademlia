@@ -247,7 +247,7 @@ deserialize
 struct find_value_response_body final
 {
     ///
-    std::vector< uint8_t > data_;
+    std::vector< std::uint8_t > data_;
 };
 
 /**
