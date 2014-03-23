@@ -135,23 +135,23 @@ public:
         ( value_to_hash_type const& value );
 
     blocks_type::reverse_iterator
-    begin_block
+    begin
         ( void )
     { return blocks_.rbegin(); }
 
     blocks_type::reverse_iterator
-    end_block
+    end
         ( void )
     { return blocks_.rend(); }
 
     blocks_type::const_reverse_iterator
-    begin_block
+    begin
         ( void )
         const
     { return blocks_.rbegin(); }
 
     blocks_type::const_reverse_iterator
-    end_block
+    end
         ( void )
         const
     { return blocks_.rend(); }

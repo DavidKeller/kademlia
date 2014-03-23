@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE( emptry_string_generated_id_is_valid )
     auto equal_to_zero = [] ( kd::id::block_type v ) 
     { return ! v; };
 
-    BOOST_REQUIRE( std::all_of( new_id.begin_block()
-                              , new_id.end_block()
+    BOOST_REQUIRE( std::all_of( new_id.begin()
+                              , new_id.end()
                               , equal_to_zero ) );
 }
 

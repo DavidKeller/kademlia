@@ -118,7 +118,7 @@ operator<<
     ( std::ostream & out
     , id const& id_to_print )
 {
-    auto i = id_to_print.begin_block(), e = id_to_print.end_block();
+    auto i = id_to_print.begin(), e = id_to_print.end();
 
     // Skip leading 0.
     while ( i != e && *i == 0 )

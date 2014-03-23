@@ -63,11 +63,45 @@ deserialize
 
 inline void
 serialize
+    ( std::vector< std::uint8_t > data
+    , buffer & b )
+{
+    serialize( data.size(), b );
+    for ( auto const& d : data )
+        b.push_back( d );
+}
+
+/**
+ *
+ */
+inline std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , std::vector< std::uint8_t > & data )
+{
+    std::uint64_t size;
+    auto failure = deserialize( i, e, size );
+    if ( failure )
+        return failure;
+
+    if ( std::size_t( std::distance( i, e ) ) < size )
+        return make_error_code( CORRUPTED_BODY );
+
+    for ( ; size > 0; -- size )
+        data.push_back( *i++ );
+
+    return std::error_code{};
+}
+
+
+inline void
+serialize
     ( id const& i
     , buffer & b )
 {
-    std::copy( i.begin_block()
-             , i.end_block()
+    std::copy( i.begin()
+             , i.end()
              , std::back_inserter( b ) );
 }
 
@@ -83,7 +117,7 @@ deserialize
     if ( std::size_t( std::distance( i, e ) ) < id::BLOCKS_COUNT )
         return make_error_code( TRUNCATED_ID );
 
-    std::copy_n( i, id::BLOCKS_COUNT, new_id.begin_block() );
+    std::copy_n( i, id::BLOCKS_COUNT, new_id.begin() );
     std::advance( i, id::BLOCKS_COUNT );
 
     return std::error_code{};
@@ -324,7 +358,7 @@ serialize
     ( find_value_request_body const& body
     , buffer & b )
 {
-    serialize( body.node_to_find_id_, b );
+    serialize( body.value_to_find_, b );
 }
 
 std::error_code
@@ -333,7 +367,7 @@ deserialize
     , buffer::const_iterator e
     , find_value_request_body & body )
 {
-    return deserialize( i, e, body.node_to_find_id_ );
+    return deserialize( i, e, body.value_to_find_ );
 }
 
 void
@@ -341,10 +375,7 @@ serialize
     ( find_value_response_body const& body
     , buffer & b )
 {
-    serialize( body.data_.size(), b );
-
-    for ( auto const & d : body.data_ )
-        b.push_back( d );
+    serialize( body.data_, b );
 }
 
 std::error_code
@@ -353,18 +384,30 @@ deserialize
     , buffer::const_iterator e
     , find_value_response_body & body )
 {
-    std::uint64_t size;
-    auto failure = deserialize( i, e, size );
+    return deserialize( i, e, body.data_ );
+}
+
+void
+serialize
+    ( store_value_request_body const& body
+    , buffer & b )
+{
+    serialize( body.data_key_hash_, b );
+
+    serialize( body.data_value_, b );
+}
+
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , store_value_request_body & body )
+{
+    auto failure = deserialize( i, e, body.data_key_hash_ );
     if ( failure )
         return failure;
 
-    if ( std::size_t( std::distance( i, e ) ) < size )
-        return make_error_code( CORRUPTED_BODY );
-
-    for ( ; size > 0 ; -- size )
-        body.data_.push_back( *i++ );
-
-    return std::error_code{};
+    return deserialize( i, e, body.data_value_ );
 }
 
 } // namespace detail

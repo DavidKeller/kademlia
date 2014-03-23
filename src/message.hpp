@@ -214,7 +214,7 @@ deserialize
 struct find_value_request_body final
 {
     ///
-    id node_to_find_id_;
+    id value_to_find_;
 };
 
 /**
@@ -274,6 +274,43 @@ deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
     , find_value_response_body & body );
+
+/**
+ *
+ */
+struct store_value_request_body final
+{
+    ///
+    id data_key_hash_;
+    ///
+    std::vector< std::uint8_t > data_value_;
+};
+
+/**
+ *
+ */
+template<>
+struct message_traits< store_value_request_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::STORE_REQUEST; };
+
+
+/**
+ *
+ */
+void
+serialize
+    ( store_value_request_body const& body
+    , buffer & b );
+
+/**
+ *
+ */
+std::error_code
+deserialize
+    ( buffer::const_iterator & i
+    , buffer::const_iterator e
+    , store_value_request_body & body );
+
 
 } // namespace detail
 } // namespace kademlia

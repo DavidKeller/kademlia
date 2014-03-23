@@ -57,15 +57,15 @@ BOOST_AUTO_TEST_CASE( can_serialize_header )
     BOOST_REQUIRE_EQUAL( header_out.version_, header_in.version_ );
     BOOST_REQUIRE_EQUAL( header_out.type_, header_in.type_);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.source_id_.begin_block()
-                                   , header_out.source_id_.end_block()
-                                   , header_in.source_id_.begin_block()
-                                   , header_in.source_id_.end_block() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.source_id_.begin()
+                                   , header_out.source_id_.end()
+                                   , header_in.source_id_.begin()
+                                   , header_in.source_id_.end() );
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.random_token_.begin_block()
-                                   , header_out.random_token_.end_block()
-                                   , header_in.random_token_.begin_block()
-                                   , header_in.random_token_.end_block() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.random_token_.begin()
+                                   , header_out.random_token_.end()
+                                   , header_in.random_token_.begin()
+                                   , header_in.random_token_.end() );
 }
  
 BOOST_AUTO_TEST_CASE( can_serialize_find_node_request_body )
@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_node_request_body )
     BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.node_to_find_id_.begin_block()
-                                   , body_out.node_to_find_id_.end_block()
-                                   , body_in.node_to_find_id_.begin_block()
-                                   , body_in.node_to_find_id_.end_block() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.node_to_find_id_.begin()
+                                   , body_out.node_to_find_id_.end()
+                                   , body_in.node_to_find_id_.begin()
+                                   , body_in.node_to_find_id_.end() );
 }
 
 BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )
     BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL( body_out.node_to_find_id_
-                       , body_in.node_to_find_id_ );
+    BOOST_REQUIRE_EQUAL( body_out.value_to_find_
+                       , body_in.value_to_find_ );
 }
  
 BOOST_AUTO_TEST_CASE( can_serialize_find_value_response_body )

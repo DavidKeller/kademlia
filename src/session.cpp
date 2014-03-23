@@ -212,7 +212,7 @@ private:
                 main_failure_ = failure;
             else
             {
-                handle_new_message( current_subnet, sender, message );
+                handle_new_message( sender, message );
                 schedule_receive_on_subnet( current_subnet );
             }
         };
@@ -225,8 +225,7 @@ private:
      */
     void
     handle_new_message
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
+        ( detail::message_socket::endpoint_type const& sender
         , detail::buffer const& message )
     {
         auto i = message.begin(), e = message.end();
@@ -239,16 +238,16 @@ private:
         switch ( h.type_ )
         {
             case detail::header::PING_REQUEST: 
-                handle_ping_request( source_subnet, sender, h );
+                handle_ping_request( sender, h );
                 break;
             case detail::header::STORE_REQUEST: 
-                handle_store_request( source_subnet, sender, h, i, e );
+                handle_store_request( sender, h, i, e );
                 break;
             case detail::header::FIND_NODE_REQUEST: 
-                handle_find_node_request( source_subnet, sender, h, i, e );
+                handle_find_node_request( sender, h, i, e );
                 break;
             case detail::header::FIND_VALUE_REQUEST:
-                handle_find_value_request( source_subnet, sender, h, i, e );
+                handle_find_value_request( sender, h, i, e );
                 break;
             default:
                 handle_response( sender, h, i, e );
@@ -280,8 +279,7 @@ private:
      */
     void
     handle_ping_request
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
+        ( detail::message_socket::endpoint_type const& sender
         , detail::header const& h )
     {
         add_current_peer_to_routing_table( h.source_id_, sender );
@@ -297,8 +295,7 @@ private:
      */
     void
     handle_store_request
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
+        ( detail::message_socket::endpoint_type const& sender
         , detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
@@ -310,9 +307,30 @@ private:
      *
      */
     void
+    send_find_node_response
+        ( detail::message_socket::endpoint_type const& sender
+        , detail::id const& random_token
+        , detail::id const& node_to_find_id )
+    {
+        // Find X closest peers and save
+        // their location into the response..
+        detail::find_node_response_body response;
+        for ( auto i = routing_table_.find( node_to_find_id )
+                , e = routing_table_.end()
+            ; i != e; ++i )
+            response.nodes_.push_back( { i->first, i->second } );
+
+        // Now send the response.
+        async_send_response( serialize_message( response, random_token )
+                           , sender );
+    }
+
+    /**
+     *
+     */
+    void
     handle_find_node_request
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
+        ( detail::message_socket::endpoint_type const& sender
         , detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
@@ -324,17 +342,9 @@ private:
 
         add_current_peer_to_routing_table( h.source_id_, sender );
 
-        // Find X closest peers and save
-        // their location into the response..
-        detail::find_node_response_body response;
-        for ( auto i = routing_table_.find( request.node_to_find_id_ )
-                , e = routing_table_.end()
-            ; i != e; ++i )
-            response.nodes_.push_back( { i->first, i->second } );
-
-        // Now send the response.
-        async_send_response( serialize_message( response, h.random_token_ )
-                           , sender );
+        send_find_node_response( sender
+                               , h.random_token_
+                               , request.node_to_find_id_ );
     }
 
     /**
@@ -342,13 +352,28 @@ private:
      */
     void
     handle_find_value_request
-        ( detail::subnet & source_subnet
-        , detail::message_socket::endpoint_type const& sender
+        ( detail::message_socket::endpoint_type const& sender
         , detail::header const& h
         , detail::buffer::const_iterator i
         , detail::buffer::const_iterator e )
     {
+        detail::find_value_request_body request;
+        if ( detail::deserialize( i, e, request ) )
+            return;
 
+        add_current_peer_to_routing_table( h.source_id_, sender );
+
+        auto found = value_store_.find( request.value_to_find_ ); 
+        if ( found == value_store_.end() )
+            send_find_node_response( sender
+                                   , h.random_token_
+                                   , request.value_to_find_ );
+        else
+        {
+            detail::find_value_response_body const response{ found->second };
+            async_send_response( serialize_message( response, h.random_token_ )
+                               , sender );
+        }
     }
 
     /**
