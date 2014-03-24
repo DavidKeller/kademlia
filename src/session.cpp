@@ -56,6 +56,7 @@ namespace kademlia {
 namespace {
 
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
 
 } // anonymous namespace
 
@@ -94,7 +95,19 @@ public:
         ( key_type const& key 
         , data_type const& data
         , save_handler_type handler )
-    { throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; }
+    { 
+        detail::id const hashed_key{ key };
+
+        auto on_lookup_finished = [ this, handler ]
+                ( std::error_code const& failure )
+        { 
+            handler( failure );
+        };
+
+        search_k_closest_nodes( hashed_key, on_lookup_finished );
+
+        throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; 
+    }
 
     /**
      *
@@ -326,9 +339,11 @@ private:
         // Find X closest peers and save
         // their location into the response..
         detail::find_node_response_body response;
+        auto remaining_node = CONCURRENT_FIND_NODE_REQUESTS_COUNT;
         for ( auto i = routing_table_.find( node_to_find_id )
-                , e = routing_table_.end()
-            ; i != e; ++i )
+                 , e = routing_table_.end()
+            ; i != e && remaining_node > 0
+            ; ++i, -- remaining_node )
             response.nodes_.push_back( { i->first, i->second } );
 
         // Now send the response.
@@ -609,6 +624,51 @@ private:
         // And its known peers.
         for ( auto const& node : response.nodes_ )
             routing_table_.push( node.id_, node.endpoint_ );
+    }
+
+    /**
+     *
+     */
+    void
+    send_store_request
+        ( detail::id const& hashed_key
+        , data_type const& data
+        , save_handler_type handler )
+    { 
+        
+    }
+
+    /**
+     *
+     */
+    template< typename OnLookupFinished >
+    void
+    search_k_closest_nodes
+        ( detail::id const& key
+        , OnLookupFinished on_lookup_finished )
+    {
+        auto closest_nodes 
+                = pick_n_closest_nodes( key
+                                      , CONCURRENT_FIND_NODE_REQUESTS_COUNT );
+    }
+
+    /**
+     *
+     */
+    std::vector< detail::routing_table::value_type >
+    pick_n_closest_nodes
+        ( detail::id const& key
+        , std::size_t n )
+    {
+        std::vector< detail::routing_table::value_type > nodes;
+
+        for ( auto i = routing_table_.find( key )
+                 , e = routing_table_.end()
+            ; i != e && n > 0
+            ; ++i, --n )
+            nodes.push_back( *i );
+
+        return nodes;
     }
 
 private:

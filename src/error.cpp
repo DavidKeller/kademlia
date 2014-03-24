@@ -82,6 +82,8 @@ struct kademlia_error_category : std::error_category
                 return "invalid IPv4 address";
             case INVALID_IPV6_ADDRESS:
                 return "invalid IPv6 address";
+            case NO_VALID_NEIGHBOR_REMAINING:
+                return "no valid neighbor remaing";
             default:
                 return "unknown error";
         }
