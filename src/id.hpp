@@ -36,6 +36,8 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <functional>
+#include <algorithm>
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
@@ -125,7 +127,7 @@ public:
      */
     explicit
     id 
-        ( std::string const& value );
+        ( std::string value );
 
     /**
      *  @brief Construct an id by hashing a value.
@@ -134,27 +136,27 @@ public:
     id 
         ( value_to_hash_type const& value );
 
-    blocks_type::reverse_iterator
+    blocks_type::iterator
     begin
         ( void )
-    { return blocks_.rbegin(); }
+    { return blocks_.begin(); }
 
-    blocks_type::reverse_iterator
+    blocks_type::iterator
     end
         ( void )
-    { return blocks_.rend(); }
+    { return blocks_.end(); }
 
-    blocks_type::const_reverse_iterator
+    blocks_type::const_iterator
     begin
         ( void )
         const
-    { return blocks_.rbegin(); }
+    { return blocks_.begin(); }
 
-    blocks_type::const_reverse_iterator
+    blocks_type::const_iterator
     end
         ( void )
         const
-    { return blocks_.rend(); }
+    { return blocks_.end(); }
 
     bool
     operator==
@@ -168,39 +170,43 @@ public:
         const
     { return ! (o == *this); }
 
+    /**
+     *  @brief Return a const reference to a bit of the id.
+     *  @param index The index of the bit (from 0 to BIT_SIZE - 1).
+     *  @note Index 0 is the lowest bit.
+     */
     const_reference
     operator[]
         ( std::size_t index )
         const
-    { return const_reference{ block( index ), mask( index ) }; }
+    { return const_reference{ get_block( index ), get_mask( index ) }; }
 
+    /**
+     *  @brief Return a reference to a bit of the id.
+     *  @param index The index of the bit (from 0 to BIT_SIZE - 1).
+     *  @note Index 0 is the lowest bit.
+     */
     reference
     operator[]
         ( std::size_t index )
-    { return reference{ block( index ), mask( index ) }; }
-
-    bool
-    operator<
-        ( id const& o )
-        const
-    { return blocks_ < o.blocks_; }
+    { return reference{ get_block( index ), get_mask( index ) }; }
 
 private:
     block_type &
-    block
+    get_block
         ( std::size_t index )
     { return blocks_[ index / BIT_PER_BLOCK ]; }
 
     const block_type &
-    block
+    get_block
         ( std::size_t index )
         const
     { return blocks_[ index / BIT_PER_BLOCK ]; }
 
     static block_type 
-    mask
+    get_mask
         ( std::size_t index )
-    { return 1 << index % BIT_PER_BLOCK; }
+    { return 0x80 >> index % BIT_PER_BLOCK; }
 
 private:
     blocks_type blocks_;
@@ -209,10 +215,39 @@ private:
 /**
  *
  */
+inline bool
+operator<
+    ( id const& a
+    , id const& b )
+{ 
+    return std::lexicographical_compare( a.begin(), a.end()
+                                       , b.begin(), b.end() );
+}
+
+/**
+ *
+ */
 std::ostream &
 operator<<
     ( std::ostream & out
     , id const& i );
+
+/**
+ *
+ */
+inline id
+distance
+    ( id const& a
+    , id const& b )
+{
+    id result;
+
+    std::transform( a.begin(), a.end(), b.begin()
+                  , result.begin()
+                  , std::bit_xor< id::block_type >{} );
+
+    return result; 
+}
 
 } // namespace detail
 } // namespace kademlia

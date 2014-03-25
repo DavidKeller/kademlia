@@ -172,13 +172,13 @@ BOOST_AUTO_TEST_CASE( iterator_start_from_the_closest_k_bucket )
     kd::id id3{ "4" };
     BOOST_REQUIRE( rt.push( id3, test_peer3 ) );
     
-    // Ask for id of the last inserted peer,
-    // but expect to hit the first inserted peer on first iteration.
-    auto i = rt.find( id3 );
+    // Ask for id of the closest peer, and expect to see
+    // all of them.
+    auto i = rt.find( id1 );
     
     // This one should be in the close bucket.
     BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer3, i->second );
+    BOOST_REQUIRE_EQUAL( test_peer1, i->second );
     ++ i;
     
     // This one too.
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE( iterator_start_from_the_closest_k_bucket )
     
     // This one in the far bucket.
     BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer1, i->second );
+    BOOST_REQUIRE_EQUAL( test_peer3, i->second );
     ++ i;
     
     BOOST_REQUIRE( i == rt.end() );
@@ -202,23 +202,23 @@ BOOST_AUTO_TEST_CASE( iterator_skip_empty_k_bucket )
     kd::id id1{ "1" };
     BOOST_REQUIRE( rt.push( id1, test_peer1 ) );
     
-    // Skip the next "10".
+    // Skip the next "2".
 
     // End with this one.
     auto test_peer2( create_peer( "192.168.0.2" ) );
     kd::id id2{ "4" };
     BOOST_REQUIRE( rt.push( id2, test_peer2 ) );
     
-    // Ask for id of the last inserted peer,
-    // but expect to hit the first inserted peer on first iteration.
-    auto i = rt.find( id2 );
-    
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer2, i->second );
-    ++ i;
+    // Ask for id of the closest peer, and expect to see
+    // all of them.
+    auto i = rt.find( id1 );
     
     BOOST_REQUIRE( i != rt.end() );
     BOOST_REQUIRE_EQUAL( test_peer1, i->second );
+    ++ i;
+    
+    BOOST_REQUIRE( i != rt.end() );
+    BOOST_REQUIRE_EQUAL( test_peer2, i->second );
     ++ i;
     
     BOOST_REQUIRE( i == rt.end() );

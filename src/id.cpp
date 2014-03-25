@@ -25,6 +25,7 @@
 
 #include "id.hpp"
 
+#include <cctype>
 #include <iostream>
 #include <iterator>
 #include <cassert>
@@ -47,15 +48,16 @@ namespace {
 
 id::block_type
 to_block
-    ( std::string const& value )
+    ( std::string const& s )
 {
-    std::stringstream converter{ value };
+    auto is_id_digit = []( int c ) { return std::isxdigit( c ); };
+    if ( ! std::all_of( s.begin(), s.end(), is_id_digit ) )
+        throw std::system_error{ make_error_code( INVALID_ID ) };
+
+    std::stringstream converter{ s };
 
     std::uint64_t result;
     converter >> std::hex >> result;
-
-    if ( converter.fail() )
-        throw std::system_error{ make_error_code( INVALID_ID ) };
 
     return static_cast< id::block_type >( result );
 }
@@ -70,38 +72,25 @@ id::id
             ( std::numeric_limits< block_type >::min()
             , std::numeric_limits< block_type >::max() ); 
     
-    for ( std::size_t i = 0; i < BLOCKS_COUNT; ++ i )
-        blocks_[i] = distribution( random_engine );
+    std::generate( blocks_.begin(), blocks_.end()
+                 , std::bind( distribution, std::ref( random_engine ) ) );
 }
 
 id::id
-    ( std::string const& s )
-    : blocks_{ }
+    ( std::string s )
 {
-    if ( s.size() > BLOCKS_COUNT * HEX_CHAR_PER_BLOCK )
+    auto CXX11_CONSTEXPR STRING_MAX_SIZE = BLOCKS_COUNT * HEX_CHAR_PER_BLOCK; 
+
+    if ( s.size() > STRING_MAX_SIZE )
         throw std::system_error{ make_error_code( INVALID_ID ) };
 
-    // Parse string from MSB to LSB.
-    std::size_t i = 0, e = s.size();
+    // Insert trailing 0.
+    s.insert( s.begin(), STRING_MAX_SIZE - s.size(), '0' );
 
-    // Check if the first block contains less than HEX_CHAR_PER_BLOCK.
-    std::size_t const first_block_char_count = e % HEX_CHAR_PER_BLOCK; 
-    if ( first_block_char_count != 0 )
-    {
-        auto const value = to_block( s.substr( i, first_block_char_count ) );
-        i += first_block_char_count;
-        auto remaining_char_count = e - i;
-        blocks_[ remaining_char_count / HEX_CHAR_PER_BLOCK ] = value;
-    }
-
-    // Parse any remaining complete block.
-    while ( i != e )
-    {
-        auto const value = to_block( s.substr( i, HEX_CHAR_PER_BLOCK ) );
-        i += HEX_CHAR_PER_BLOCK;
-        auto remaining_char_count = e - i;
-        blocks_[ remaining_char_count / HEX_CHAR_PER_BLOCK ] = value;
-    }
+    assert( s.size() == STRING_MAX_SIZE );
+    for ( std::size_t i = 0; i != BLOCKS_COUNT; ++ i )
+        blocks_[ i ] = to_block( s.substr( i * HEX_CHAR_PER_BLOCK
+                                         , HEX_CHAR_PER_BLOCK ) );
 }
     
 id::id 
@@ -118,11 +107,11 @@ operator<<
     ( std::ostream & out
     , id const& id_to_print )
 {
-    auto i = id_to_print.begin(), e = id_to_print.end();
+    auto e = id_to_print.end();
 
     // Skip leading 0.
-    while ( i != e && *i == 0 )
-        ++ i;
+    auto is_not_0 = []( id::block_type b ) { return b != 0; };
+    auto i = std::find_if( id_to_print.begin(), e, is_not_0 );
 
     auto const previous_flags = out.flags();
 

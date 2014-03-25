@@ -153,7 +153,7 @@ private:
 
 private:
     k_buckets::iterator
-    find_closer_k_bucket
+    find_closest_k_bucket
         ( id const& id_to_find );
     
     friend bool

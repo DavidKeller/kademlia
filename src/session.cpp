@@ -55,8 +55,12 @@ namespace kademlia {
 
 namespace {
 
-CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+// k 
+CXX11_CONSTEXPR std::size_t ROUTING_TABLE_BUCKET_SIZE{ 20 };
+// a
 CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
+
+CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 
 } // anonymous namespace
 
@@ -65,6 +69,18 @@ CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
  */
 class session::impl final
 {
+public:
+    ///
+    struct find_node_candidate
+    {
+        detail::id id_;
+        detail::message_socket::endpoint_type endpoint_;
+        bool is_contacted_;
+    };
+
+    using find_node_candidates = std::map< detail::id
+                                         , find_node_candidate >;
+
 public:
     /**
      *
@@ -647,28 +663,31 @@ private:
         ( detail::id const& key
         , OnLookupFinished on_lookup_finished )
     {
-        auto closest_nodes 
-                = pick_n_closest_nodes( key
-                                      , CONCURRENT_FIND_NODE_REQUESTS_COUNT );
+        auto closest_nodes = std::make_shared< find_node_candidates >
+                ( get_initial_candidates( key ) );
     }
 
     /**
      *
      */
-    std::vector< detail::routing_table::value_type >
-    pick_n_closest_nodes
-        ( detail::id const& key
-        , std::size_t n )
+    find_node_candidates 
+    get_initial_candidates
+        ( detail::id const& key )
     {
-        std::vector< detail::routing_table::value_type > nodes;
+        find_node_candidates candidates;
 
+        std::size_t n = ROUTING_TABLE_BUCKET_SIZE;
         for ( auto i = routing_table_.find( key )
                  , e = routing_table_.end()
             ; i != e && n > 0
             ; ++i, --n )
-            nodes.push_back( *i );
+        {
+            auto const distance = detail::distance( i->first, key );
+            find_node_candidate candidate{ i->first, i->second, false };
+            candidates.emplace( distance, candidate );
+        }
 
-        return nodes;
+        return std::move( candidates );
     }
 
 private:

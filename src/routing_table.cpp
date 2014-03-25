@@ -58,7 +58,7 @@ routing_table::push
     ( id const& peer_id
     , message_socket::endpoint_type const& new_peer )
 {
-    auto const target_k_bucket = find_closer_k_bucket( peer_id );
+    auto const target_k_bucket = find_closest_k_bucket( peer_id );
         
     // If there is room in the bucket.
     if ( target_k_bucket->size() == k_bucket_size_ ) 
@@ -89,7 +89,7 @@ routing_table::remove
     ( id const& peer_id )
 {
     // Find the closer bucket.
-    auto bucket = find_closer_k_bucket( peer_id );
+    auto bucket = find_closest_k_bucket( peer_id );
     
     // Check if the peer is inside.
     auto i = std::find( bucket->begin(), bucket->end(), peer_id );
@@ -109,7 +109,7 @@ routing_table::iterator
 routing_table::find
     ( id const& id_to_find )
 {
-    auto i = find_closer_k_bucket( id_to_find );
+    auto i = find_closest_k_bucket( id_to_find );
 
     // Find the first non empty k_bucket.
     while( i->empty() && i != k_buckets_.begin() )
@@ -119,7 +119,7 @@ routing_table::find
 }
 
 routing_table::k_buckets::iterator
-routing_table::find_closer_k_bucket
+routing_table::find_closest_k_bucket
     ( id const& id_to_find )
 {
     // Start from the far bucket.
