@@ -207,7 +207,8 @@ BOOST_AUTO_TEST_CASE( id_distance_can_be_evaluated )
 
         kd::id id{ random_engine };
 
-        BOOST_REQUIRE_EQUAL( kd::id{}, kd::distance( id, id ) );
+        BOOST_REQUIRE_EQUAL( kd::id(), kd::distance( id, id ) );
+
     }
     {
         kd::id const id1{ "1" };
