@@ -59,6 +59,8 @@ to_block
     std::uint64_t result;
     converter >> std::hex >> result;
 
+    assert( ! converter.fail() && "hexa to decimal conversion failed" );
+
     return static_cast< id::block_type >( result );
 }
 
@@ -87,7 +89,7 @@ id::id
     // Insert trailing 0.
     s.insert( s.begin(), STRING_MAX_SIZE - s.size(), '0' );
 
-    assert( s.size() == STRING_MAX_SIZE );
+    assert( s.size() == STRING_MAX_SIZE && "string padding failed" );
     for ( std::size_t i = 0; i != BLOCKS_COUNT; ++ i )
         blocks_[ i ] = to_block( s.substr( i * HEX_CHAR_PER_BLOCK
                                          , HEX_CHAR_PER_BLOCK ) );
@@ -97,7 +99,7 @@ id::id
     ( value_to_hash_type const& value )
 {
     static_assert( BIT_SIZE == SHA_DIGEST_LENGTH * 8
-                 , "An id can't be constructed from a sha1 result" );
+                 , "an id can't be constructed from a sha1 result" );
     // Use openssl SHA1 here.
     ::SHA1( value.data(), value.size(), blocks_.data() );
 }

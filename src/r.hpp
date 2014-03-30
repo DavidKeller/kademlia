@@ -167,7 +167,7 @@ public:
     operator=
         ( error_type const & error )
     { 
-        assert( error && "error must be initialized" );
+        assert( error && "unexpected success error code" );
         destruct_value_if_present();
         error_ = error;
 

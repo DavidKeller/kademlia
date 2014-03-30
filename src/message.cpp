@@ -171,7 +171,7 @@ serialize
     }
     else
     {
-        assert( endpoint.address().is_v6() );
+        assert( endpoint.address().is_v6() && "unknown IP version" );
         b.push_back( KADEMLIA_ENDPOINT_SERIALIZATION_IPV6 );
         auto const& a = endpoint.address().to_v6().to_bytes();
         b.insert( b.end(), a.begin(), a.end() );
@@ -229,7 +229,8 @@ deserialize
     }
     else
     {
-        assert( protocol == KADEMLIA_ENDPOINT_SERIALIZATION_IPV6 );
+        assert( protocol == KADEMLIA_ENDPOINT_SERIALIZATION_IPV6
+              && "unknown IP version");
 
         boost::asio::ip::address_v6 address;
         auto const failure = deserialize( i, e, address );

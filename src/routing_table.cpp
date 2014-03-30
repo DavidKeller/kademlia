@@ -145,7 +145,8 @@ routing_table::iterator
 routing_table::end
     ( void )
 { 
-    assert( k_buckets_.size() > 0 && "routing_table always contains k_buckets" );
+    assert( k_buckets_.size() > 0 
+          && "routing_table must always contains k_buckets" );
     auto const first_k_bucket = k_buckets_.begin();
     
     return iterator( &k_buckets_, first_k_bucket, first_k_bucket->end() ); 
