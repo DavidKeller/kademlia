@@ -122,23 +122,16 @@ routing_table::k_buckets::iterator
 routing_table::find_closest_k_bucket
     ( id const& id_to_find )
 {
-    // Start from the far bucket.
-    k_buckets::iterator current_k_bucket = k_buckets_.begin();
-    
-    std::size_t bit_index = 0; 
-    std::size_t const last_bit_index = id::BIT_SIZE - 1;
     // Find closest bucket from the peer id.
     // i.e. the index of the first different bit
     // in the id of the new peer vs our id is equal to the
     // index of the closest bucket in the buckets container.
-    while ( bit_index < last_bit_index 
+    std::size_t bit_index = 0; 
+    while ( bit_index < id::BIT_SIZE - 1
           && id_to_find[ bit_index ] == my_id_[ bit_index ] )
-    {
         ++ bit_index;
-        ++ current_k_bucket;
-    }
 
-    return current_k_bucket;
+    return std::next( k_buckets_.begin(), bit_index );
 }
 
 routing_table::iterator
@@ -232,7 +225,7 @@ operator<<
             << "\t}" << std::endl;
     }
 
-    return out;    
+    return out << "}" << std::endl;
 }
 
 } // namespace detail
