@@ -61,6 +61,7 @@ CXX11_CONSTEXPR std::size_t ROUTING_TABLE_BUCKET_SIZE{ 20 };
 CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
 
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
 
 } // anonymous namespace
 
@@ -69,18 +70,6 @@ CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 
  */
 class session::impl final
 {
-public:
-    ///
-    struct find_node_candidate
-    {
-        detail::id id_;
-        detail::message_socket::endpoint_type endpoint_;
-        bool is_contacted_;
-    };
-
-    using find_node_candidates = std::map< detail::id
-                                         , find_node_candidate >;
-
 public:
     /**
      *
@@ -165,6 +154,22 @@ public:
 
         io_service_.post( set_abort_flag );
     }
+
+private:
+    ///
+    struct find_node_candidate
+    {
+        detail::message_socket::endpoint_type endpoint_;
+        bool is_contacted_;
+    };
+
+    struct find_node_candidates
+    {
+        detail::id searched_key_;
+        std::size_t in_flight_requests_count_;
+        std::size_t remaining_candidates_;
+        std::map< detail::id, find_node_candidate > candidates_;
+    };
 
 private:
     /**
@@ -663,32 +668,135 @@ private:
         ( detail::id const& key
         , OnLookupFinished on_lookup_finished )
     {
-        auto closest_nodes = std::make_shared< find_node_candidates >
-                ( get_initial_candidates( key ) );
+        search_k_closest_nodes( get_initial_candidates( key )
+                              , on_lookup_finished );
     }
 
     /**
      *
      */
-    find_node_candidates 
+    template< typename OnLookupFinished >
+    void
+    search_k_closest_nodes
+        ( std::shared_ptr< find_node_candidates > all_candidates
+        , OnLookupFinished on_lookup_finished )
+    {
+        auto candidates = select_candidates( *all_candidates );
+
+        // On message received, process it.
+        auto on_message_received = [ this, all_candidates, on_lookup_finished ]
+            ( detail::message_socket::endpoint_type const& s
+            , detail::header const& h
+            , detail::buffer::const_iterator i
+            , detail::buffer::const_iterator e )
+        { 
+            -- all_candidates->in_flight_requests_count_;
+            handle_find_node_response( s, h, i, e
+                                     , all_candidates
+                                     , on_lookup_finished ); 
+        };
+
+        // On error, retry with another endpoint.
+        auto on_error = [ this, all_candidates, on_lookup_finished ]
+            ( std::error_code const& ) 
+        {
+            // XXX: Current candidate must be flagged as stale.
+            -- all_candidates->in_flight_requests_count_;
+            search_k_closest_nodes( all_candidates
+                                  , on_lookup_finished ); 
+        };
+
+        for ( auto const& candidate : candidates )
+            async_send_request( detail::id{ random_engine_ }
+                              , detail::find_node_request_body{ all_candidates->searched_key_ }
+                              , candidate
+                              , NODE_LOOKUP_TIMEOUT 
+                              , on_message_received
+                              , on_error );
+    }
+
+    void 
+    add_candidate
+        ( find_node_candidates & c 
+        , detail::id const& new_candidate_id 
+        , detail::message_socket::endpoint_type const& new_candidate_endpoint )
+    {
+        auto const distance = detail::distance( new_candidate_id
+                                              , c.searched_key_ );
+        find_node_candidate const candidate{ new_candidate_endpoint, false }; 
+        if ( c.candidates_.emplace( distance, candidate ).second )
+            ++ c.remaining_candidates_;
+    }
+
+    /**
+     *
+     */
+    std::shared_ptr< find_node_candidates >
     get_initial_candidates
         ( detail::id const& key )
     {
-        find_node_candidates candidates;
+        auto c = std::make_shared< find_node_candidates >();
+        c->searched_key_ = key;
 
         std::size_t n = ROUTING_TABLE_BUCKET_SIZE;
         for ( auto i = routing_table_.find( key )
                  , e = routing_table_.end()
             ; i != e && n > 0
             ; ++i, --n )
-        {
-            auto const distance = detail::distance( i->first, key );
-            find_node_candidate candidate{ i->first, i->second, false };
-            candidates.emplace( distance, candidate );
-        }
+            add_candidate( *c, i->first, i->second );
 
-        return std::move( candidates );
+        return std::move( c );
     }
+
+    std::vector< detail::message_socket::endpoint_type >
+    select_candidates
+        ( find_node_candidates & t )
+    {
+        std::vector< detail::message_socket::endpoint_type > selected_candidates;
+
+        for ( auto i = t.candidates_.begin(), e = t.candidates_.end()
+            ; i != e && t.in_flight_requests_count_ < CONCURRENT_FIND_NODE_REQUESTS_COUNT
+            ; ++ i)
+            if ( ! i->second.is_contacted_ )
+            {
+                i->second.is_contacted_ = true;
+                ++ t.in_flight_requests_count_;
+                selected_candidates.push_back( i->second.endpoint_ );
+            }
+
+        return std::move( selected_candidates );
+    }
+
+    /**
+     *
+     */
+    template< typename OnLookupFinished >
+    void
+    handle_find_node_response
+        ( detail::message_socket::endpoint_type const& s
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e
+        , std::shared_ptr< find_node_candidates > all_candidates
+        , OnLookupFinished on_lookup_finished )
+    { 
+        if ( h.type_ != detail::header::FIND_NODE_RESPONSE )
+            return ;
+
+        detail::find_node_response_body response;
+        if ( detail::deserialize( i, e, response ) )
+            return;
+
+        // Add the initial peer to the routing_table.
+        routing_table_.push( h.source_id_, s );
+
+        // XXX Add new peers.
+        for ( auto const& new_peer : response.nodes_ )
+            add_candidate( *all_candidates, new_peer.id_, new_peer.endpoint_ );
+
+        search_k_closest_nodes( all_candidates, on_lookup_finished );
+    }
+
 
 private:
     std::default_random_engine random_engine_;
