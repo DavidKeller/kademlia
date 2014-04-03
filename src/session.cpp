@@ -163,11 +163,11 @@ private:
         bool is_contacted_;
     };
 
+    ///
     struct find_node_candidates
     {
         detail::id searched_key_;
         std::size_t in_flight_requests_count_;
-        std::size_t remaining_candidates_;
         std::map< detail::id, find_node_candidate > candidates_;
     };
 
@@ -724,8 +724,7 @@ private:
         auto const distance = detail::distance( new_candidate_id
                                               , c.searched_key_ );
         find_node_candidate const candidate{ new_candidate_endpoint, false }; 
-        if ( c.candidates_.emplace( distance, candidate ).second )
-            ++ c.remaining_candidates_;
+        c.candidates_.emplace( distance, candidate );
     }
 
     /**
@@ -790,11 +789,21 @@ private:
         // Add the initial peer to the routing_table.
         routing_table_.push( h.source_id_, s );
 
-        // XXX Add new peers.
+        // Keep track of the closest candidate before
+        // new candidate insertion.
+        auto closest_candidate = all_candidates->candidates_.begin();
         for ( auto const& new_peer : response.nodes_ )
             add_candidate( *all_candidates, new_peer.id_, new_peer.endpoint_ );
 
-        search_k_closest_nodes( all_candidates, on_lookup_finished );
+        // If a closer candidate has been found, keep going
+        // asking for closer candidate.
+        if ( closest_candidate != all_candidates->candidates_.begin() )
+            search_k_closest_nodes( all_candidates, on_lookup_finished );
+        else if ( all_candidates->in_flight_requests_count_ == 0 )
+        {
+            // XXX: Search is over candidates contains 
+            // closest nodes.
+        }
     }
 
 
