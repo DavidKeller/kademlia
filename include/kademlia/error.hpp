@@ -56,6 +56,7 @@ enum error_type
     INVALID_IPV6_ADDRESS,
     UNIMPLEMENTED,
     NO_VALID_NEIGHBOR_REMAINING,
+    VALUE_NOT_FOUND,
 };
 
 /**
