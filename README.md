@@ -26,7 +26,7 @@ A session instance has to be created.
 Then a search for the key `"keepsake"` can be performed.
 ```
     // This callback will be called once the load succeed or failed.
-    auto on_load_finished = [&s]( std::error_code const& error
+    auto on_load_finished = [&s]( std::error_code const& failure
                                 , kademlia::session::data_type const& data )
     { 
         if ( failure )
@@ -49,7 +49,7 @@ without problem as `async_load` and `async_save` methods
 are asynchronous.
 ```C++
     // Run the library main loop. It will exit soon as the
-    // on_load_finish callback abort dispatching when called.
+    // on_load_finish callback aborts dispatching.
     s.run();
 }
 ```
@@ -59,6 +59,6 @@ are asynchronous.
 * [Bug tracker](http://redmine.litchis.fr/projects/kademlia)
 
 ## Supported targets
-FreeBSD 9 | Fedora 19 | Ubuntu 13 | Windows 7
+FreeBSD | Fedora | Ubuntu | Windows
 ----------|-----------|-----------|----------
 [![FreeBSD9 build](http://buildbot.litchis.fr/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/builders/freebsd9-x64-builder) | [![Fedora19 build](http://buildbot.litchis.fr/png?builder=fedora19-x64-builder)](http://buildbot.litchis.fr/builders/fedora19-x64-builder) | [![Ubuntu build](http://buildbot.litchis.fr/png?builder=ubuntu13-x64-builder)](http://buildbot.litchis.fr/builders/ubuntu13-x64-builder) | [![Windows 7 build](http://buildbot.litchis.fr/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/builders/win2008r2-x64-builder)
