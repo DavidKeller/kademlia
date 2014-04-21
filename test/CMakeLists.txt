@@ -33,6 +33,9 @@ add_library(test_helpers_common STATIC
     helpers/common.cpp 
     helpers/common.hpp)
 
+set_target_properties(test_helpers_common PROPERTIES 
+    COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
 macro(build_and_run_test source_file)
     get_filename_component(test_name ${source_file} NAME_WE)
     add_executable(${test_name} ${source_file} ${ARGN}) 
@@ -43,7 +46,7 @@ macro(build_and_run_test source_file)
         ${OPENSSL_LIBRARIES} 
         ${CMAKE_THREAD_LIBS_INIT})
     add_dependencies(check ${test_name})
-    add_test(${test_name} ${test_name} ${CMAKE_CURRENT_SOURCE_DIR}/captures)
+    add_test(${test_name} ${test_name})
 endmacro()
 
 build_and_run_test(test_id.cpp)

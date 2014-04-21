@@ -37,13 +37,13 @@ namespace detail = kademlia::detail;
 
 namespace {
 
-filesystem::path captures_directory_;
+filesystem::path const tests_directory_{ TESTS_DIR };
 
-} // namespace
+}
 
 std::string get_capture_path( std::string const & capture_name )
 {
-    return (captures_directory_ / capture_name).string();
+    return ( tests_directory_ / "captures" / capture_name ).string();
 }
 
 std::uint16_t
@@ -85,42 +85,15 @@ get_temporary_listening_port
 bool
 init_unit_test
     ( void )
-{
-    using boost::unit_test::framework::master_test_suite;
-    auto const argc = master_test_suite().argc;
-    auto const argv = master_test_suite().argv;
-    if ( argc != 2 )
-    {
-        std::cerr << "usage: " << argv[ 0 ] 
-                  << " [test args] CAPTURE_DIR" << std::endl;
-        return false;
-    }
-
-    captures_directory_ = argv[ argc - 1 ];
-
-    return true;
-}
+{ return true; }
 
 #else
 
 boost::unit_test::test_suite *
 init_unit_test_suite
-    ( int argc
-    , char* argv[] )
-{ 
-    if ( argc != 2 )
-    {
-        std::ostringstream error;
-        error << "usage: " << argv[ 0 ] 
-              << " [test args] CAPTURE_DIR";
-
-        throw boost::unit_test::framework::setup_error{ error.str() };
-    }
-
-    captures_directory_ = argv[ argc - 1 ];
-
-    return nullptr; 
-}
+    ( int 
+    , char* [] )
+{ return nullptr; }
 
 #endif
 
