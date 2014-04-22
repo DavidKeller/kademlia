@@ -59,6 +59,8 @@ namespace {
 CXX11_CONSTEXPR std::size_t ROUTING_TABLE_BUCKET_SIZE{ 20 };
 // a
 CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
+// c
+CXX11_CONSTEXPR std::size_t REDUNDANT_SAVE_COUNT{ 3 };
 
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
@@ -101,7 +103,10 @@ public:
         , data_type const& data
         , save_handler_type handler )
     { 
-        throw std::system_error{ make_error_code( UNIMPLEMENTED ) }; 
+        auto context = create_store_value_context( detail::id{ key }
+                                                 , data
+                                                 , handler );
+        async_store_value( context );
     }
 
     /**
@@ -112,8 +117,9 @@ public:
         ( key_type const& key
         , load_handler_type handler )
     { 
-        find_value( create_find_value_context( detail::id{ key }
-                                             , handler ) );
+        auto context = create_find_value_context( detail::id{ key }
+                                                , handler );
+        async_find_value( context );
     }
 
     /**
@@ -150,63 +156,133 @@ public:
 
 private:
     ///
-    class find_value_context
+    struct candidate
     {
-    public:
+        detail::id id_;
+        detail::message_socket::endpoint_type endpoint_;
+        enum {
+            STATE_UNKNOWN,
+            STATE_CONTACTED,
+            STATE_RESPONDED,
+            STATE_TIMEOUTED,
+        } state_;
+    };
+
+    ///
+    class context_base
+    {
+    protected:
+        ~context_base
+            ( void )
+        { }
+
         template< typename Iterator >
         explicit
-        find_value_context( detail::id const & searched_key
-                          , Iterator i, Iterator e
-                          , load_handler_type load_handler )
-            : searched_key_{ searched_key }
+        context_base( detail::id const & key
+                    , Iterator i, Iterator e )
+            : key_{ key }
             , in_flight_requests_count_{ 0 }
             , candidates_{}
-            , load_handler_{ std::move( load_handler ) }
         { 
+            // Extract K candidates from the routing table.
             for ( std::size_t n = ROUTING_TABLE_BUCKET_SIZE
                 ; n > 0 && i != e
                 ; ++i, --n )
                 add_candidate( i->first, i->second );
         }
 
+    public:
         void
-        add_candidate
-            ( detail::id const& i
-            , detail::message_socket::endpoint_type const& e )
-        {
-            auto const distance = detail::distance( i, searched_key_ );
-            candidates_.emplace( distance, candidate{ e, false } );
+        flag_candidate_as_valid
+            ( detail::id const& id )
+        { 
+            -- in_flight_requests_count_; 
+
+            auto i = find_candidate( id );
+            assert( i != candidates_.end() 
+                  && i->second.state_ == candidate::STATE_CONTACTED
+                  && "candidate is already known");
+
+            i->second.state_ = candidate::STATE_RESPONDED;
         }
 
         void
-        ack_candidate_response
+        flag_candidate_as_invalid
+            ( detail::id const& id )
+        { 
+            -- in_flight_requests_count_; 
+
+            auto i = find_candidate( id );
+            assert( i != candidates_.end() 
+                  && i->second.state_ == candidate::STATE_CONTACTED
+                  && "candidate is already known" );
+
+            i->second.state_ = candidate::STATE_TIMEOUTED;
+        }
+
+        std::vector< candidate >
+        select_new_closest_candidates
             ( void )
-        { -- in_flight_requests_count_; }
-
-        std::vector< detail::message_socket::endpoint_type >
-        select_n_candidates
-            ( std::size_t candidates_max_count )
         {
-            std::vector< detail::message_socket::endpoint_type > candidates;
+            std::vector< candidate > candidates;
 
+            // Iterate over all candidates until we picked
+            // candidates_max_count not-contacted candidates.
             for ( auto i = candidates_.begin(), e = candidates_.end()
-                ; i != e && in_flight_requests_count_ < candidates_max_count 
+                ; i != e && in_flight_requests_count_ < CONCURRENT_FIND_NODE_REQUESTS_COUNT 
                 ; ++ i)
-                if ( ! i->second.is_contacted_ )
+            {
+                if ( i->second.state_ == candidate::STATE_UNKNOWN )
                 {
-                    i->second.is_contacted_ = true;
+                    i->second.state_ = candidate::STATE_CONTACTED;
                     ++ in_flight_requests_count_;
-                    candidates.push_back( i->second.endpoint_ );
+                    candidates.push_back( i->second );
                 }
+            }
 
             return std::move( candidates );
         }
 
-        detail::message_socket::endpoint_type
-        get_closest_candidate
+        std::vector< candidate >
+        select_closest_valid_candidates
             ( void )
-            const
-        { return candidates_.begin()->second.endpoint_; }
+        {
+            std::vector< candidate > candidates;
+
+            // Iterate over all candidates until we picked
+            // candidates_max_count not-contacted candidates.
+            for ( auto i = candidates_.begin(), e = candidates_.end()
+                ; i != e && candidates.size() < REDUNDANT_SAVE_COUNT 
+                ; ++ i)
+            {
+                if ( i->second.state_ == candidate::STATE_RESPONDED )
+                    candidates.push_back( i->second );
+            }
+
+            return std::move( candidates );
+        }
+
+        /**
+         *
+         */
+        template< typename Candidates >
+        bool
+        are_these_candidates_closest
+            ( Candidates const& candidates )
+        {
+            // Keep track of the closest candidate before
+            // new candidate insertion.
+            auto closest_candidate = candidates_.begin();
+
+            for ( auto const& new_candidate : candidates )
+                add_candidate( new_candidate.id_, new_candidate.endpoint_ );
+
+            // If no closest candidate has been found.
+            if ( closest_candidate == candidates_.begin() )
+                return false;
+
+            return true;
+        }
 
         bool
         have_all_requests_completed
@@ -214,34 +290,112 @@ private:
             const
         { return in_flight_requests_count_ == 0; }
         
-        detail::id
-        get_searched_key
+        detail::id const&
+        get_key
             ( void )
             const
-        { return searched_key_; }
-
-        void
-        forward_to_client
-            ( data_type const& data )
-        { load_handler_( std::error_code{}, data ); }
-
-        void
-        forward_to_client
-            ( std::error_code const& failure )
-        { load_handler_( failure, data_type{} ); }
+        { return key_; }
 
     private:
-        struct candidate
+        ///
+        using candidates_type = std::map< detail::id, candidate >;
+
+    private:
+        void
+        add_candidate
+            ( detail::id const& id
+            , detail::message_socket::endpoint_type const& e )
         {
-            detail::message_socket::endpoint_type endpoint_;
-            bool is_contacted_;
-        };
+            auto const distance = detail::distance( id, key_ );
+            candidates_.emplace( distance, candidate{ id, e } );
+        }
+
+        candidates_type::iterator
+        find_candidate
+            ( detail::id const& id )
+        {
+            auto const distance = detail::distance( id, key_ );
+            return candidates_.find( distance );
+        }
 
     private:
-        detail::id searched_key_;
+        detail::id key_;
         std::size_t in_flight_requests_count_;
-        std::map< detail::id, candidate > candidates_;
+        candidates_type candidates_;
+    };
+
+    ///
+    class find_value_context
+            : public context_base
+    {
+    public:
+        template< typename Iterator >
+        explicit
+        find_value_context( detail::id const & searched_key
+                          , Iterator i, Iterator e
+                          , load_handler_type load_handler )
+            : context_base( searched_key, i, e )
+            , load_handler_{ std::move( load_handler ) }
+            , is_finished_{}
+        { }
+
+        void
+        notify_caller
+            ( data_type const& data )
+        { 
+            load_handler_( std::error_code{}, data ); 
+            is_finished_ = true;
+        }
+
+        void
+        notify_caller
+            ( std::error_code const& failure )
+        { 
+            load_handler_( failure, data_type{} ); 
+            is_finished_ = true;
+        }
+    
+        bool
+        is_caller_notified
+            ( void )
+            const
+        { return is_finished_; }
+
+    private:
         load_handler_type load_handler_;
+        bool is_finished_;
+    };
+
+    ///
+    class store_value_context
+            : public context_base
+    {
+    public:
+        template< typename Iterator >
+        explicit
+        store_value_context( detail::id const & key
+                          , data_type const& data
+                          , Iterator i, Iterator e
+                          , save_handler_type save_handler )
+            : context_base{ key, i, e }
+            , data_{ data }
+            , save_handler_{ std::move( save_handler ) }
+        { }
+
+        void
+        notify_caller
+            ( std::error_code const& failure )
+        { save_handler_( failure ); }
+
+        data_type const&
+        get_data
+            ( void )
+            const
+        { return data_; }
+
+    private:
+        data_type data_;
+        save_handler_type save_handler_;
     };
 
 private:
@@ -255,7 +409,7 @@ private:
         io_service_.reset();
 
         start_receive_on_each_subnet();
-        discover_neighbors();
+        async_discover_neighbors();
     }
 
     /**
@@ -294,6 +448,33 @@ private:
         }
 
         throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
+    }
+
+    /**
+     *
+     */
+    std::shared_ptr< find_value_context >
+    create_find_value_context 
+        ( detail::id const& key
+        , load_handler_type load_handler )
+    {
+        auto i = routing_table_.find( key ), e = routing_table_.end();
+        return std::make_shared< find_value_context >( key, i, e
+                                                     , load_handler );
+    }
+
+    /**
+     *
+     */
+    std::shared_ptr< store_value_context >
+    create_store_value_context 
+        ( detail::id const& key
+        , data_type const& data
+        , save_handler_type save_handler )
+    {
+        auto i = routing_table_.find( key ), e = routing_table_.end();
+        return std::make_shared< store_value_context >( key, data, i, e
+                                                     , save_handler );
     }
 
     /**
@@ -628,6 +809,28 @@ private:
     /**
      *
      */
+    template< typename Request >
+    void
+    async_send_request
+        ( detail::id const& response_id
+        , Request const& request
+        , detail::message_socket::endpoint_type const& e )
+    { 
+        // Generate the request buffer.
+        auto message = serialize_message( request, response_id );
+
+        // This lamba will keep the request message alive.
+        auto on_request_sent = [ message ] 
+            ( std::error_code const& ) 
+        { };
+
+        // Serialize the request and send it.
+        get_subnet_for( e ).async_send( *message, e, on_request_sent );
+    }
+
+    /**
+     *
+     */
     void
     async_send_response
         ( std::shared_ptr< detail::buffer > const& response
@@ -642,12 +845,11 @@ private:
         get_subnet_for( e ).async_send( *response, e, on_response_sent );
     }
 
-
     /**
      *
      */
     void
-    discover_neighbors
+    async_discover_neighbors
         ( void )
     {
         // Initial peer should know our neighbors, hence ask 
@@ -655,14 +857,14 @@ private:
         auto endoints_to_query = std::make_shared< detail::resolved_endpoints >
                 ( detail::resolve_endpoint( io_service_, initial_peer_ ) );
 
-        search_ourselves( std::move( endoints_to_query ) );
+        async_search_ourselves( std::move( endoints_to_query ) );
     }
 
     /**
      *
      */
     void
-    search_ourselves
+    async_search_ourselves
         ( std::shared_ptr< detail::resolved_endpoints > endpoints_to_query )
     { 
         if ( endpoints_to_query->empty() )
@@ -686,7 +888,7 @@ private:
         // On error, retry with another endpoint.
         auto on_error = [ this, endpoints_to_query ]
             ( std::error_code const& ) 
-        { search_ourselves( endpoints_to_query ); };
+        { async_search_ourselves( endpoints_to_query ); };
 
         async_send_request( detail::id{ random_engine_ }
                           , detail::find_node_request_body{ my_id_ }
@@ -725,72 +927,120 @@ private:
      *
      */
     void
-    send_store_request
-        ( detail::id const& hashed_key
-        , data_type const& data
-        , save_handler_type handler )
+    async_store_value
+        ( std::shared_ptr< store_value_context > context )
     { 
-        
+        detail::find_node_request_body const request{ context->get_key() };
+
+        for ( auto const& c : context->select_new_closest_candidates() )
+            async_send_find_node_request( request, c, context ); 
     }
 
     /**
      *
      */
     void
-    find_value
-        ( std::shared_ptr< find_value_context > context )
-    {
-        auto candidates = context->select_n_candidates( CONCURRENT_FIND_NODE_REQUESTS_COUNT );
-
+    async_send_find_node_request
+        ( detail::find_node_request_body const& request
+        , candidate const& current_candidate
+        , std::shared_ptr< store_value_context > context )
+    { 
         // On message received, process it.
-        auto on_message_received = [ this, context ]
+        auto on_message_received = [ this, context, current_candidate ]
             ( detail::message_socket::endpoint_type const& s
             , detail::header const& h
             , detail::buffer::const_iterator i
             , detail::buffer::const_iterator e )
         { 
-            context->ack_candidate_response();
+            context->flag_candidate_as_valid( current_candidate.id_ );
+
             handle_find_node_response( s, h, i, e, context );
         };
 
         // On error, retry with another endpoint.
-        auto on_error = [ this, context ]
+        auto on_error = [ this, context, current_candidate ]
             ( std::error_code const& ) 
         {
-            // XXX: Current candidate must be flagged as stale.
-            context->ack_candidate_response();
-            find_value( context ); 
+            // XXX: Can also flag candidate as invalid is
+            // present in routing table.
+            context->flag_candidate_as_invalid( current_candidate.id_ );
+
+            // If no more requests are in flight
+            // we know the closest nodes hence ask
+            // them to store the value.
+            if ( context->have_all_requests_completed() )
+                send_store_requests( context );
         };
 
-        detail::find_node_request_body request{ context->get_searched_key() };
-
-        for ( auto const& candidate : candidates )
-            async_send_request( detail::id{ random_engine_ }
-                              , request
-                              , candidate
-                              , NODE_LOOKUP_TIMEOUT 
-                              , on_message_received
-                              , on_error );
-    }
-
-    /**
-     *
-     */
-    std::shared_ptr< find_value_context >
-    create_find_value_context 
-        ( detail::id const& key
-        , load_handler_type load_handler )
-    {
-        auto i = routing_table_.find( key ), e = routing_table_.end();
-        return std::make_shared< find_value_context >( key, i, e
-                                                     , load_handler );
+        async_send_request( detail::id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_
+                          , NODE_LOOKUP_TIMEOUT 
+                          , on_message_received
+                          , on_error );
     }
 
     /**
      *
      */
     void
-    handle_find_node_response
+    async_find_value
+        ( std::shared_ptr< find_value_context > context )
+    {
+        detail::find_value_request_body const request{ context->get_key() };
+
+        for ( auto const& c : context->select_new_closest_candidates() )
+            async_send_find_value_request( request, c, context );
+    }
+
+    /**
+     *
+     */
+    void
+    async_send_find_value_request
+        ( detail::find_value_request_body const& request
+        , candidate const& current_candidate
+        , std::shared_ptr< find_value_context > context )
+    {
+        // On message received, process it.
+        auto on_message_received = [ this, context, current_candidate ]
+            ( detail::message_socket::endpoint_type const& s
+            , detail::header const& h
+            , detail::buffer::const_iterator i
+            , detail::buffer::const_iterator e )
+        { 
+            if ( context->is_caller_notified() )
+                return;
+
+            context->flag_candidate_as_valid( current_candidate.id_ );
+            handle_find_value_response( s, h, i, e, context );
+        };
+
+        // On error, retry with another endpoint.
+        auto on_error = [ this, context, current_candidate ]
+            ( std::error_code const& ) 
+        {
+            if ( context->is_caller_notified() )
+                return;
+
+            // XXX: Current current_candidate must be flagged as stale.
+            context->flag_candidate_as_invalid( current_candidate.id_ );
+            async_find_value( context ); 
+        };
+
+        async_send_request( detail::id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_
+                          , NODE_LOOKUP_TIMEOUT 
+                          , on_message_received
+                          , on_error );
+    }
+
+    /**
+     *
+     */
+    void
+    handle_find_value_response
         ( detail::message_socket::endpoint_type const& s
         , detail::header const& h
         , detail::buffer::const_iterator i
@@ -819,18 +1069,11 @@ private:
         if ( detail::deserialize( i, e, response ) )
             return;
 
-        // Keep track of the closest candidate before
-        // new candidate insertion.
-        auto closest_candidate = context->get_closest_candidate();
-        for ( auto const& new_peer : response.nodes_ )
-            context->add_candidate( new_peer.id_, new_peer.endpoint_ );
-
-        // If a closer candidate has been found, keep going
-        // asking for closer candidate.
-        if ( closest_candidate != context->get_closest_candidate() )
-            find_value( context );
-        else if ( context->have_all_requests_completed() )
-            context->forward_to_client( make_error_code( VALUE_NOT_FOUND ) );
+        if ( context->are_these_candidates_closest( response.nodes_ ) )
+            async_find_value( context );
+        
+        if ( context->have_all_requests_completed() )
+            context->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
     }
 
     /**
@@ -846,9 +1089,62 @@ private:
         if ( detail::deserialize( i, e, response ) )
             return;
 
-        context->forward_to_client( response.data_ );
+        context->notify_caller( response.data_ );
     }
 
+    /**
+     *
+     */
+    void
+    handle_find_node_response
+        ( detail::message_socket::endpoint_type const& s
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e
+        , std::shared_ptr< store_value_context > context )
+    { 
+        // Add the initial peer to the routing_table.
+        add_current_peer_to_routing_table( h.source_id_, s );
+
+        detail::find_node_response_body response;
+        if ( detail::deserialize( i, e, response ) )
+            return;
+
+        // If new candidate have been discovered, ask them.
+        if ( context->are_these_candidates_closest( response.nodes_ ) )
+            async_store_value( context );
+        // Else if all candidates have responded, 
+        // we know the closest nodes hence ask them
+        // to store the value.
+        else if ( context->have_all_requests_completed() )
+            send_store_requests( context );
+    }
+    
+    /**
+     *
+     */
+    void
+    send_store_requests
+        ( std::shared_ptr< store_value_context > context )
+    { 
+        for ( auto c : context->select_closest_valid_candidates() )
+            send_store_request( c, context );
+    }
+
+    /**
+     *
+     */
+    void
+    send_store_request
+        ( candidate const& current_candidate
+        , std::shared_ptr< store_value_context > context )
+    {
+        detail::store_value_request_body const request{ context->get_key()
+                                                      , context->get_data() };
+        async_send_request( detail::id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_ );
+    }
 
 private:
     std::default_random_engine random_engine_;
