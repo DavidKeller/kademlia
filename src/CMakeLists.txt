@@ -30,20 +30,23 @@ set(kademlia_sources
     endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
     error.cpp
-    id.hpp
-    id.cpp
-    subnet.hpp
-    routing_table.hpp
-    routing_table.cpp
-    response_dispatcher.hpp
-    response_dispatcher.cpp
-    timer.hpp
-    timer.cpp
-    message.hpp
-    message.cpp
-    message_socket.hpp
-    message_socket.cpp
     boost_to_std_error.hpp
+    id.cpp
+    id.hpp
+    message.cpp
+    message.hpp
+    message_socket.cpp
+    message_socket.hpp
+    response_dispatcher.cpp
+    response_dispatcher.hpp
+    routing_table.cpp
+    routing_table.hpp
+    value_context.hpp
+    find_value_context.hpp
+    store_value_context.hpp
+    subnet.hpp
+    timer.cpp
+    timer.hpp
     value_store.hpp
     buffer.hpp)
 

@@ -50,6 +50,9 @@
 #include "response_dispatcher.hpp"
 #include "timer.hpp"
 #include "value_store.hpp"
+#include "candidate.hpp"
+#include "find_value_context.hpp"
+#include "store_value_context.hpp"
 
 namespace kademlia {
 
@@ -62,7 +65,9 @@ CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
 // c
 CXX11_CONSTEXPR std::size_t REDUNDANT_SAVE_COUNT{ 3 };
 
+//
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+//
 CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
 
 } // anonymous namespace
@@ -156,247 +161,10 @@ public:
 
 private:
     ///
-    struct candidate
-    {
-        detail::id id_;
-        detail::message_socket::endpoint_type endpoint_;
-        enum {
-            STATE_UNKNOWN,
-            STATE_CONTACTED,
-            STATE_RESPONDED,
-            STATE_TIMEOUTED,
-        } state_;
-    };
+    using find_value_context = detail::find_value_context< load_handler_type, data_type >;
 
     ///
-    class context_base
-    {
-    protected:
-        ~context_base
-            ( void )
-        { }
-
-        template< typename Iterator >
-        explicit
-        context_base( detail::id const & key
-                    , Iterator i, Iterator e )
-            : key_{ key }
-            , in_flight_requests_count_{ 0 }
-            , candidates_{}
-        { 
-            // Extract K candidates from the routing table.
-            for ( std::size_t n = ROUTING_TABLE_BUCKET_SIZE
-                ; n > 0 && i != e
-                ; ++i, --n )
-                add_candidate( i->first, i->second );
-        }
-
-    public:
-        void
-        flag_candidate_as_valid
-            ( detail::id const& id )
-        { 
-            -- in_flight_requests_count_; 
-
-            auto i = find_candidate( id );
-            assert( i != candidates_.end() 
-                  && i->second.state_ == candidate::STATE_CONTACTED
-                  && "candidate is already known");
-
-            i->second.state_ = candidate::STATE_RESPONDED;
-        }
-
-        void
-        flag_candidate_as_invalid
-            ( detail::id const& id )
-        { 
-            -- in_flight_requests_count_; 
-
-            auto i = find_candidate( id );
-            assert( i != candidates_.end() 
-                  && i->second.state_ == candidate::STATE_CONTACTED
-                  && "candidate is already known" );
-
-            i->second.state_ = candidate::STATE_TIMEOUTED;
-        }
-
-        std::vector< candidate >
-        select_new_closest_candidates
-            ( void )
-        {
-            std::vector< candidate > candidates;
-
-            // Iterate over all candidates until we picked
-            // candidates_max_count not-contacted candidates.
-            for ( auto i = candidates_.begin(), e = candidates_.end()
-                ; i != e && in_flight_requests_count_ < CONCURRENT_FIND_NODE_REQUESTS_COUNT 
-                ; ++ i)
-            {
-                if ( i->second.state_ == candidate::STATE_UNKNOWN )
-                {
-                    i->second.state_ = candidate::STATE_CONTACTED;
-                    ++ in_flight_requests_count_;
-                    candidates.push_back( i->second );
-                }
-            }
-
-            return std::move( candidates );
-        }
-
-        std::vector< candidate >
-        select_closest_valid_candidates
-            ( void )
-        {
-            std::vector< candidate > candidates;
-
-            // Iterate over all candidates until we picked
-            // candidates_max_count not-contacted candidates.
-            for ( auto i = candidates_.begin(), e = candidates_.end()
-                ; i != e && candidates.size() < REDUNDANT_SAVE_COUNT 
-                ; ++ i)
-            {
-                if ( i->second.state_ == candidate::STATE_RESPONDED )
-                    candidates.push_back( i->second );
-            }
-
-            return std::move( candidates );
-        }
-
-        /**
-         *
-         */
-        template< typename Candidates >
-        bool
-        are_these_candidates_closest
-            ( Candidates const& candidates )
-        {
-            // Keep track of the closest candidate before
-            // new candidate insertion.
-            auto closest_candidate = candidates_.begin();
-
-            for ( auto const& new_candidate : candidates )
-                add_candidate( new_candidate.id_, new_candidate.endpoint_ );
-
-            // If no closest candidate has been found.
-            if ( closest_candidate == candidates_.begin() )
-                return false;
-
-            return true;
-        }
-
-        bool
-        have_all_requests_completed
-            ( void )
-            const
-        { return in_flight_requests_count_ == 0; }
-        
-        detail::id const&
-        get_key
-            ( void )
-            const
-        { return key_; }
-
-    private:
-        ///
-        using candidates_type = std::map< detail::id, candidate >;
-
-    private:
-        void
-        add_candidate
-            ( detail::id const& id
-            , detail::message_socket::endpoint_type const& e )
-        {
-            auto const distance = detail::distance( id, key_ );
-            candidates_.emplace( distance, candidate{ id, e } );
-        }
-
-        candidates_type::iterator
-        find_candidate
-            ( detail::id const& id )
-        {
-            auto const distance = detail::distance( id, key_ );
-            return candidates_.find( distance );
-        }
-
-    private:
-        detail::id key_;
-        std::size_t in_flight_requests_count_;
-        candidates_type candidates_;
-    };
-
-    ///
-    class find_value_context
-            : public context_base
-    {
-    public:
-        template< typename Iterator >
-        explicit
-        find_value_context( detail::id const & searched_key
-                          , Iterator i, Iterator e
-                          , load_handler_type load_handler )
-            : context_base( searched_key, i, e )
-            , load_handler_{ std::move( load_handler ) }
-            , is_finished_{}
-        { }
-
-        void
-        notify_caller
-            ( data_type const& data )
-        { 
-            load_handler_( std::error_code{}, data ); 
-            is_finished_ = true;
-        }
-
-        void
-        notify_caller
-            ( std::error_code const& failure )
-        { 
-            load_handler_( failure, data_type{} ); 
-            is_finished_ = true;
-        }
-    
-        bool
-        is_caller_notified
-            ( void )
-            const
-        { return is_finished_; }
-
-    private:
-        load_handler_type load_handler_;
-        bool is_finished_;
-    };
-
-    ///
-    class store_value_context
-            : public context_base
-    {
-    public:
-        template< typename Iterator >
-        explicit
-        store_value_context( detail::id const & key
-                          , data_type const& data
-                          , Iterator i, Iterator e
-                          , save_handler_type save_handler )
-            : context_base{ key, i, e }
-            , data_{ data }
-            , save_handler_{ std::move( save_handler ) }
-        { }
-
-        void
-        notify_caller
-            ( std::error_code const& failure )
-        { save_handler_( failure ); }
-
-        data_type const&
-        get_data
-            ( void )
-            const
-        { return data_; }
-
-    private:
-        data_type data_;
-        save_handler_type save_handler_;
-    };
+    using store_value_context = detail::store_value_context< save_handler_type, data_type >;
 
 private:
     /**
@@ -932,7 +700,7 @@ private:
     { 
         detail::find_node_request_body const request{ context->get_key() };
 
-        for ( auto const& c : context->select_new_closest_candidates() )
+        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_NODE_REQUESTS_COUNT ) )
             async_send_find_node_request( request, c, context ); 
     }
 
@@ -942,7 +710,7 @@ private:
     void
     async_send_find_node_request
         ( detail::find_node_request_body const& request
-        , candidate const& current_candidate
+        , detail::candidate const& current_candidate
         , std::shared_ptr< store_value_context > context )
     { 
         // On message received, process it.
@@ -989,7 +757,7 @@ private:
     {
         detail::find_value_request_body const request{ context->get_key() };
 
-        for ( auto const& c : context->select_new_closest_candidates() )
+        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_NODE_REQUESTS_COUNT ) )
             async_send_find_value_request( request, c, context );
     }
 
@@ -999,7 +767,7 @@ private:
     void
     async_send_find_value_request
         ( detail::find_value_request_body const& request
-        , candidate const& current_candidate
+        , detail::candidate const& current_candidate
         , std::shared_ptr< find_value_context > context )
     {
         // On message received, process it.
@@ -1127,7 +895,7 @@ private:
     send_store_requests
         ( std::shared_ptr< store_value_context > context )
     { 
-        for ( auto c : context->select_closest_valid_candidates() )
+        for ( auto c : context->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT ) )
             send_store_request( c, context );
     }
 
@@ -1136,7 +904,7 @@ private:
      */
     void
     send_store_request
-        ( candidate const& current_candidate
+        ( detail::candidate const& current_candidate
         , std::shared_ptr< store_value_context > context )
     {
         detail::store_value_request_body const request{ context->get_key()
