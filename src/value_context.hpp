@@ -48,9 +48,9 @@ protected:
     { }
 
     template< typename Iterator >
-    explicit
-    value_context( id const & key
-                , Iterator i, Iterator e )
+    value_context
+        ( id const & key
+        , Iterator i, Iterator e )
         : key_{ key }
         , in_flight_requests_count_{ 0 }
         , candidates_{}
@@ -64,13 +64,12 @@ public:
     flag_candidate_as_valid
         ( id const& candidate_id )
     { 
-        -- in_flight_requests_count_; 
-
         auto i = find_candidate( candidate_id );
-        assert( i != candidates_.end() 
-              && i->second.state_ == candidate::STATE_CONTACTED
-              && "candidate is already known");
+        if ( i == candidates_.end() 
+           && i->second.state_ == candidate::STATE_CONTACTED )
+            return;
 
+        -- in_flight_requests_count_; 
         i->second.state_ = candidate::STATE_RESPONDED;
     }
 
@@ -78,13 +77,12 @@ public:
     flag_candidate_as_invalid
         ( id const& candidate_id )
     { 
-        -- in_flight_requests_count_; 
-
         auto i = find_candidate( candidate_id );
-        assert( i != candidates_.end() 
-              && i->second.state_ == candidate::STATE_CONTACTED
-              && "candidate is already known" );
+        if ( i == candidates_.end() 
+           && i->second.state_ == candidate::STATE_CONTACTED )
+            return;
 
+        -- in_flight_requests_count_; 
         i->second.state_ = candidate::STATE_TIMEOUTED;
     }
 
