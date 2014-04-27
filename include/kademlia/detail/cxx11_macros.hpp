@@ -27,19 +27,16 @@
 #define KADEMLIA_DETAIL_CXX11_MACROS_HPP
 
 #ifdef _MSC_VER
-#   define CXX11_FINAL
 #   define CXX11_CONSTEXPR const
 #   define CXX11_NOEXCEPT throw()
 #endif
 
 #ifdef __clang__
-#   define CXX11_FINAL final
 #   define CXX11_CONSTEXPR constexpr
 #   define CXX11_NOEXCEPT noexcept
 #endif
 
 #ifdef __GNUC__
-#   define CXX11_FINAL final
 #   define CXX11_CONSTEXPR constexpr
 #   define CXX11_NOEXCEPT noexcept
 #endif

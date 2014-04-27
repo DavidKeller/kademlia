@@ -127,7 +127,7 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     std::error_code
     run
-            ( void );
+        ( void );
 
     /**
      *
@@ -135,7 +135,7 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     void
     abort
-            ( void );
+        ( void );
 
 private:
     //

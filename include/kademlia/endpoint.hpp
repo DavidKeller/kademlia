@@ -43,7 +43,7 @@ namespace kademlia {
 /**
  *
  */
-class endpoint CXX11_FINAL
+class endpoint final
 {
 public:
     ///
