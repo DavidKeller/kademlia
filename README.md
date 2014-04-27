@@ -1,6 +1,8 @@
 # Description
 C++11 distributed hash table library
 
+This software is experimental and under active development.
+
 ## Example
 
 The library is so simple that one light header is enough.
