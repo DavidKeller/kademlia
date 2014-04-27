@@ -5,7 +5,7 @@ This software is experimental and under active development.
 
 ## Example
 
-The library is so simple that one light header is enough.
+The library is so simple that one class header is enough to include.
 ```C++
 #include <kademlia/session.hpp>
 ```
@@ -25,11 +25,11 @@ A session instance has to be created.
     kademlia::session s{ initial_peer };
 ```
 
-Then a search for the key `"keepsake"` can be performed.
+And a callback to receive the data.
 ```
     // This callback will be called once the load succeed or failed.
-    auto on_load_finished = [&s]( std::error_code const& failure
-                                , kademlia::session::data_type const& data )
+    auto on_load = [&s]( std::error_code const& failure
+                       , kademlia::session::data_type const& data )
     { 
         if ( failure )
             std::cerr << failure.message() << std::endl;
@@ -40,9 +40,12 @@ Then a search for the key `"keepsake"` can be performed.
         // Stop running loop, we won't load anything else in this example.
         s.abort();
     };
+```
     
+Then a search for the key `"keepsake"` can be performed.
+```
     // Schedule an asynchronous load.
-    s.async_load( "keepsake", on_load_finished );
+    s.async_load( "keepsake", on_load );
 ```
 
 The library event loop can run in a dedicated thread but for
@@ -54,6 +57,26 @@ are asynchronous.
     // on_load_finish callback aborts dispatching.
     s.run();
 }
+```
+
+Saving a data into the map is similar:
+```
+    // [...]
+
+    // Copy data from your source.
+    kademlia::session::data_type data;
+    std::copy( ?.begin(), ?.end(), std::back_inserter( data ) );
+
+    // Create the handler.
+    auto on_save = []( std::error_code const& failure )
+    { 
+        if ( failure ) std::cerr << failure.message() << std::endl;
+    }
+     
+    // And perform the saving.
+    s.async_save( "key", data, on_save );
+
+    // [...]
 ```
 
 # Development
