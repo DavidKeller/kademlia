@@ -897,6 +897,8 @@ private:
     { 
         for ( auto c : context->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT ) )
             send_store_request( c, context );
+
+        context->notify_caller( std::error_code{} );
     }
 
     /**
