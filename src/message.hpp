@@ -311,7 +311,6 @@ deserialize
     , buffer::const_iterator e
     , store_value_request_body & body );
 
-
 } // namespace detail
 } // namespace kademlia
 

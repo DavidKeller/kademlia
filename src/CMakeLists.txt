@@ -35,6 +35,8 @@ set(kademlia_sources
     id.hpp
     message.cpp
     message.hpp
+    message_serializer.cpp
+    message_serializer.hpp
     message_socket.cpp
     message_socket.hpp
     response_dispatcher.cpp
@@ -44,6 +46,8 @@ set(kademlia_sources
     value_context.hpp
     find_value_context.hpp
     store_value_context.hpp
+    net.cpp
+    net.hpp
     subnet.hpp
     timer.cpp
     timer.hpp

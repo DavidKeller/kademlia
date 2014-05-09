@@ -30,12 +30,8 @@
 
 #include <kademlia/session.hpp>
 
-#include <list>
-#include <map>
-#include <iostream>
 #include <algorithm>
 #include <stdexcept>
-#include <thread>
 #include <chrono>
 #include <random>
 #include <memory>
@@ -45,10 +41,8 @@
 
 #include "message_socket.hpp"
 #include "message.hpp"
+#include "net.hpp"
 #include "routing_table.hpp"
-#include "subnet.hpp"
-#include "response_dispatcher.hpp"
-#include "timer.hpp"
 #include "value_store.hpp"
 #include "candidate.hpp"
 #include "find_value_context.hpp"
@@ -89,12 +83,15 @@ public:
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
             , io_service_{}
+            , net_{ my_id_
+                  , std::bind( &impl::handle_new_request, this
+                             , std::placeholders::_1
+                             , std::placeholders::_2
+                             , std::placeholders::_3
+                             , std::placeholders::_4 )
+                  , io_service_, listen_on_ipv4, listen_on_ipv6 }
             , initial_peer_{ initial_peer }
-            , ipv4_subnet_{ create_ipv4_subnet( io_service_, listen_on_ipv4 ) }
-            , ipv6_subnet_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
             , routing_table_{ my_id_ }
-            , response_dispatcher_{}
-            , timer_{ io_service_ }
             , value_store_{}
             , main_failure_{}
     { }
@@ -176,46 +173,8 @@ private:
     {
         io_service_.reset();
 
-        start_receive_on_each_subnet();
+        net_.init();
         async_discover_neighbors();
-    }
-
-    /**
-     *
-     */
-    static detail::subnet
-    create_ipv4_subnet
-        ( boost::asio::io_service & io_service
-        , endpoint const& ipv4_endpoint )
-    {
-        auto endpoints = detail::resolve_endpoint( io_service, ipv4_endpoint );
-
-        for ( auto const& i : endpoints )
-        {
-            if ( i.address().is_v4() )
-                return detail::subnet{ detail::create_socket( io_service, i ) };
-        }
-
-        throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
-    }
-
-    /**
-     *
-     */
-    static detail::subnet
-    create_ipv6_subnet
-        ( boost::asio::io_service & io_service
-        , endpoint const& ipv6_endpoint )
-    {
-        auto endpoints = detail::resolve_endpoint( io_service, ipv6_endpoint );
-
-        for ( auto const& i : endpoints )
-        {
-            if ( i.address().is_v6() )
-                return detail::subnet{ detail::create_socket( io_service, i ) };
-        }
-
-        throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
     }
 
     /**
@@ -249,52 +208,12 @@ private:
      *
      */
     void
-    start_receive_on_each_subnet
-        ( void )
-    {
-        schedule_receive_on_subnet( ipv4_subnet_ );
-        schedule_receive_on_subnet( ipv6_subnet_ );
-    }
-
-    /**
-     *
-     */
-    void
-    schedule_receive_on_subnet
-        ( detail::subnet & current_subnet )
-    {
-        auto on_new_message = [ this, &current_subnet ]
-            ( std::error_code const& failure
-            , detail::message_socket::endpoint_type const& sender
-            , detail::buffer const& message )
-        {
-            if ( failure )
-                main_failure_ = failure;
-            else
-            {
-                handle_new_message( sender, message );
-                schedule_receive_on_subnet( current_subnet );
-            }
-        };
-
-        current_subnet.async_receive( on_new_message );
-    }
-
-    /**
-     *
-     */
-    void
-    handle_new_message
+    handle_new_request
         ( detail::message_socket::endpoint_type const& sender
-        , detail::buffer const& message )
+        , detail::header const& h
+        , detail::buffer::const_iterator i
+        , detail::buffer::const_iterator e )
     {
-        auto i = message.begin(), e = message.end();
-
-        detail::header h;
-        // Try to deserialize header.
-        if ( deserialize( i, e, h ) )
-            return;
-
         switch ( h.type_ )
         {
             case detail::header::PING_REQUEST: 
@@ -310,20 +229,11 @@ private:
                 handle_find_value_request( sender, h, i, e );
                 break;
             default:
-                handle_response( sender, h, i, e );
+                // Unknown request or unassociated responses
+                // are discarded.
+                break;
         }
     }
-
-    /**
-     *
-     */
-    void
-    handle_response 
-        ( detail::message_socket::endpoint_type const& sender
-        , detail::header const& h
-        , detail::buffer::const_iterator i
-        , detail::buffer::const_iterator e )
-    { response_dispatcher_.dispatch_message( sender, h, i, e ); }
 
     /**
      *
@@ -344,10 +254,9 @@ private:
     {
         add_current_peer_to_routing_table( h.source_id_, sender );
 
-        // And respond to him.
-        auto response = serialize_message( detail::header::PING_RESPONSE
-                                         , h.random_token_ );
-        async_send_response( response, sender ); 
+        net_.async_send_response( h.random_token_
+                                , detail::header::PING_RESPONSE
+                                , sender ); 
     }
 
     /**
@@ -368,31 +277,6 @@ private:
 
         value_store_[ request.data_key_hash_ ] 
                 = std::move( request.data_value_ );
-    }
-
-    /**
-     *
-     */
-    void
-    send_find_node_response
-        ( detail::message_socket::endpoint_type const& sender
-        , detail::id const& random_token
-        , detail::id const& node_to_find_id )
-    {
-        // Find X closest peers and save
-        // their location into the response..
-        detail::find_node_response_body response;
-
-        auto remaining_node = ROUTING_TABLE_BUCKET_SIZE;
-        for ( auto i = routing_table_.find( node_to_find_id )
-                 , e = routing_table_.end()
-            ; i != e && remaining_node > 0
-            ; ++i, -- remaining_node )
-            response.nodes_.push_back( { i->first, i->second } );
-
-        // Now send the response.
-        async_send_response( serialize_message( response, random_token )
-                           , sender );
     }
 
     /**
@@ -421,6 +305,30 @@ private:
      *
      */
     void
+    send_find_node_response
+        ( detail::message_socket::endpoint_type const& sender
+        , detail::id const& random_token
+        , detail::id const& node_to_find_id )
+    {
+        // Find X closest peers and save
+        // their location into the response..
+        detail::find_node_response_body response;
+
+        auto remaining_node = ROUTING_TABLE_BUCKET_SIZE;
+        for ( auto i = routing_table_.find( node_to_find_id )
+                 , e = routing_table_.end()
+            ; i != e && remaining_node > 0
+            ; ++i, -- remaining_node )
+            response.nodes_.push_back( { i->first, i->second } );
+
+        // Now send the response.
+        net_.async_send_response( random_token, response, sender );
+    }
+
+    /**
+     *
+     */
+    void
     handle_find_value_request
         ( detail::message_socket::endpoint_type const& sender
         , detail::header const& h
@@ -441,176 +349,10 @@ private:
         else
         {
             detail::find_value_response_body const response{ found->second };
-            async_send_response( serialize_message( response, h.random_token_ )
-                               , sender );
+            net_.async_send_response( h.random_token_
+                                    , response
+                                    , sender );
         }
-    }
-
-    /**
-     *
-     */
-    detail::subnet &
-    get_subnet_for
-        ( detail::message_socket::endpoint_type const& e )
-    {
-        if ( e.address().is_v4() )
-            return ipv4_subnet_;
-
-        return ipv6_subnet_;
-    }
-
-    /**
-     *
-     */
-    detail::header
-    generate_header
-        ( detail::header::type const& type
-        , detail::id const& random_id )
-    {
-        return detail::header
-                { detail::header::V1
-                , type
-                , my_id_
-                , detail::id{ random_engine_ } };
-    }
-
-    /**
-     *
-     */
-    template< typename Message >
-    std::shared_ptr< detail::buffer >
-    serialize_message
-        ( Message const& message
-        , detail::id const& response_id )
-    {
-        auto buffer = std::make_shared< detail::buffer >();
-
-        auto const type = detail::message_traits< Message >::TYPE_ID;
-        auto const header = generate_header( type, response_id );
-
-        detail::serialize( header, *buffer );
-        detail::serialize( message, *buffer );
-
-        return std::move( buffer );
-    }
-
-    /**
-     *
-     */
-    std::shared_ptr< detail::buffer >
-    serialize_message
-        ( detail::header::type const& type
-        , detail::id const& response_id )
-    {
-        auto buffer = std::make_shared< detail::buffer >();
-
-        auto const header = generate_header( type, response_id );
-
-        detail::serialize( header, *buffer );
-
-        return std::move( buffer );
-    }
-
-    /**
-     *
-     */
-    template< typename OnResponseReceived, typename OnError >
-    void
-    register_temporary_association
-        ( detail::id const& response_id
-        , detail::timer::duration const& association_ttl
-        , OnResponseReceived const& on_response_received
-        , OnError const& on_error )
-    {
-        auto on_timeout = [ this, on_error, response_id ]
-            ( void ) 
-        {
-            // If an association has been removed, that means
-            // the message has never been received
-            // hence report the timeout to the client.
-            if ( response_dispatcher_.remove_association( response_id ) )
-                on_error( make_error_code( std::errc::timed_out ) );
-        };
-
-        // Associate the response id with the 
-        // on_response_received callback.
-        response_dispatcher_.push_association( response_id
-                                             , on_response_received );
-
-        timer_.expires_from_now( association_ttl, on_timeout );
-    }
-
-    /**
-     *
-     */
-    template< typename Request, typename OnResponseReceived, typename OnError >
-    void
-    async_send_request
-        ( detail::id const& response_id
-        , Request const& request
-        , detail::message_socket::endpoint_type const& e
-        , detail::timer::duration const& timeout
-        , OnResponseReceived const& on_response_received
-        , OnError const& on_error )
-    { 
-        // Generate the request buffer.
-        auto message = serialize_message( request, response_id );
-
-        // This lamba will keep the request message alive.
-        auto on_request_sent = [ this, response_id
-                               , on_response_received, on_error
-                               , timeout, message ] 
-            ( std::error_code const& failure ) 
-        {
-            if ( failure )
-                on_error( failure );
-            else 
-                register_temporary_association( response_id, timeout
-                                              , on_response_received
-                                              , on_error );
-        };
-
-        // Serialize the request and send it.
-        get_subnet_for( e ).async_send( *message, e, on_request_sent );
-    }
-
-    /**
-     *
-     */
-    template< typename Request >
-    void
-    async_send_request
-        ( detail::id const& response_id
-        , Request const& request
-        , detail::message_socket::endpoint_type const& e )
-    { 
-        // Generate the request buffer.
-        auto message = serialize_message( request, response_id );
-
-        // This lamba will keep the request message alive.
-        auto on_request_sent = [ message ] 
-            ( std::error_code const& ) 
-        { };
-
-        // Serialize the request and send it.
-        get_subnet_for( e ).async_send( *message, e, on_request_sent );
-    }
-
-    /**
-     *
-     */
-    void
-    async_send_response
-        ( std::shared_ptr< detail::buffer > const& response
-        , detail::message_socket::endpoint_type const& e )
-    { 
-        // This lamba will keep the response message alive.
-        auto on_response_sent = [ response ] 
-            ( std::error_code const& failure ) 
-        { };
-
-        // Serialize the message and send it.
-        get_subnet_for( e ).async_send( *response, e, on_response_sent );
     }
 
     /**
@@ -658,12 +400,12 @@ private:
             ( std::error_code const& ) 
         { async_search_ourselves( endpoints_to_query ); };
 
-        async_send_request( detail::id{ random_engine_ }
-                          , detail::find_node_request_body{ my_id_ }
-                          , endpoint_to_query
-                          , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                          , on_message_received
-                          , on_error );
+        net_.async_send_request( detail::id{ random_engine_ }
+                               , detail::find_node_request_body{ my_id_ }
+                               , endpoint_to_query
+                               , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                               , on_message_received
+                               , on_error );
     }
 
     /**
@@ -740,12 +482,12 @@ private:
                 send_store_requests( context );
         };
 
-        async_send_request( detail::id{ random_engine_ }
-                          , request
-                          , current_candidate.endpoint_
-                          , NODE_LOOKUP_TIMEOUT 
-                          , on_message_received
-                          , on_error );
+        net_.async_send_request( detail::id{ random_engine_ }
+                               , request
+                               , current_candidate.endpoint_
+                               , NODE_LOOKUP_TIMEOUT 
+                               , on_message_received
+                               , on_error );
     }
 
     /**
@@ -796,12 +538,12 @@ private:
             async_find_value( context ); 
         };
 
-        async_send_request( detail::id{ random_engine_ }
-                          , request
-                          , current_candidate.endpoint_
-                          , NODE_LOOKUP_TIMEOUT 
-                          , on_message_received
-                          , on_error );
+        net_.async_send_request( detail::id{ random_engine_ }
+                               , request
+                               , current_candidate.endpoint_
+                               , NODE_LOOKUP_TIMEOUT 
+                               , on_message_received
+                               , on_error );
     }
 
     /**
@@ -911,21 +653,18 @@ private:
     {
         detail::store_value_request_body const request{ context->get_key()
                                                       , context->get_data() };
-        async_send_request( detail::id{ random_engine_ }
-                          , request
-                          , current_candidate.endpoint_ );
+        net_.async_send_request( detail::id{ random_engine_ }
+                               , request
+                               , current_candidate.endpoint_ );
     }
 
 private:
     std::default_random_engine random_engine_;
     detail::id my_id_;
     boost::asio::io_service io_service_;
+    detail::net net_;
     endpoint initial_peer_;
-    detail::subnet ipv4_subnet_;
-    detail::subnet ipv6_subnet_;
     detail::routing_table routing_table_;
-    detail::response_dispatcher response_dispatcher_;
-    detail::timer timer_;
     detail::value_store< detail::id, data_type > value_store_;
     std::error_code main_failure_;
 };
@@ -969,3 +708,4 @@ session::abort
 #ifdef _MSC_VER
 #   pragma warning( pop )
 #endif
+
