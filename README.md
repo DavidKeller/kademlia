@@ -9,7 +9,7 @@ Initialization:
 ```C++
 #include <kademlia/session.hpp>
 
-// ...
+// [...]
 
 {
     // The session need to know at least one member of the
@@ -23,6 +23,8 @@ Initialization:
     
     // Run the library main loop in a dedicated thread.
     auto main_loop_result = std::async( &kademlia::session::run, &s );
+    
+    // [...]
 ```
 
 Searching for value associated with "key":
@@ -49,8 +51,6 @@ Searching for value associated with "key":
 
 Saving a data into the map is similar:
 ```C++
-    // [...]
-
     // Copy data from your source.
     kademlia::session::data_type const data( ?.begin(), ?.end() );
 
