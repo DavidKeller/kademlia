@@ -26,7 +26,7 @@ Initialization:
     // [...]
 ```
 
-Searching for value associated with "key":
+Searching for value associated with "key1":
 ```C++
     // This callback will be called once the load succeed or failed.
     auto on_load = [&s]( std::error_code const& failure
@@ -43,7 +43,7 @@ Searching for value associated with "key":
     };
 
     // Schedule an asynchronous load.
-    s.async_load( "key", on_load );
+    s.async_load( "key1", on_load );
 
     // [...]
 ```
@@ -61,7 +61,7 @@ Saving a data into the map is similar:
     }
      
     // And perform the saving.
-    s.async_save( "key", data, on_save );
+    s.async_save( "key2", data, on_save );
 
     // [...]
 ```
