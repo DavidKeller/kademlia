@@ -3,8 +3,7 @@ C++11 distributed hash table library
 
 This software is experimental and under active development.
 
-## Example
-
+### Example
 Initialization:
 ```C++
 #include <kademlia/session.hpp>
@@ -80,10 +79,21 @@ Destruction:
 ```
 
 # Development
-* Documentation intended for developers is stored under 'doc/'.
-* [Bug tracker](http://redmine.litchis.fr/projects/kademlia)
 
-## Supported targets
+### Project structure
+```
+kademlia/
+    |
+    |-- include     API public headers files
+    |-- src         Implementation sources and headers files.
+    |-- test        Unit tests
+    |-- doc         User and development documentation
+```
+
+### Bug and feature requests
+* [Tracker](http://redmine.litchis.fr/projects/kademlia)
+
+### Supported targets
 FreeBSD | Fedora | Ubuntu | Windows
 ----------|-----------|-----------|----------
 [![FreeBSD9 build](http://buildbot.litchis.fr/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/builders/freebsd9-x64-builder) | [![Fedora19 build](http://buildbot.litchis.fr/png?builder=fedora19-x64-builder)](http://buildbot.litchis.fr/builders/fedora19-x64-builder) | [![Ubuntu build](http://buildbot.litchis.fr/png?builder=ubuntu13-x64-builder)](http://buildbot.litchis.fr/builders/ubuntu13-x64-builder) | [![Windows 7 build](http://buildbot.litchis.fr/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/builders/win2008r2-x64-builder)
