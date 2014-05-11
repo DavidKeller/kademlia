@@ -5,13 +5,10 @@ This software is experimental and under active development.
 
 ## Example
 
-The library is so simple that one class header is enough to include.
+Initialization:
 ```C++
 #include <kademlia/session.hpp>
-```
 
-A session instance has to be created.
-```C++
 // ...
 
 {
@@ -23,10 +20,13 @@ A session instance has to be created.
     // Following runtime errors will be reported
     // through an std::error_code.
     kademlia::session s{ initial_peer };
+    
+    // Run the library main loop in a dedicated thread.
+    auto main_loop_result = std::async( &kademlia::session::run, &s );
 ```
 
-And a callback to receive the data.
-```
+Searching for value associated with "key":
+```C++
     // This callback will be called once the load succeed or failed.
     auto on_load = [&s]( std::error_code const& failure
                        , kademlia::session::data_type const& data )
@@ -40,43 +40,43 @@ And a callback to receive the data.
         // Stop running loop, we won't load anything else in this example.
         s.abort();
     };
-```
-    
-Then a search for the key `"keepsake"` can be performed.
-```
-    // Schedule an asynchronous load.
-    s.async_load( "keepsake", on_load );
-```
 
-The library event loop can run in a dedicated thread but for
-the example purpose, we'll run it directly from the current thread
-without problem as `async_load` and `async_save` methods 
-are asynchronous.
-```C++
-    // Run the library main loop. It will exit soon as the
-    // on_load_finish callback aborts dispatching.
-    s.run();
-}
+    // Schedule an asynchronous load.
+    s.async_load( "key", on_load );
+
+    // [...]
 ```
 
 Saving a data into the map is similar:
-```
+```C++
     // [...]
 
     // Copy data from your source.
-    kademlia::session::data_type data;
-    std::copy( ?.begin(), ?.end(), std::back_inserter( data ) );
+    kademlia::session::data_type const data( ?.begin(), ?.end() );
 
     // Create the handler.
     auto on_save = []( std::error_code const& failure )
     { 
-        if ( failure ) std::cerr << failure.message() << std::endl;
+        if ( failure ) 
+            std::cerr << failure.message() << std::endl;
     }
      
     // And perform the saving.
     s.async_save( "key", data, on_save );
 
     // [...]
+```
+
+Destruction:
+```C++
+    // Once we've finished, abort the session::run() 
+    // blocking call.
+    s.abort();
+    
+    auto failure = main_loop_result.get();
+    if ( failure != kademlia::RUN_ABORTED )
+        std::cerr << failure.message() << std::endl;
+}
 ```
 
 # Development
