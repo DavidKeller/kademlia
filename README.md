@@ -37,9 +37,6 @@ Searching for value associated with "key1":
         else
             std::copy( data.begin(), data.end()
                      , std::ostream_iterator< std::uint32_t >{ std::cout, " " } );
-            
-        // Stop running loop, we won't load anything else in this example.
-        s.abort();
     };
 
     // Schedule an asynchronous load.
@@ -51,7 +48,7 @@ Searching for value associated with "key1":
 Saving a data into the map is similar:
 ```C++
     // Copy data from your source.
-    kademlia::session::data_type const data( ?.begin(), ?.end() );
+    kademlia::session::data_type const data{ ?.begin(), ?.end() };
 
     // Create the handler.
     auto on_save = []( std::error_code const& failure )
