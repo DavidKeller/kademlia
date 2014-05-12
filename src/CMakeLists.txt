@@ -64,5 +64,5 @@ set_target_properties(kademlia
 add_library(kademlia_convenience STATIC
     ${kademlia_sources})
 
-target_link_libraries(kademlia ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(kademlia ${Boost_LIBRARIES} ${BOTAN_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 

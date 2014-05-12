@@ -66,8 +66,7 @@ find_package(Boost REQUIRED COMPONENTS
     filesystem 
     unit_test_framework)
 # Crypto
-find_package(OpenSSL REQUIRED)
-find_package(Botan)
+find_package(Botan REQUIRED)
 
 add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
@@ -86,7 +85,7 @@ endif()
 
 # Setup includes directories.
 include_directories(BEFORE include)
-include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+include_directories(${Boost_INCLUDE_DIRS} ${BOTAN_INCLUDE_DIR})
 
 # Build everything.
 add_subdirectory(include)

@@ -35,7 +35,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include <openssl/sha.h>
+#include <botan/sha1_sse2.h>
 
 #include <kademlia/error.hpp>
 
@@ -98,10 +98,11 @@ id::id
 id::id 
     ( value_to_hash_type const& value )
 {
-    static_assert( BIT_SIZE == SHA_DIGEST_LENGTH * 8
-                 , "an id can't be constructed from a sha1 result" );
-    // Use openssl SHA1 here.
-    ::SHA1( value.data(), value.size(), blocks_.data() );
+    Botan::SHA_160_SSE2 hasher{};
+    auto const result = hasher.process( value.data(), value.size() );
+    assert( BIT_SIZE == hasher.output_length() * 8 
+          && "an id can't be constructed from a sha1 result" );
+    std::copy( result.begin(), result.end(), blocks_.data() );
 }
 
 std::ostream &

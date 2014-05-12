@@ -43,7 +43,7 @@ macro(build_and_run_test source_file)
         test_helpers_common 
         kademlia_convenience 
         ${Boost_LIBRARIES} 
-        ${OPENSSL_LIBRARIES} 
+        ${BOTAN_LIBRARIES} 
         ${CMAKE_THREAD_LIBS_INIT})
     add_dependencies(check ${test_name})
     add_test(${test_name} ${test_name})
