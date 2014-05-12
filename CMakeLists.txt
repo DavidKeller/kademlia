@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 cmake_minimum_required(VERSION 2.8) 
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 project(kademlia) 
 
 # Configure compilers.
@@ -62,8 +65,9 @@ find_package(Boost REQUIRED COMPONENTS
     chrono
     filesystem 
     unit_test_framework)
-# OpenSSL
+# Crypto
 find_package(OpenSSL REQUIRED)
+find_package(Botan)
 
 add_definitions(-DPACKAGE_VERSION="1.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
