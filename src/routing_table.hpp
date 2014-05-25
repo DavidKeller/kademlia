@@ -270,7 +270,7 @@ template< typename PeerType >
 class routing_table< PeerType >::iterator
     : public boost::iterator_facade
         < iterator
-        , routing_table::value_type
+        , typename routing_table::value_type
         , boost::single_pass_traversal_tag >
 {
 public:
@@ -345,7 +345,7 @@ private:
     /**
      *
      */
-    routing_table::value_type & 
+    typename routing_table::value_type & 
     dereference
         ( void )
         const
