@@ -213,7 +213,7 @@ public:
             << "\t\"k_bucket_size\": " << table.k_bucket_size_<< ',' << std::endl
             << "\t\"k_buckets\": " << std::endl;
         
-        for ( auto i = 0UL, e = table.k_buckets_.size(); i != e; ++i )
+        for ( std::size_t i = 0, e = table.k_buckets_.size(); i != e; ++i )
         {
             out << "\t{" << std::endl
                 << "\t\t\"index\": " << i << "," << std::endl
