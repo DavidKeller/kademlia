@@ -38,35 +38,53 @@ namespace kademlia {
 namespace detail {
 
 ///
-template< typename SaveHandler, typename DataType >
-class store_value_context
+template< typename SaveHandlerType, typename DataType >
+class store_value_context final
     : public value_context
 {
 public:
+    ///
+    using save_handler_type = SaveHandlerType;
+
+    ///
+    using data_type = DataType;
+
+public:
+    /**
+     *
+     */
     template< typename Iterator >
     store_value_context( detail::id const & key
-                       , DataType const& data
+                       , data_type const& data
                        , Iterator i, Iterator e
-                       , SaveHandler save_handler )
+                       , save_handler_type save_handler )
         : value_context{ key, i, e }
         , data_{ data }
         , save_handler_{ std::move( save_handler ) }
     { }
 
+    /**
+     *
+     */
     void
     notify_caller
         ( std::error_code const& failure )
     { save_handler_( failure ); }
 
-    DataType const&
+    /**
+     *
+     */
+    data_type const&
     get_data
         ( void )
         const
     { return data_; }
 
 private:
-    DataType data_;
-    SaveHandler save_handler_;
+    ///
+    data_type data_;
+    ///
+    save_handler_type save_handler_;
 };
 
 } // namespace detail

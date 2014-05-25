@@ -43,10 +43,16 @@ namespace detail {
 class value_context
 {
 protected:
+    /**
+     *
+     */
     ~value_context
         ( void )
-    { }
+        = default;
 
+    /**
+     *
+     */
     template< typename Iterator >
     value_context
         ( id const & key
@@ -60,6 +66,9 @@ protected:
     }
 
 public:
+    /**
+     *
+     */
     void
     flag_candidate_as_valid
         ( id const& candidate_id )
@@ -73,6 +82,9 @@ public:
         i->second.state_ = candidate::STATE_RESPONDED;
     }
 
+    /**
+     *
+     */
     void
     flag_candidate_as_invalid
         ( id const& candidate_id )
@@ -86,6 +98,9 @@ public:
         i->second.state_ = candidate::STATE_TIMEOUTED;
     }
 
+    /**
+     *
+     */
     std::vector< candidate >
     select_new_closest_candidates
         ( std::size_t max_count )
@@ -153,12 +168,18 @@ public:
         return true;
     }
 
+    /**
+     *
+     */
     bool
     have_all_requests_completed
         ( void )
         const
     { return in_flight_requests_count_ == 0; }
     
+    /**
+     *
+     */
     id const&
     get_key
         ( void )
@@ -170,6 +191,9 @@ private:
     using candidates_type = std::map< id, candidate >;
 
 private:
+    /**
+     *
+     */
     void
     add_candidate
         ( id const& candidate_id
@@ -180,6 +204,9 @@ private:
         candidates_.emplace( distance, c );
     }
 
+    /**
+     *
+     */
     candidates_type::iterator
     find_candidate
         ( id const& candidate_id )
@@ -189,8 +216,11 @@ private:
     }
 
 private:
+    ///
     id key_;
+    ///
     std::size_t in_flight_requests_count_;
+    ///
     candidates_type candidates_;
 };
 

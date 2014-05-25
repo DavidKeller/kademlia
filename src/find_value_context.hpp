@@ -38,10 +38,17 @@ namespace kademlia {
 namespace detail {
 
 ///
-template< typename LoadHandler, typename DataType >
-class find_value_context
+template< typename LoadHandlerType, typename DataType >
+class find_value_context final
         : public value_context
 {
+public:
+    ///
+    using load_handler_type = LoadHandlerType;
+
+    ///
+    using data_type = DataType;
+
 public:
     /**
      *
@@ -49,7 +56,7 @@ public:
     template< typename Iterator >
     find_value_context( id const & searched_key
                       , Iterator i, Iterator e
-                      , LoadHandler load_handler )
+                      , load_handler_type load_handler )
         : value_context( searched_key, i, e )
         , load_handler_{ std::move( load_handler ) }
         , is_finished_{}
@@ -60,7 +67,7 @@ public:
      */
     void
     notify_caller
-        ( DataType const& data )
+        ( data_type const& data )
     { 
         load_handler_( std::error_code{}, data ); 
         is_finished_ = true;
@@ -73,7 +80,7 @@ public:
     notify_caller
         ( std::error_code const& failure )
     { 
-        load_handler_( failure, DataType{} ); 
+        load_handler_( failure, data_type{} ); 
         is_finished_ = true;
     }
 
@@ -88,7 +95,7 @@ public:
 
 private:
     ///
-    LoadHandler load_handler_;
+    load_handler_type load_handler_;
     ///
     bool is_finished_;
 };
