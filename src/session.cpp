@@ -28,6 +28,7 @@
 #include <utility>
 
 #include "engine.hpp"
+#include "net.hpp"
 
 namespace kademlia {
 
@@ -43,11 +44,11 @@ struct session::impl final
         ( endpoint const& initial_peer
         , endpoint const& listen_on_ipv4
         , endpoint const& listen_on_ipv6 )
-            : engine_{ initial_peer, listen_on_ipv4, listen_on_ipv6 }
+        : engine_{ initial_peer, listen_on_ipv4, listen_on_ipv6 }
     { }
 
     ///
-    detail::engine< key_type, data_type > engine_;
+    detail::engine< key_type, data_type, detail::net > engine_;
 };
 
 session::session

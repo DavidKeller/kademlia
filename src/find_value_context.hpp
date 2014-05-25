@@ -40,7 +40,7 @@ namespace detail {
 ///
 template< typename LoadHandlerType, typename DataType >
 class find_value_context final
-        : public value_context
+    : public value_context
 {
 public:
     ///
@@ -54,9 +54,10 @@ public:
      *
      */
     template< typename Iterator, typename HandlerType >
-    find_value_context( id const & searched_key
-                      , Iterator i, Iterator e
-                      , HandlerType && load_handler )
+    find_value_context
+        ( id const & searched_key
+        , Iterator i, Iterator e
+        , HandlerType && load_handler )
         : value_context( searched_key, i, e )
         , load_handler_{ std::forward< HandlerType >( load_handler ) }
         , is_finished_{}

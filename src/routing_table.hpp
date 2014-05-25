@@ -30,16 +30,18 @@
 #   pragma once
 #endif
 
-#include <utility>
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <iostream>
 #include <list>
+#include <utility>
 #include <vector>
-#include <iosfwd>
 #include <boost/iterator/iterator_facade.hpp>
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
 #include "id.hpp"
-#include "message_socket.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -48,28 +50,33 @@ namespace detail {
  *  This class keeps track of peers and find the known peer closed to an id.
  *  @note Current implementation use a discret symbol approach.
  */
+template< typename PeerType >
 class routing_table final
 {
 public:
+    ///
     enum { DEFAULT_K_BUCKET_SIZE = 20 };
 
+    ///
+    using peer_type = PeerType;
+
+    ///
+    using value_type = std::pair< id, peer_type >;
+
     class iterator;
-    
-    using value_type = std::pair< id, message_socket::endpoint_type >;
-    
+
 public:
     /**
      *  Construct the routing_table implementation.
      */
     routing_table
         ( id const& my_id
-        , std::size_t k_bucket_size = DEFAULT_K_BUCKET_SIZE );
-
-    /**
-     *  Destroy the routing_table implementation.
-     */
-    ~routing_table
-        ( void );
+        , std::size_t k_bucket_size = DEFAULT_K_BUCKET_SIZE )
+        : k_buckets_( id::BIT_SIZE ), my_id_( my_id )
+        , peer_count_( 0 ), k_bucket_size_( k_bucket_size )
+    {
+        assert( k_bucket_size_ > 0 && "k_bucket size must be > 0" );
+    }
 
     /**
      * Disabled copy constructor.
@@ -93,7 +100,8 @@ public:
     std::size_t 
     peer_count
         ( void )
-        const;
+        const
+    { return peer_count_; }
 
     /**
      *  Register a peer into the routing table.
@@ -105,7 +113,27 @@ public:
     bool
     push
         ( id const& peer_id
-        , message_socket::endpoint_type const& new_peer );
+        , peer_type const& new_peer )
+    {
+        auto const target_k_bucket = find_closest_k_bucket( peer_id );
+            
+        // If there is room in the bucket.
+        if ( target_k_bucket->size() == k_bucket_size_ ) 
+            return false;
+            
+        auto const end = target_k_bucket->end();
+        
+        // Check if the peer is not already known.
+        auto is_peer_known = [&peer_id] ( value_type const& entry )
+        { return entry.first == peer_id; };
+        if ( std::find_if( target_k_bucket->begin(), end, is_peer_known ) != end )
+            return false;
+        
+        target_k_bucket->insert( end, value_type{ peer_id, new_peer } ); 
+        ++ peer_count_;
+        
+        return true;
+    }
     
     /**
      *  Remove a peer from the routing table.
@@ -114,7 +142,26 @@ public:
      */
     bool
     remove
-        ( id const& peer_id );
+        ( id const& peer_id )
+    {
+        // Find the closer bucket.
+        auto bucket = find_closest_k_bucket( peer_id );
+        
+        // Check if the peer is inside.
+        auto is_peer_known = [&peer_id] ( value_type const& entry )
+        { return entry.first == peer_id; };
+        auto i = std::find_if( bucket->begin(), bucket->end(), is_peer_known );
+        
+        // If the peer wasn't inside.
+        if ( i == bucket->end() )
+            return false;
+        
+        // Remove it.
+        bucket->erase( i );
+        -- peer_count_;
+        
+        return true;
+    }
 
     /**
      *  Find closest peers to an id.
@@ -123,14 +170,31 @@ public:
      */
     iterator
     find
-        ( id const& id_to_find );
+        ( id const& id_to_find )
+    {
+        auto i = find_closest_k_bucket( id_to_find );
+
+        // Find the first non empty k_bucket.
+        while( i->empty() && i != k_buckets_.begin() )
+            -- i;
+
+        return iterator( &k_buckets_, i, i->begin() );
+    }
     
     /**
      *  @return An iterator to the end of the routing table.
      */
     iterator
     end
-        ( void );
+        ( void )
+    { 
+        assert( k_buckets_.size() > 0 
+              && "routing_table must always contains k_buckets" );
+        auto const first_k_bucket = k_buckets_.begin();
+        
+        return iterator( &k_buckets_, first_k_bucket, first_k_bucket->end() ); 
+    }
+
 
     /**
      *  Print the routing table content.
@@ -141,10 +205,27 @@ public:
     friend std::ostream &
     operator<<
         ( std::ostream & out
-        , routing_table const& table );
+        , routing_table const& table )
+    {
+        out << "{" << std::endl
+            << "\t\"id\": " << table.my_id_ << "," << std::endl
+            << "\t\"peer_count\": " << table.peer_count_ << ',' << std::endl
+            << "\t\"k_bucket_size\": " << table.k_bucket_size_<< ',' << std::endl
+            << "\t\"k_buckets\": " << std::endl;
+        
+        for ( auto i = 0UL, e = table.k_buckets_.size(); i != e; ++i )
+        {
+            out << "\t{" << std::endl
+                << "\t\t\"index\": " << i << "," << std::endl
+                << "\t\t\"bit_value\": " << table.my_id_[i] << "," << std::endl
+                << "\t\t\"peer_count\": " << table.k_buckets_[i].size() << std::endl
+                << "\t}" << std::endl;
+        }
+
+        return out << "}" << std::endl;
+    }
 
 private:
-    
     /// Contains peer with a common base id.
     using k_bucket = std::list< value_type >;
     /// Contains all the k_bucket.
@@ -152,15 +233,25 @@ private:
     using k_buckets = std::vector< k_bucket >;
 
 private:
-    k_buckets::iterator
+    /**
+     *
+     */
+    typename k_buckets::iterator
     find_closest_k_bucket
-        ( id const& id_to_find );
-    
-    friend bool
-    operator==
-        ( value_type const& entry 
-        , id const& id_to_match );
+        ( id const& id_to_find )
+    {
+        // Find closest bucket from the peer id.
+        // i.e. the index of the first different bit
+        // in the id of the new peer vs our id is equal to the
+        // index of the closest bucket in the buckets container.
+        std::size_t bit_index = 0; 
+        while ( bit_index < id::BIT_SIZE - 1
+              && id_to_find[ bit_index ] == my_id_[ bit_index ] )
+            ++ bit_index;
 
+        return std::next( k_buckets_.begin(), bit_index );
+    }
+   
 private:
     /// This contains buckets up to id bit count.
     k_buckets k_buckets_;
@@ -175,7 +266,8 @@ private:
 /**
  * 
  */
-class routing_table::iterator
+template< typename PeerType >
+class routing_table< PeerType >::iterator
     : public boost::iterator_facade
         < iterator
         , routing_table::value_type
@@ -187,15 +279,26 @@ public:
      */
     iterator
         ( k_buckets * buckets
-        , k_buckets::iterator current_bucket
-        , k_bucket::iterator current_peer );
+        , typename k_buckets::iterator current_bucket
+        , typename k_bucket::iterator current_peer )
+        : k_buckets_( buckets )
+        , current_k_bucket_( current_bucket )
+        , current_entry_( current_peer )
+    { }
 
     /**
      *
      */
     iterator &
     operator=
-        ( iterator const& o );
+        ( iterator const& o )
+    {
+        k_buckets_ = o.k_buckets_;
+        current_k_bucket_ = o.current_k_bucket_;
+        current_entry_ = o.current_entry_;
+
+        return *this;
+    }
 
 private:
     friend class boost::iterator_core_access;
@@ -205,7 +308,26 @@ private:
      */
     void
     increment
-        ( void );
+        ( void )
+    {
+        ++ current_entry_;
+        
+        // If the current entry is not at the end of the bucket
+        // then there is nothing more to do.
+        if ( current_entry_ != current_k_bucket_->end() )
+            return;
+        
+        // If the current bucket is already the first (far)
+        // then there is nothing more to do, we reach the end of the routing table.
+        if ( current_k_bucket_ == k_buckets_->begin() )
+            return;
+        
+        // Go to the next non-empty bucket and start from its first entry.
+        do
+            -- current_k_bucket_;
+        while ( current_k_bucket_->empty() && current_k_bucket_ != k_buckets_->begin() );
+        current_entry_ = current_k_bucket_->begin();
+    }
        
     /**
      *
@@ -213,7 +335,12 @@ private:
     bool
     equal
         ( iterator const& o )
-        const;
+        const
+    { 
+        return k_buckets_ == o.k_buckets_
+                && current_k_bucket_ == o.current_k_bucket_
+                && current_entry_ == o.current_entry_;
+    }
 
     /**
      *
@@ -221,15 +348,16 @@ private:
     routing_table::value_type & 
     dereference
         ( void )
-        const;
+        const
+    { return *current_entry_; }
 
 private:
     ///
     k_buckets * k_buckets_;
     ///
-    k_buckets::iterator current_k_bucket_;
+    typename k_buckets::iterator current_k_bucket_;
     ///
-    k_bucket::iterator current_entry_;
+    typename k_bucket::iterator current_entry_;
 
 };
 

@@ -42,7 +42,6 @@ set(kademlia_sources
     message_socket.hpp
     response_dispatcher.cpp
     response_dispatcher.hpp
-    routing_table.cpp
     routing_table.hpp
     value_context.hpp
     find_value_context.hpp

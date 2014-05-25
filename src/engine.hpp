@@ -41,7 +41,6 @@
 
 #include "message_socket.hpp"
 #include "message.hpp"
-#include "net.hpp"
 #include "routing_table.hpp"
 #include "value_store.hpp"
 #include "candidate.hpp"
@@ -70,7 +69,7 @@ CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
 /**
  *
  */
-template< typename KeyType, typename DataType >
+template< typename KeyType, typename DataType, typename NetworkType >
 class engine final
 {
 public:
@@ -79,30 +78,32 @@ public:
  
     ///
     using data_type = DataType;
+
+    ///
+    using network_type = NetworkType;
  
 public:
     /**
      *
      */
-    explicit 
     engine
         ( endpoint const& initial_peer
         , endpoint const& listen_on_ipv4
         , endpoint const& listen_on_ipv6 )
-            : random_engine_{ std::random_device{}() }
-            , my_id_( random_engine_ )
-            , io_service_{}
-            , net_{ my_id_
-                  , std::bind( &engine::handle_new_request, this
-                             , std::placeholders::_1
-                             , std::placeholders::_2
-                             , std::placeholders::_3
-                             , std::placeholders::_4 )
-                  , io_service_, listen_on_ipv4, listen_on_ipv6 }
-            , initial_peer_{ initial_peer }
-            , routing_table_{ my_id_ }
-            , value_store_{}
-            , main_failure_{}
+        : random_engine_{ std::random_device{}() }
+        , my_id_( random_engine_ )
+        , io_service_{}
+        , net_{ my_id_
+              , std::bind( &engine::handle_new_request, this
+                         , std::placeholders::_1
+                         , std::placeholders::_2
+                         , std::placeholders::_3
+                         , std::placeholders::_4 )
+              , io_service_, listen_on_ipv4, listen_on_ipv6 }
+        , initial_peer_{ initial_peer }
+        , routing_table_{ my_id_ }
+        , value_store_{}
+        , main_failure_{}
     { }
 
     /**
@@ -181,6 +182,10 @@ public:
 
         io_service_.post( set_abort_flag );
     }
+
+private:
+    ///
+    using routing_table_type = routing_table< message_socket::endpoint_type >;
 
 private:
     /**
@@ -694,13 +699,21 @@ private:
     }
 
 private:
+    ///
     std::default_random_engine random_engine_;
+    ///
     id my_id_;
+    ///
     boost::asio::io_service io_service_;
-    net net_;
+    ///
+    network_type net_;
+    ///
     endpoint initial_peer_;
-    routing_table routing_table_;
+    ///
+    routing_table_type routing_table_;
+    ///
     value_store< id, data_type > value_store_;
+    ///
     std::error_code main_failure_;
 };
 
