@@ -30,6 +30,7 @@ set(kademlia_sources
     endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
     error.cpp
+    engine.hpp
     boost_to_std_error.hpp
     id.cpp
     id.hpp

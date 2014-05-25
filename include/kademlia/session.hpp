@@ -139,7 +139,7 @@ public:
 
 private:
     //
-    class impl;
+    struct impl;
 
 private:
     //

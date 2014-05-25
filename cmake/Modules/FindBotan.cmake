@@ -19,6 +19,7 @@
 #
 #
 # Copyright (c) 2012 Sergiu Dotenco
+#               2014 David Keller
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
