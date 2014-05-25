@@ -25,6 +25,8 @@
 
 #include <kademlia/session.hpp>
 
+#include <utility>
+
 #include "engine.hpp"
 
 namespace kademlia {
@@ -64,13 +66,13 @@ session::async_save
     ( key_type const& key 
     , data_type const& data
     , save_handler_type handler )
-{ impl_->engine_.async_save( key, data, handler ); }
+{ impl_->engine_.async_save( key, data, std::move( handler ) ); }
 
 void
 session::async_load
     ( key_type const& key
     , load_handler_type handler )
-{ impl_->engine_.async_load( key, handler ); }
+{ impl_->engine_.async_load( key, std::move( handler ) ); }
 
 std::error_code
 session::run

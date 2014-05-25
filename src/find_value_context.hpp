@@ -53,12 +53,12 @@ public:
     /**
      *
      */
-    template< typename Iterator >
+    template< typename Iterator, typename HandlerType >
     find_value_context( id const & searched_key
                       , Iterator i, Iterator e
-                      , load_handler_type load_handler )
+                      , HandlerType && load_handler )
         : value_context( searched_key, i, e )
-        , load_handler_{ std::move( load_handler ) }
+        , load_handler_{ std::forward< HandlerType >( load_handler ) }
         , is_finished_{}
     { }
 
