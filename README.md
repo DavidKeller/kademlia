@@ -29,8 +29,8 @@ Initialization:
 Searching for value associated with "key1":
 ```C++
     // This callback will be called once the load succeed or failed.
-    auto on_load = [&s]( std::error_code const& failure
-                       , kademlia::session::data_type const& data )
+    auto on_load = []( std::error_code const& failure
+                     , kademlia::session::data_type const& data )
     { 
         if ( failure )
             std::cerr << failure.message() << std::endl;
