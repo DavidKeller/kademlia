@@ -80,18 +80,6 @@ public:
     ///
     using data_type = DataType;
  
-    ///
-    using save_handler_type = std::function 
-            < void 
-                ( std::error_code const& error )
-            >;
-    ///
-    using load_handler_type = std::function 
-            < void 
-                ( std::error_code const& error
-                , data_type const& data )
-            >;
-
 public:
     /**
      *
@@ -135,11 +123,12 @@ public:
     /**
      *
      */
+    template< typename Handler >
     void
     async_save
         ( key_type const& key 
         , data_type const& data
-        , save_handler_type handler )
+        , Handler handler )
     { 
         auto context = create_store_value_context( id{ key }
                                                  , data
@@ -150,10 +139,11 @@ public:
     /**
      *
      */
+    template< typename Handler >
     void
     async_load
         ( key_type const& key
-        , load_handler_type handler )
+        , Handler handler )
     { 
         auto context = create_find_value_context( id{ key }
                                                 , handler );
@@ -193,13 +183,6 @@ public:
     }
 
 private:
-    ///
-    using find_value_context = find_value_context< load_handler_type, data_type >;
-
-    ///
-    using store_value_context = store_value_context< save_handler_type, data_type >;
-
-private:
     /**
      *
      */
@@ -216,28 +199,34 @@ private:
     /**
      *
      */
-    std::shared_ptr< find_value_context >
+    template< typename Handler >
+    std::shared_ptr< find_value_context< Handler, data_type > >
     create_find_value_context 
         ( id const& key
-        , load_handler_type load_handler )
+        , Handler load_handler )
     {
+        using context = find_value_context< Handler, data_type >;
+
         auto i = routing_table_.find( key ), e = routing_table_.end();
-        return std::make_shared< find_value_context >( key, i, e
-                                                     , load_handler );
+        return std::make_shared< context >( key, i, e
+                                          , load_handler );
     }
 
     /**
      *
      */
-    std::shared_ptr< store_value_context >
+    template< typename Handler >
+    std::shared_ptr< store_value_context< Handler, data_type > >
     create_store_value_context 
         ( id const& key
         , data_type const& data
-        , save_handler_type save_handler )
+        , Handler save_handler )
     {
+        using context = store_value_context< Handler, data_type >;
+
         auto i = routing_table_.find( key ), e = routing_table_.end();
-        return std::make_shared< store_value_context >( key, data, i, e
-                                                      , save_handler );
+        return std::make_shared< context >( key, data, i, e
+                                          , save_handler );
     }
 
     /**
@@ -472,9 +461,10 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     async_store_value
-        ( std::shared_ptr< store_value_context > context )
+        ( std::shared_ptr< store_value_context< Handler, data_type > > context )
     { 
         find_node_request_body const request{ context->get_key() };
 
@@ -485,11 +475,12 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     async_send_find_node_request
         ( find_node_request_body const& request
         , candidate const& current_candidate
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_context< Handler, data_type > > context )
     { 
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
@@ -529,9 +520,10 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     async_find_value
-        ( std::shared_ptr< find_value_context > context )
+        ( std::shared_ptr< find_value_context< Handler, data_type > > context )
     {
         find_value_request_body const request{ context->get_key() };
 
@@ -542,11 +534,12 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     async_send_find_value_request
         ( find_value_request_body const& request
         , candidate const& current_candidate
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_context< Handler, data_type > > context )
     {
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
@@ -585,13 +578,14 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     handle_find_value_response
         ( message_socket::endpoint_type const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_context< Handler, data_type > > context )
     { 
         // Add the initial peer to the routing_table.
         add_current_peer_to_routing_table( h.source_id_, s );
@@ -605,11 +599,12 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     handle_find_node_response
         ( buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_context< Handler, data_type > > context )
     { 
         find_node_response_body response;
         if ( deserialize( i, e, response ) )
@@ -625,11 +620,12 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     handle_find_value_response
         ( buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_context< Handler, data_type > > context )
     { 
         find_value_response_body response;
         if ( deserialize( i, e, response ) )
@@ -641,13 +637,14 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     handle_find_node_response
         ( message_socket::endpoint_type const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_context< Handler, data_type > > context )
     { 
         // Add the initial peer to the routing_table.
         add_current_peer_to_routing_table( h.source_id_, s );
@@ -669,9 +666,10 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     send_store_requests
-        ( std::shared_ptr< store_value_context > context )
+        ( std::shared_ptr< store_value_context< Handler, data_type > > context )
     { 
         for ( auto c : context->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT ) )
             send_store_request( c, context );
@@ -682,10 +680,11 @@ private:
     /**
      *
      */
+    template< typename Handler >
     void
     send_store_request
         ( candidate const& current_candidate
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_context< Handler, data_type > > context )
     {
         store_value_request_body const request{ context->get_key()
                                                       , context->get_data() };
