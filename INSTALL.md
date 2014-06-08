@@ -3,6 +3,7 @@
 ## Requirements
  * cmake 
  * boost
+ * c++11 compiler
 
 ## Compilation
  1. `$ mkdir build && cd build`
