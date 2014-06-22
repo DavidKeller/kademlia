@@ -61,7 +61,7 @@ set_target_properties(kademlia
     PROPERTIES 
         COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
 
-add_library(kademlia_convenience STATIC
+add_library(kademlia_static STATIC
     ${kademlia_sources})
 
 target_link_libraries(kademlia ${Boost_LIBRARIES} ${BOTAN_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

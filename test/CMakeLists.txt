@@ -41,7 +41,7 @@ macro(build_and_run_test source_file)
     add_executable(${test_name} ${source_file} ${ARGN}) 
     target_link_libraries(${test_name} 
         test_helpers_common 
-        kademlia_convenience 
+        kademlia_static 
         ${Boost_LIBRARIES} 
         ${BOTAN_LIBRARIES} 
         ${CMAKE_THREAD_LIBS_INIT})
