@@ -39,6 +39,9 @@
 
 #include <kademlia/error.hpp>
 
+#include "timer.hpp"
+#include "message_serializer.hpp"
+#include "response_dispatcher.hpp"
 #include "message_socket.hpp"
 #include "message.hpp"
 #include "routing_table.hpp"
@@ -69,7 +72,7 @@ CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
 /**
  *
  */
-template< typename KeyType, typename DataType, typename NetworkType >
+template< typename KeyType, typename DataType, typename SubnetType >
 class engine final
 {
 public:
@@ -80,7 +83,7 @@ public:
     using data_type = DataType;
 
     ///
-    using network_type = NetworkType;
+    using subnet_type = SubnetType;
  
 public:
     /**
@@ -93,13 +96,11 @@ public:
         : random_engine_{ std::random_device{}() }
         , my_id_( random_engine_ )
         , io_service_{}
-        , net_{ my_id_
-              , std::bind( &engine::handle_new_request, this
-                         , std::placeholders::_1
-                         , std::placeholders::_2
-                         , std::placeholders::_3
-                         , std::placeholders::_4 )
-              , io_service_, listen_on_ipv4, listen_on_ipv6 }
+        , response_dispatcher_{}
+        , timer_{ io_service_ }
+        , message_serializer_{ my_id_ }
+        , subnet_ipv4_{ create_ipv4_subnet( io_service_, listen_on_ipv4 ) }
+        , subnet_ipv6_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
         , initial_peer_{ initial_peer }
         , routing_table_{ my_id_ }
         , value_store_{}
@@ -197,9 +198,84 @@ private:
     {
         io_service_.reset();
 
-        net_.init();
+        schedule_receive_on_subnet( subnet_ipv4_ );
+        schedule_receive_on_subnet( subnet_ipv6_ );
+
         async_discover_neighbors();
     }
+
+    /**
+     *
+     */
+    void
+    schedule_receive_on_subnet
+        ( subnet_type & current_subnet )
+    {
+        auto on_new_message = [ this, &current_subnet ]
+            ( std::error_code const& failure
+            , message_socket::endpoint_type const& sender
+            , buffer const& message )
+        {
+            if ( ! failure )
+                handle_new_message( sender, message );
+
+            schedule_receive_on_subnet( current_subnet );
+        };
+
+        current_subnet.async_receive( on_new_message );
+    }
+
+    /**
+     *
+     */
+    static subnet_type
+    create_ipv4_subnet
+        ( boost::asio::io_service & io_service
+        , endpoint const& ipv4_endpoint )
+    {
+        auto endpoints = resolve_endpoint( io_service, ipv4_endpoint );
+
+        for ( auto const& i : endpoints )
+        {
+            if ( i.address().is_v4() )
+                return subnet_type{ create_socket( io_service, i ) };
+        }
+
+        throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
+    }
+
+    /**
+     *
+     */
+    static subnet_type
+    create_ipv6_subnet
+        ( boost::asio::io_service & io_service
+        , endpoint const& ipv6_endpoint )
+    {
+        auto endpoints = resolve_endpoint( io_service, ipv6_endpoint );
+
+        for ( auto const& i : endpoints )
+        {
+            if ( i.address().is_v6() )
+                return subnet_type{ create_socket( io_service, i ) };
+        }
+
+        throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
+    }
+
+    /**
+     *
+     */
+    subnet_type &
+    get_subnet_for
+        ( message_socket::endpoint_type const& e )
+    {
+        if ( e.address().is_v4() )
+            return subnet_ipv4_;
+
+        return subnet_ipv6_;
+    }
+
 
     /**
      *
@@ -284,9 +360,9 @@ private:
     {
         add_current_peer_to_routing_table( h.source_id_, sender );
 
-        net_.async_send_response( h.random_token_
-                                , header::PING_RESPONSE
-                                , sender ); 
+        async_send_response( h.random_token_
+                           , header::PING_RESPONSE
+                           , sender ); 
     }
 
     /**
@@ -352,7 +428,7 @@ private:
             response.nodes_.push_back( { i->first, i->second } );
 
         // Now send the response.
-        net_.async_send_response( random_token, response, sender );
+        async_send_response( random_token, response, sender );
     }
 
     /**
@@ -379,9 +455,9 @@ private:
         else
         {
             find_value_response_body const response{ found->second };
-            net_.async_send_response( h.random_token_
-                                    , response
-                                    , sender );
+            async_send_response( h.random_token_
+                               , response
+                               , sender );
         }
     }
 
@@ -430,12 +506,12 @@ private:
             ( std::error_code const& ) 
         { async_search_ourselves( endpoints_to_query ); };
 
-        net_.async_send_request( id{ random_engine_ }
-                               , find_node_request_body{ my_id_ }
-                               , endpoint_to_query
-                               , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                               , on_message_received
-                               , on_error );
+        async_send_request( id{ random_engine_ }
+                          , find_node_request_body{ my_id_ }
+                          , endpoint_to_query
+                          , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -514,12 +590,12 @@ private:
                 send_store_requests( context );
         };
 
-        net_.async_send_request( id{ random_engine_ }
-                               , request
-                               , current_candidate.endpoint_
-                               , NODE_LOOKUP_TIMEOUT 
-                               , on_message_received
-                               , on_error );
+        async_send_request( id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_
+                          , NODE_LOOKUP_TIMEOUT 
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -572,12 +648,12 @@ private:
             async_find_value( context ); 
         };
 
-        net_.async_send_request( id{ random_engine_ }
-                               , request
-                               , current_candidate.endpoint_
-                               , NODE_LOOKUP_TIMEOUT 
-                               , on_message_received
-                               , on_error );
+        async_send_request( id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_
+                          , NODE_LOOKUP_TIMEOUT 
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -693,9 +769,129 @@ private:
     {
         store_value_request_body const request{ context->get_key()
                                               , context->get_data() };
-        net_.async_send_request( id{ random_engine_ }
-                               , request
-                               , current_candidate.endpoint_ );
+        async_send_request( id{ random_engine_ }
+                          , request
+                          , current_candidate.endpoint_ );
+    }
+
+    /**
+     *
+     */
+    void
+    handle_new_message
+        ( message_socket::endpoint_type const& sender
+        , buffer const& message )
+    {
+        auto i = message.begin(), e = message.end();
+
+        detail::header h;
+        // Try to deserialize header.
+        if ( deserialize( i, e, h ) )
+            return;
+
+        // Try to forward the message to its associated callback.
+        auto failure = response_dispatcher_.dispatch_message( sender
+                                                            , h, i, e ); 
+
+        // If no callback was associated, forward the message
+        // to the request handler.
+        if ( failure == UNASSOCIATED_MESSAGE_ID )
+            handle_new_request( sender, h, i, e );
+    }
+
+    /**
+     *
+     */
+    template< typename Request, typename OnResponseReceived, typename OnError >
+    void
+    async_send_request
+        ( id const& response_id
+        , Request const& request
+        , message_socket::endpoint_type const& e
+        , timer::duration const& timeout
+        , OnResponseReceived const& on_response_received
+        , OnError const& on_error )
+    {
+        // Generate the request buffer.
+        auto message = message_serializer_.serialize( request, response_id );
+
+        // This lamba will keep the request message alive.
+        auto on_request_sent = [ this, response_id
+                               , on_response_received, on_error
+                               , timeout, message ] 
+            ( std::error_code const& failure ) 
+        {
+            if ( failure )
+                on_error( failure );
+            else 
+                register_temporary_association( response_id, timeout
+                                              , on_response_received
+                                              , on_error );
+        };
+
+        // Serialize the request and send it.
+        get_subnet_for( e ).async_send( *message, e, on_request_sent );
+    }
+
+    /**
+     *
+     */
+    template< typename Request >
+    void
+    async_send_request
+        ( id const& response_id
+        , Request const& request
+        , message_socket::endpoint_type const& e )
+    { async_send_response( response_id, request, e ); }
+
+    /**
+     *
+     */
+    template< typename Response >
+    void
+    async_send_response
+        ( id const& response_id
+        , Response const& response
+        , message_socket::endpoint_type const& e )
+    { 
+        auto message = message_serializer_.serialize( response, response_id );
+
+        // This lamba will keep the response message alive.
+        auto on_response_sent = [ message ] 
+            ( std::error_code const& failure ) 
+        { };
+
+        // Serialize the message and send it.
+        get_subnet_for( e ).async_send( *message, e, on_response_sent );
+    }
+
+    /**
+     *
+     */
+    template< typename OnResponseReceived, typename OnError >
+    void
+    register_temporary_association
+        ( id const& response_id
+        , timer::duration const& association_ttl
+        , OnResponseReceived const& on_response_received
+        , OnError const& on_error )
+    {
+        auto on_timeout = [ this, on_error, response_id ]
+            ( void ) 
+        {
+            // If an association has been removed, that means
+            // the message has never been received
+            // hence report the timeout to the client.
+            if ( response_dispatcher_.remove_association( response_id ) )
+                on_error( make_error_code( std::errc::timed_out ) );
+        };
+
+        // Associate the response id with the 
+        // on_response_received callback.
+        response_dispatcher_.push_association( response_id
+                                             , on_response_received );
+
+        timer_.expires_from_now( association_ttl, on_timeout );
     }
 
 private:
@@ -706,7 +902,15 @@ private:
     ///
     boost::asio::io_service io_service_;
     ///
-    network_type net_;
+    response_dispatcher response_dispatcher_;
+    ///
+    timer timer_;
+    ///
+    message_serializer message_serializer_;
+    ///
+    subnet_type subnet_ipv4_;
+    ///
+    subnet_type subnet_ipv6_;
     ///
     endpoint initial_peer_;
     ///

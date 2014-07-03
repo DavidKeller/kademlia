@@ -60,14 +60,14 @@ public:
      *
      */
     subnet
-#ifdef _MSC_VER
         ( subnet && o )
+#ifdef _MSC_VER
         : reception_buffer_{ std::move( o.reception_buffer_ ) }
         , current_message_sender_{ std::move( o.current_message_sender_ ) }
         , socket_{ std::move( o.socket_ ) }
     { }
 #else
-        ( subnet && o ) = default;
+        = default;
 #endif
 
     /**
@@ -162,14 +162,16 @@ subnet::async_send
     if ( message.size() > INPUT_BUFFER_SIZE )
         callback( make_error_code( std::errc::value_too_large ) );
     else {
-        auto on_completion = [ this, callback ]
+        // Copy the buffer as it has to live past the end of this call.
+        auto message_copy = std::make_shared< buffer >( message );
+        auto on_completion = [ this, callback, message_copy ]
             ( boost::system::error_code const& failure
             , std::size_t /* bytes_sent */ )
         {
             callback( boost_to_std_error( failure ) );
         };
 
-        this->socket_.async_send_to( boost::asio::buffer( message )
+        this->socket_.async_send_to( boost::asio::buffer( *message_copy )
                                    , to
                                    , on_completion );
     }

@@ -28,7 +28,7 @@
 #include <utility>
 
 #include "engine.hpp"
-#include "net.hpp"
+#include "subnet.hpp"
 
 namespace kademlia {
 
@@ -48,7 +48,7 @@ struct session::impl final
     { }
 
     ///
-    detail::engine< key_type, data_type, detail::net > engine_;
+    detail::engine< key_type, data_type, detail::subnet > engine_;
 };
 
 session::session

@@ -46,8 +46,6 @@ set(kademlia_sources
     value_context.hpp
     find_value_context.hpp
     store_value_context.hpp
-    net.cpp
-    net.hpp
     subnet.hpp
     timer.cpp
     timer.hpp
