@@ -818,7 +818,7 @@ private:
         // This lamba will keep the request message alive.
         auto on_request_sent = [ this, response_id
                                , on_response_received, on_error
-                               , timeout, message ] 
+                               , timeout ] 
             ( std::error_code const& failure ) 
         {
             if ( failure )
@@ -830,7 +830,7 @@ private:
         };
 
         // Serialize the request and send it.
-        get_subnet_for( e ).async_send( *message, e, on_request_sent );
+        get_subnet_for( e ).async_send( message, e, on_request_sent );
     }
 
     /**
@@ -856,13 +856,12 @@ private:
     { 
         auto message = message_serializer_.serialize( response, response_id );
 
-        // This lamba will keep the response message alive.
-        auto on_response_sent = [ message ] 
-            ( std::error_code const& failure ) 
+        auto on_response_sent = [] 
+            ( std::error_code const& /* failure */ ) 
         { };
 
         // Serialize the message and send it.
-        get_subnet_for( e ).async_send( *message, e, on_response_sent );
+        get_subnet_for( e ).async_send( message, e, on_response_sent );
     }
 
     /**

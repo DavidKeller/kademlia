@@ -53,7 +53,7 @@ public:
      *
      */
     template< typename Message >
-    std::shared_ptr< buffer >
+    buffer
     serialize
         ( Message const& message
         , id const& token );
@@ -61,7 +61,7 @@ public:
     /**
      *
      */
-    std::shared_ptr< buffer >
+    buffer
     serialize
         ( header::type const& type
         , id const& token );
@@ -81,18 +81,17 @@ private:
 };
 
 template< typename Message >
-std::shared_ptr< buffer >
+buffer
 message_serializer::serialize
     ( Message const& message
     , id const& token )
 {
-    auto b = std::make_shared< buffer >();
-
     auto const type = message_traits< Message >::TYPE_ID;
     auto const header = generate_header( type, token );
 
-    detail::serialize( header, *b );
-    detail::serialize( message, *b );
+    buffer b;
+    detail::serialize( header, b );
+    detail::serialize( message, b );
 
     return std::move( b );
 }

@@ -45,16 +45,15 @@ message_serializer::generate_header
             , token };
 }
 
-std::shared_ptr< buffer >
+buffer
 message_serializer::serialize
     ( header::type const& type
     , id const& token )
 {
-    auto b = std::make_shared< buffer >();
-
     auto const header = generate_header( type, token );
 
-    detail::serialize( header, *b );
+    buffer b;
+    detail::serialize( header, b );
 
     return std::move( b );
 }
