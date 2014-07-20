@@ -45,7 +45,7 @@ create_endpoint
 
 inline kademlia::detail::peer
 create_peer
-    ( kademlia::detail::id const& id = kademlia::detail::id{}
+    ( kademlia::detail::id const& id = kademlia::detail::id()
     , kademlia::detail::ip_endpoint const& endpoint = create_endpoint() )
 {
     using peer_type = kademlia::detail::peer;

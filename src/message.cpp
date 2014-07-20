@@ -46,7 +46,7 @@ serialize_integer
 
     for ( auto i = 0u; i < sizeof( value ); ++i )
     {
-        b.push_back( value );
+        b.push_back( buffer::value_type( value ) );
         static_cast< unsigned_integer_type & >( value ) >>= 8;
     }
 }
