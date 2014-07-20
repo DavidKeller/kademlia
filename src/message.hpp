@@ -36,9 +36,11 @@
 #include <system_error>
 #include <vector>
 
+#include <boost/asio/ip/address.hpp>
+
 #include <kademlia/detail/cxx11_macros.hpp>
 
-#include "message_socket.hpp"
+#include "peer.hpp"
 #include "id.hpp"
 #include "buffer.hpp"
 
@@ -66,9 +68,9 @@ struct header final
         ///
         STORE_REQUEST,
         ///
-        FIND_NODE_REQUEST,
+        FIND_PEER_REQUEST,
         ///
-        FIND_NODE_RESPONSE,
+        FIND_PEER_RESPONSE,
         ///
         FIND_VALUE_REQUEST,
         ///
@@ -109,25 +111,25 @@ deserialize
 /**
  *
  */
-struct find_node_request_body final
+struct find_peer_request_body final
 {
     ///
-    id node_to_find_id_;
+    id peer_to_find_id_;
 };
 
 /**
  *
  */
 template<>
-struct message_traits< find_node_request_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_NODE_REQUEST; };
+struct message_traits< find_peer_request_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_PEER_REQUEST; };
 
 /**
  *
  */
 void
 serialize
-    ( find_node_request_body const& body
+    ( find_peer_request_body const& body
     , buffer & b );
 
 /**
@@ -137,58 +139,24 @@ std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , find_node_request_body & body );
+    , find_peer_request_body & body );
+
 
 /**
  *
  */
-struct node
-{
-    id id_;
-    message_socket::endpoint_type endpoint_;
-};
-
-/**
- *
- */
-inline bool
-operator==
-    ( node const& a
-    , node const& b )
-{ return a.id_ == b.id_ && a.endpoint_ == b.endpoint_; }
-
-/**
- *
- */
-inline bool
-operator!=
-    ( node const& a
-    , node const& b )
-{ return ! ( a == b ); }
-
-/**
- *
- */
-std::ostream &
-operator<<
-    ( std::ostream & out
-    , node const& a );
-
-/**
- *
- */
-struct find_node_response_body final
+struct find_peer_response_body final
 {
     ///
-    std::vector< node > nodes_;
+    std::vector< peer > peers_;
 };
 
 /**
  *
  */
 template<>
-struct message_traits< find_node_response_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_NODE_RESPONSE; };
+struct message_traits< find_peer_response_body >
+{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_PEER_RESPONSE; };
 
 
 /**
@@ -196,7 +164,7 @@ struct message_traits< find_node_response_body >
  */
 void
 serialize
-    ( find_node_response_body const& body
+    ( find_peer_response_body const& body
     , buffer & b );
 
 /**
@@ -206,7 +174,7 @@ std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , find_node_response_body & body );
+    , find_peer_response_body & body );
 
 /**
  *

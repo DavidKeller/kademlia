@@ -24,13 +24,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "helpers/common.hpp"
+#include "helpers/peer_factory.hpp"
 
 #include <vector>
 #include <utility>
 
 #include "id.hpp"
 #include "message_socket.hpp"
-
 #include "value_context.hpp"
 
 namespace k = kademlia;
@@ -48,7 +48,7 @@ struct test_context : kd::value_context {
 };
 
 using routing_table_peer = std::pair< kd::id
-                                    , kd::message_socket::endpoint_type >;
+                                    , kd::ip_endpoint >;
 
 } // anonymous namespace
 
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
 BOOST_AUTO_TEST_CASE( can_be_constructed_with_candidates )
 {
     std::vector< routing_table_peer > candidates;
-    kd::message_socket::endpoint_type const default_address; 
+    kd::ip_endpoint const default_address{};
     candidates.emplace_back( kd::id{ "1" }, default_address );
     kd::id const key{};
     test_context c{ key, candidates.begin(), candidates.end() };
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 BOOST_AUTO_TEST_CASE( can_select_candidates )
 {
     std::vector< routing_table_peer > candidates;
-    kd::message_socket::endpoint_type const default_address; 
+    kd::ip_endpoint const default_address{}; 
     candidates.emplace_back( kd::id{ "7" }, default_address );
     candidates.emplace_back( kd::id{ "3" }, default_address );
     candidates.emplace_back( kd::id{ "6" }, default_address );
@@ -123,22 +123,24 @@ BOOST_AUTO_TEST_CASE( can_select_candidates )
 
 BOOST_AUTO_TEST_CASE( can_add_candidates )
 {
-    kd::message_socket::endpoint_type const default_address; 
     std::vector< routing_table_peer > candidates;
+    kd::ip_endpoint const default_address{}; 
     candidates.emplace_back( kd::id{ "7" }, default_address );
-    kd::id const key{};
-    test_context c{ key, candidates.begin(), candidates.end() };
 
-    std::vector< kd::candidate > new_candidates;
-    new_candidates.push_back( { kd::id{ "7" }, default_address } );
+    kd::id const our_id{};
+    test_context c{ our_id, candidates.begin(), candidates.end() };
+
+    std::vector< kd::peer > new_candidates;
+    new_candidates.emplace_back( create_peer( kd::id{ "7" } ) );
     BOOST_REQUIRE( ! c.are_these_candidates_closest( new_candidates ) );
 
-    new_candidates.push_back( { kd::id{ "6" }, default_address } );
-    new_candidates.push_back( { kd::id{ "8" }, default_address } );
+    new_candidates.emplace_back( create_peer( kd::id{ "6" } ) );
+    new_candidates.emplace_back( create_peer( kd::id{ "8" } ) );
+
     BOOST_REQUIRE( c.are_these_candidates_closest( new_candidates ) );
 
     candidates.clear();
-    new_candidates.push_back( { kd::id{ "9" }, default_address } );
+    new_candidates.emplace_back( create_peer( kd::id{ "9" } ) );
     BOOST_REQUIRE( ! c.are_these_candidates_closest( new_candidates ) );
 }
 

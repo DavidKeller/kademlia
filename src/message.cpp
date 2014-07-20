@@ -33,30 +33,40 @@ namespace detail {
 
 namespace {
 
+template< typename IntegerType >
 inline void
-serialize
-    ( std::uint64_t size
+serialize_integer
+    ( IntegerType value
     , buffer & b )
 {
-    for ( auto i = 0u; i < sizeof( size ); ++i )
-        b.push_back( size >> 8 * i & 0xff );
+    // Cast the integer as unsigned because
+    // right shifting signed is UB.
+    using unsigned_integer_type 
+            = typename std::make_unsigned< IntegerType >::type;
+
+    for ( auto i = 0u; i < sizeof( value ); ++i )
+    {
+        b.push_back( value );
+        static_cast< unsigned_integer_type & >( value ) >>= 8;
+    }
 }
 
 /**
  *
  */
+template< typename IntegerType >
 inline std::error_code
-deserialize
+deserialize_integer
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , std::uint64_t & size )
+    , IntegerType & value )
 {
-    if ( std::size_t( std::distance( i, e ) ) < sizeof( size ) )
+    if ( std::size_t( std::distance( i, e ) ) < sizeof( value ) )
         return make_error_code( TRUNCATED_SIZE );
 
-    size = 0;
-    for ( auto j = 0u; j < sizeof( size ); ++j )
-        size |= std::uint64_t{ *i++ } << 8 * j;
+    value = 0;
+    for ( auto j = 0u; j < sizeof( value ); ++j )
+        value |= IntegerType{ *i++ } << 8 * j;
 
     return std::error_code{};
 }
@@ -66,7 +76,7 @@ serialize
     ( std::vector< std::uint8_t > data
     , buffer & b )
 {
-    serialize( data.size(), b );
+    serialize_integer( data.size(), b );
     for ( auto const& d : data )
         b.push_back( d );
 }
@@ -81,7 +91,7 @@ deserialize
     , std::vector< std::uint8_t > & data )
 {
     std::uint64_t size;
-    auto failure = deserialize( i, e, size );
+    auto failure = deserialize_integer( i, e, size );
     if ( failure )
         return failure;
 
@@ -156,24 +166,20 @@ enum
  */
 inline void
 serialize
-    ( message_socket::endpoint_type const& endpoint
+    ( boost::asio::ip::address const& address
     , buffer & b )
 {
-    auto const port = endpoint.port();
-    b.push_back( port & 0xff );
-    b.push_back( port >> 8 );
-
-    if ( endpoint.address().is_v4() )
+    if ( address.is_v4() )
     {
         b.push_back( KADEMLIA_ENDPOINT_SERIALIZATION_IPV4 );
-        auto const& a = endpoint.address().to_v4().to_bytes();
+        auto const& a = address.to_v4().to_bytes();
         b.insert( b.end(), a.begin(), a.end() );
     }
     else
     {
-        assert( endpoint.address().is_v6() && "unknown IP version" );
+        assert( address.is_v6() && "unknown IP version" );
         b.push_back( KADEMLIA_ENDPOINT_SERIALIZATION_IPV6 );
-        auto const& a = endpoint.address().to_v6().to_bytes();
+        auto const& a = address.to_v6().to_bytes();
         b.insert( b.end(), a.begin(), a.end() );
     }
 }
@@ -181,9 +187,9 @@ serialize
 /**
  *
  */
-template<typename Address>
+template< typename Address >
 inline std::error_code
-deserialize
+deserialize_address
     ( buffer::const_iterator & i
     , buffer::const_iterator e
     , Address & address )
@@ -207,37 +213,32 @@ inline std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , message_socket::endpoint_type & endpoint )
+    , boost::asio::ip::address & address )
 {
-    if ( std::distance( i, e ) < 3 )
+    if ( std::distance( i, e ) < 1 )
         return make_error_code( TRUNCATED_ENDPOINT ); 
-
-    std::uint16_t port;
-    port = *i++;
-    port |= *i++ << 8;
-    endpoint.port( port );
 
     auto const protocol = *i++;
     if ( protocol == KADEMLIA_ENDPOINT_SERIALIZATION_IPV4 )
     {
-        boost::asio::ip::address_v4 address;
-        auto const failure = deserialize( i, e, address );
+        boost::asio::ip::address_v4 a;
+        auto const failure = deserialize_address( i, e, a );
         if ( failure )
             return failure;
 
-        endpoint.address( address );
+        address = a;
     }
     else
     {
         assert( protocol == KADEMLIA_ENDPOINT_SERIALIZATION_IPV6
               && "unknown IP version");
 
-        boost::asio::ip::address_v6 address;
-        auto const failure = deserialize( i, e, address );
+        boost::asio::ip::address_v6 a;
+        auto const failure = deserialize_address( i, e, a );
         if ( failure )
             return failure;
 
-        endpoint.address( address );
+        address = a;
     }
 
     return std::error_code{};
@@ -248,11 +249,12 @@ deserialize
  */
 inline void
 serialize
-    ( node const& n  
+    ( peer const& n  
     , buffer & b )
 {
     serialize( n.id_, b ); 
-    serialize( n.endpoint_, b ); 
+    serialize_integer( n.endpoint_.port_, b ); 
+    serialize( n.endpoint_.address_, b ); 
 }
 
 /**
@@ -262,13 +264,17 @@ inline std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , node & n )
+    , peer & n )
 {
     auto failure = deserialize( i, e, n.id_ ); 
     if ( failure )
         return failure;
 
-    return deserialize( i, e, n.endpoint_ ); 
+    failure = deserialize_integer( i, e, n.endpoint_.port_ ); 
+    if ( failure )
+        return failure;
+
+    return deserialize( i, e, n.endpoint_.address_ ); 
 }
 
 } // anonymous namespace
@@ -302,35 +308,29 @@ deserialize
 
 void
 serialize
-    ( find_node_request_body const& body
+    ( find_peer_request_body const& body
     , buffer & b )
 {
-    serialize( body.node_to_find_id_, b );
+    serialize( body.peer_to_find_id_, b );
 }
 
 std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , find_node_request_body & body )
+    , find_peer_request_body & body )
 {
-    return deserialize( i, e, body.node_to_find_id_ );
+    return deserialize( i, e, body.peer_to_find_id_ );
 }
-
-std::ostream &
-operator<<
-    ( std::ostream & out
-    , node const& a )
-{ return out << a.id_ << "@" << a.endpoint_; }
 
 void
 serialize
-    ( find_node_response_body const& body
+    ( find_peer_response_body const& body
     , buffer & b )
 {
-    serialize( body.nodes_.size(), b );
+    serialize_integer( body.peers_.size(), b );
 
-    for ( auto const & n : body.nodes_ )
+    for ( auto const & n : body.peers_ )
         serialize( n, b );
 }
 
@@ -338,17 +338,17 @@ std::error_code
 deserialize
     ( buffer::const_iterator & i
     , buffer::const_iterator e
-    , find_node_response_body & body )
+    , find_peer_response_body & body )
 {
     std::uint64_t size;
-    auto failure = deserialize( i, e, size );
+    auto failure = deserialize_integer( i, e, size );
 
     for ( 
         ; size > 0 && ! failure
         ; -- size )
     {
-        body.nodes_.resize( body.nodes_.size() + 1 );
-        failure = deserialize( i, e, body.nodes_.back() );
+        body.peers_.resize( body.peers_.size() + 1 );
+        failure = deserialize( i, e, body.peers_.back() );
     }
 
     return failure;

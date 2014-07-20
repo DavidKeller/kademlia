@@ -57,33 +57,21 @@ public:
     find_value_context
         ( id const & searched_key
         , Iterator i, Iterator e
-        , HandlerType && load_handler )
-        : value_context( searched_key, i, e )
-        , load_handler_{ std::forward< HandlerType >( load_handler ) }
-        , is_finished_{}
-    { }
+        , HandlerType && load_handler );
 
     /**
      *
      */
     void
     notify_caller
-        ( data_type const& data )
-    { 
-        load_handler_( std::error_code{}, data ); 
-        is_finished_ = true;
-    }
+        ( data_type const& data );
 
     /**
      *
      */
     void
     notify_caller
-        ( std::error_code const& failure )
-    { 
-        load_handler_( failure, data_type{} ); 
-        is_finished_ = true;
-    }
+        ( std::error_code const& failure );
 
     /**
      *
@@ -91,8 +79,7 @@ public:
     bool
     is_caller_notified
         ( void )
-        const
-    { return is_finished_; }
+        const;
 
 private:
     ///
@@ -100,6 +87,43 @@ private:
     ///
     bool is_finished_;
 };
+
+template< typename LoadHandlerType, typename DataType >
+template< typename Iterator, typename HandlerType >
+inline
+find_value_context< LoadHandlerType, DataType >::find_value_context
+    ( id const & searched_key
+    , Iterator i, Iterator e
+    , HandlerType && load_handler )
+        : value_context{ searched_key, i, e }
+        , load_handler_{ std::forward< HandlerType >( load_handler ) }
+        , is_finished_{}
+{ }
+
+template< typename LoadHandlerType, typename DataType >
+inline void
+find_value_context< LoadHandlerType, DataType >::notify_caller
+    ( data_type const& data )
+{ 
+    load_handler_( std::error_code{}, data ); 
+    is_finished_ = true;
+}
+
+template< typename LoadHandlerType, typename DataType >
+inline void
+find_value_context< LoadHandlerType, DataType >::notify_caller
+    ( std::error_code const& failure )
+{ 
+    load_handler_( failure, data_type{} ); 
+    is_finished_ = true;
+}
+
+template< typename LoadHandlerType, typename DataType >
+inline bool
+find_value_context< LoadHandlerType, DataType >::is_caller_notified
+    ( void )
+    const
+{ return is_finished_; }
 
 } // namespace detail
 } // namespace kademlia

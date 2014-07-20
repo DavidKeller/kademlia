@@ -31,11 +31,10 @@
 #endif
 
 #include <map>
-#include <cassert>
 #include <functional>
-#include <system_error>
 
 #include "id.hpp"
+#include "ip_endpoint.hpp"
 #include "message.hpp"
 
 namespace kademlia {
@@ -46,8 +45,11 @@ class response_dispatcher final
 {
 public:
     ///
+    using endpoint_type = ip_endpoint;
+
+    ///
     using callback = std::function< void
-            ( message_socket::endpoint_type const& sender
+            ( endpoint_type const& sender
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e ) >;
@@ -73,7 +75,7 @@ public:
      */
     std::error_code
     dispatch_message
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e );
@@ -86,20 +88,6 @@ private:
     ///
     associations associations_;
 };
-
-inline void
-response_dispatcher::push_association
-    ( id const& message_id
-    , callback const& on_message_received )
-{
-    auto i = associations_.emplace( message_id, on_message_received ); 
-    assert( i.second && "an id can't be registered twice" );
-}
-
-inline bool
-response_dispatcher::remove_association
-    ( id const& message_id )
-{ return associations_.erase( message_id ) > 0; }
 
 } // namespace detail
 } // namespace kademlia

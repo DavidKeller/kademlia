@@ -68,32 +68,32 @@ BOOST_AUTO_TEST_CASE( can_serialize_header )
                                    , header_in.random_token_.end() );
 }
  
-BOOST_AUTO_TEST_CASE( can_serialize_find_node_request_body )
+BOOST_AUTO_TEST_CASE( can_serialize_find_peer_request_body )
 {
     std::default_random_engine random_engine;
 
-    kd::find_node_request_body const body_out =
+    kd::find_peer_request_body const body_out =
             { kd::id{ random_engine } };
 
     kd::buffer buffer;
     kd::serialize( body_out, buffer );
 
-    kd::find_node_request_body body_in;
+    kd::find_peer_request_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
     BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.node_to_find_id_.begin()
-                                   , body_out.node_to_find_id_.end()
-                                   , body_in.node_to_find_id_.begin()
-                                   , body_in.node_to_find_id_.end() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.peer_to_find_id_.begin()
+                                   , body_out.peer_to_find_id_.end()
+                                   , body_in.peer_to_find_id_.begin()
+                                   , body_in.peer_to_find_id_.end() );
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
+BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
 {
     std::default_random_engine random_engine;
 
-    kd::find_node_response_body body_out;
+    kd::find_peer_response_body body_out;
    
     for ( std::size_t i = 0; i < 10; ++ i)
     {
@@ -101,28 +101,28 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_node_response_body )
             { "::1"
             , "127.0.0.1" };
 
-        kd::node new_node = 
+        kd::peer new_peer = 
             { kd::id{ random_engine }
             , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
               , std::uint16_t( 1024 + i ) } };
 
-        body_out.nodes_.push_back( std::move( new_node ) );
+        body_out.peers_.push_back( std::move( new_peer ) );
     } 
 
     kd::buffer buffer;
     kd::serialize( body_out, buffer );
 
-    kd::find_node_response_body body_in;
+    kd::find_peer_response_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
     BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
     BOOST_REQUIRE( i == e );
 
-    BOOST_REQUIRE_EQUAL( body_out.nodes_.size(), body_in.nodes_.size() );
+    BOOST_REQUIRE_EQUAL( body_out.peers_.size(), body_in.peers_.size() );
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.nodes_.begin()
-                                   , body_out.nodes_.end()
-                                   , body_in.nodes_.begin()
-                                   , body_in.nodes_.end() );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.peers_.begin()
+                                   , body_out.peers_.end()
+                                   , body_in.peers_.begin()
+                                   , body_in.peers_.end() );
 }
  
 BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )

@@ -25,16 +25,30 @@
 
 #include "response_dispatcher.hpp"
 
-#include <algorithm>
+#include <cassert>
 
 #include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
+void
+response_dispatcher::push_association
+    ( id const& message_id
+    , callback const& on_message_received )
+{
+    auto i = associations_.emplace( message_id, on_message_received ); 
+    assert( i.second && "an id can't be registered twice" );
+}
+
+bool
+response_dispatcher::remove_association
+    ( id const& message_id )
+{ return associations_.erase( message_id ) > 0; }
+
 std::error_code
 response_dispatcher::dispatch_message
-    ( message_socket::endpoint_type const& sender
+    ( endpoint_type const& sender
     , header const& h
     , buffer::const_iterator i
     , buffer::const_iterator e )

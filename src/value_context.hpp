@@ -34,7 +34,7 @@
 #include <map>
 #include <vector>
 
-#include "candidate.hpp"
+#include "peer.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -42,131 +42,42 @@ namespace detail {
 ///
 class value_context
 {
-protected:
-    /**
-     *
-     */
-    ~value_context
-        ( void )
-        = default;
-
-    /**
-     *
-     */
-    template< typename Iterator >
-    value_context
-        ( id const & key
-        , Iterator i, Iterator e )
-        : key_{ key }
-        , in_flight_requests_count_{ 0 }
-        , candidates_{}
-    { 
-        for ( ; i != e; ++i )
-            add_candidate( i->first, i->second );
-    }
-
 public:
     /**
      *
      */
     void
     flag_candidate_as_valid
-        ( id const& candidate_id )
-    { 
-        auto i = find_candidate( candidate_id );
-        if ( i == candidates_.end() 
-           && i->second.state_ == candidate::STATE_CONTACTED )
-            return;
-
-        -- in_flight_requests_count_; 
-        i->second.state_ = candidate::STATE_RESPONDED;
-    }
+        ( id const& candidate_id );
 
     /**
      *
      */
     void
     flag_candidate_as_invalid
-        ( id const& candidate_id )
-    { 
-        auto i = find_candidate( candidate_id );
-        if ( i == candidates_.end() 
-           && i->second.state_ == candidate::STATE_CONTACTED )
-            return;
-
-        -- in_flight_requests_count_; 
-        i->second.state_ = candidate::STATE_TIMEOUTED;
-    }
+        ( id const& candidate_id );
 
     /**
      *
      */
-    std::vector< candidate >
+    std::vector< peer >
     select_new_closest_candidates
-        ( std::size_t max_count )
-    {
-        std::vector< candidate > candidates;
-
-        // Iterate over all candidates until we picked
-        // candidates_max_count not-contacted candidates.
-        for ( auto i = candidates_.begin(), e = candidates_.end()
-            ; i != e && in_flight_requests_count_ < max_count 
-            ; ++ i)
-        {
-            if ( i->second.state_ == candidate::STATE_UNKNOWN )
-            {
-                i->second.state_ = candidate::STATE_CONTACTED;
-                ++ in_flight_requests_count_;
-                candidates.push_back( i->second );
-            }
-        }
-
-        return std::move( candidates );
-    }
+        ( std::size_t max_count );
 
     /**
      *
      */
-    std::vector< candidate >
+    std::vector< peer >
     select_closest_valid_candidates
-        ( std::size_t max_count )
-    {
-        std::vector< candidate > candidates;
-
-        // Iterate over all candidates until we picked
-        // candidates_max_count not-contacted candidates.
-        for ( auto i = candidates_.begin(), e = candidates_.end()
-            ; i != e && candidates.size() < max_count 
-            ; ++ i)
-        {
-            if ( i->second.state_ == candidate::STATE_RESPONDED )
-                candidates.push_back( i->second );
-        }
-
-        return std::move( candidates );
-    }
+        ( std::size_t max_count );
 
     /**
      *
      */
-    template< typename Candidates >
+    template< typename Peers >
     bool
     are_these_candidates_closest
-        ( Candidates const& candidates )
-    {
-        // Keep track of the closest candidate before
-        // new candidate insertion.
-        auto closest_candidate = candidates_.begin();
-
-        for ( auto const& new_candidate : candidates )
-            add_candidate( new_candidate.id_, new_candidate.endpoint_ );
-
-        // If no closest candidate has been found.
-        if ( closest_candidate == candidates_.begin() )
-            return false;
-
-        return true;
-    }
+        ( Peers const& peers );
 
     /**
      *
@@ -174,8 +85,7 @@ public:
     bool
     have_all_requests_completed
         ( void )
-        const
-    { return in_flight_requests_count_ == 0; }
+        const;
     
     /**
      *
@@ -183,10 +93,36 @@ public:
     id const&
     get_key
         ( void )
-        const
-    { return key_; }
+        const;
+
+protected:
+    /**
+     *
+     */
+    ~value_context
+        ( void );
+
+    /**
+     *
+     */
+    template< typename Iterator >
+    value_context
+        ( id const & key
+        , Iterator i, Iterator e );
 
 private:
+    ///
+    struct candidate final
+    {
+        peer peer_;
+        enum {
+            STATE_UNKNOWN,
+            STATE_CONTACTED,
+            STATE_RESPONDED,
+            STATE_TIMEOUTED,
+        } state_;
+    };
+
     ///
     using candidates_type = std::map< id, candidate >;
 
@@ -196,24 +132,14 @@ private:
      */
     void
     add_candidate
-        ( id const& candidate_id
-        , message_socket::endpoint_type const& e )
-    {
-        auto const distance = detail::distance( candidate_id, key_ );
-        candidate const c{ candidate_id, e, candidate::STATE_UNKNOWN };
-        candidates_.emplace( distance, c );
-    }
+        ( peer const& p );
 
     /**
      *
      */
     candidates_type::iterator
     find_candidate
-        ( id const& candidate_id )
-    {
-        auto const distance = detail::distance( candidate_id, key_ );
-        return candidates_.find( distance );
-    }
+        ( id const& candidate_id );
 
 private:
     ///
@@ -223,6 +149,140 @@ private:
     ///
     candidates_type candidates_;
 };
+
+inline
+value_context::~value_context
+    ( void )
+    = default;
+
+template< typename Iterator >
+inline
+value_context::value_context
+    ( id const & key
+    , Iterator i, Iterator e )
+        : key_{ key }
+        , in_flight_requests_count_{ 0 }
+        , candidates_{}
+{ 
+    for ( ; i != e; ++i )
+        add_candidate( peer{ i->first, i->second } );
+}
+
+inline void
+value_context::flag_candidate_as_valid
+    ( id const& candidate_id )
+{ 
+    auto i = find_candidate( candidate_id );
+    if ( i == candidates_.end() 
+       && i->second.state_ == candidate::STATE_CONTACTED )
+        return;
+
+    -- in_flight_requests_count_; 
+    i->second.state_ = candidate::STATE_RESPONDED;
+}
+
+inline void
+value_context::flag_candidate_as_invalid
+    ( id const& candidate_id )
+{ 
+    auto i = find_candidate( candidate_id );
+    if ( i == candidates_.end() 
+       && i->second.state_ == candidate::STATE_CONTACTED )
+        return;
+
+    -- in_flight_requests_count_; 
+    i->second.state_ = candidate::STATE_TIMEOUTED;
+}
+
+inline std::vector< peer >
+value_context::select_new_closest_candidates
+    ( std::size_t max_count )
+{
+    std::vector< peer > candidates;
+
+    // Iterate over all candidates until we picked
+    // candidates_max_count not-contacted candidates.
+    for ( auto i = candidates_.begin(), e = candidates_.end()
+        ; i != e && in_flight_requests_count_ < max_count 
+        ; ++ i)
+    {
+        if ( i->second.state_ == candidate::STATE_UNKNOWN )
+        {
+            i->second.state_ = candidate::STATE_CONTACTED;
+            ++ in_flight_requests_count_;
+            candidates.push_back( i->second.peer_ );
+        }
+    }
+
+    return std::move( candidates );
+}
+
+inline std::vector< peer >
+value_context::select_closest_valid_candidates
+    ( std::size_t max_count )
+{
+    std::vector< peer > candidates;
+
+    // Iterate over all candidates until we picked
+    // candidates_max_count not-contacted candidates.
+    for ( auto i = candidates_.begin(), e = candidates_.end()
+        ; i != e && candidates.size() < max_count 
+        ; ++ i)
+    {
+        if ( i->second.state_ == candidate::STATE_RESPONDED )
+            candidates.push_back( i->second.peer_ );
+    }
+
+    return std::move( candidates );
+}
+
+template< typename Peers >
+inline bool
+value_context::are_these_candidates_closest
+    ( Peers const& peers )
+{
+    // Keep track of the closest candidate before
+    // new candidate insertion.
+    auto closest_candidate = candidates_.begin();
+
+    for ( auto const& p : peers )
+        add_candidate( p );
+
+    // If no closest candidate has been found.
+    if ( closest_candidate == candidates_.begin() )
+        return false;
+
+    return true;
+}
+
+inline bool
+value_context::have_all_requests_completed
+    ( void )
+    const
+{ return in_flight_requests_count_ == 0; }
+
+inline id const&
+value_context::get_key
+    ( void )
+    const
+{ return key_; }
+
+inline void
+value_context::add_candidate
+    ( peer const& p )
+{
+    auto const distance = detail::distance( p.id_, key_ );
+    candidate const c{ p, candidate::STATE_UNKNOWN };
+    candidates_.emplace( distance, c );
+}
+
+inline value_context::candidates_type::iterator
+value_context::find_candidate
+    ( id const& candidate_id )
+{
+    auto const distance = detail::distance( candidate_id, key_ );
+    return candidates_.find( distance );
+}
 
 } // namespace detail
 } // namespace kademlia

@@ -31,41 +31,339 @@
 #endif
 
 #include <vector>
+#include <algorithm>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/v6_only.hpp>
+#include <boost/asio/buffer.hpp>
 
-#include <kademlia/endpoint.hpp>
+#include <kademlia/error.hpp>
+#include <kademlia/detail/cxx11_macros.hpp>
+
+#include "buffer.hpp"
+#include "ip_endpoint.hpp"
+#include "boost_to_std_error.hpp"
 
 namespace kademlia {
 namespace detail {
 
-///
-using message_socket = boost::asio::ip::udp::socket;
-///
-using resolved_endpoints = std::vector< message_socket::endpoint_type >;
-
 /**
  *
  */
-message_socket
-create_socket
+template< typename UnderlyingSocketType >
+class message_socket final
+{
+public:
+    /// Consider we won't receive IPv6 jumbo datagram.
+    static CXX11_CONSTEXPR std::size_t INPUT_BUFFER_SIZE = UINT16_MAX;
+
+    ///
+    using endpoint_type = ip_endpoint;
+
+    ///
+    using resolved_endpoints = std::vector< endpoint_type >;
+
+public:
+    /**
+     *
+     */
+    template< typename EndpointType >
+    static resolved_endpoints
+    resolve_endpoint
+        ( boost::asio::io_service & io_service
+        , EndpointType const& e );
+
+    /**
+     *
+     */
+    template< typename EndpointType >
+    static message_socket
+    ipv4
+        ( boost::asio::io_service & io_service
+        , EndpointType const& e );
+
+
+    /**
+     *
+     */
+    template< typename EndpointType >
+    static message_socket
+    ipv6
+        ( boost::asio::io_service & io_service
+        , EndpointType const& e );
+
+    /**
+     *
+     */
+    message_socket
+        ( message_socket && o )
+#ifdef _MSC_VER
+        : reception_buffer_{ std::move( o.reception_buffer_ ) }
+        , current_message_sender_{ std::move( o.current_message_sender_ ) }
+        , socket_{ std::move( o.socket_ ) }
+    { }
+#else
+        = default;
+#endif
+
+    /**
+     *
+     */
+    ~message_socket
+        ( void );
+
+    /**
+     *
+     */
+    explicit
+    message_socket
+        ( message_socket const& o ) = delete;
+
+    /**
+     *
+     */
+    message_socket &
+    operator=
+        ( message_socket const& o ) = delete;
+
+    /**
+     *
+     */
+    template<typename ReceiveCallback>
+    void
+    async_receive
+        ( ReceiveCallback const& callback );
+
+    /**
+     *
+     */
+    template<typename SendCallback>
+    void
+    async_send
+        ( buffer const& message
+        , endpoint_type const& to
+        , SendCallback const& callback );
+
+    /**
+     *
+     */
+    endpoint_type
+    local_endpoint 
+        ( void ) 
+        const;
+
+private:
+    ///
+    using underlying_socket_type = UnderlyingSocketType; 
+
+    ///
+    using underlying_endpoint_type = typename underlying_socket_type::endpoint_type;
+
+private:
+    /**
+     *
+     */
+    message_socket
+        ( boost::asio::io_service & io_service
+        , endpoint_type const& e );
+
+    /**
+     *
+     */
+    static underlying_socket_type
+    create_underlying_socket
+        ( boost::asio::io_service & io_service
+        , endpoint_type const& e );
+
+    /**
+     *
+     */
+    static endpoint_type
+    convert_endpoint
+        ( underlying_endpoint_type const& e );
+
+    /**
+     *
+     */
+    static underlying_endpoint_type
+    convert_endpoint
+        ( endpoint_type const& e );
+
+private:
+    ///
+    buffer reception_buffer_;
+    ///
+    underlying_endpoint_type current_message_sender_;
+    ///
+    underlying_socket_type socket_;
+};
+
+template< typename UnderlyingSocketType >
+template< typename EndpointType >
+inline message_socket< UnderlyingSocketType >
+message_socket< UnderlyingSocketType >::ipv4
     ( boost::asio::io_service & io_service
-    , message_socket::endpoint_type const& e );
+    , EndpointType const& ipv4_endpoint )
+{
+    auto endpoints = resolve_endpoint( io_service, ipv4_endpoint );
 
-/**
- *
- */
-void
-graceful_close_socket
-    ( message_socket & s );
+    for ( auto const& i : endpoints )
+    {
+        if ( i.address_.is_v4() )
+            return message_socket{ io_service, i };
+    }
 
-/**
- *
- */
-resolved_endpoints
-resolve_endpoint
+    throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
+}
+
+template< typename UnderlyingSocketType >
+template< typename EndpointType >
+inline message_socket< UnderlyingSocketType >
+message_socket< UnderlyingSocketType >::ipv6
     ( boost::asio::io_service & io_service
-    , endpoint const& e );
+    , EndpointType const& ipv6_endpoint )
+{
+    auto endpoints = resolve_endpoint( io_service, ipv6_endpoint );
+
+    for ( auto const& i : endpoints )
+    {
+        if ( i.address_.is_v6() )
+            return message_socket{ io_service, i };
+    }
+
+    throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
+}
+
+template< typename UnderlyingSocketType >
+inline 
+message_socket< UnderlyingSocketType >::message_socket
+    ( boost::asio::io_service & io_service
+    , endpoint_type const& e )
+    : reception_buffer_{}
+    , current_message_sender_{}
+    , socket_{ create_underlying_socket( io_service, e ) }
+{ }
+
+template< typename UnderlyingSocketType >
+inline 
+message_socket< UnderlyingSocketType >::~message_socket
+    ( void )
+{
+    boost::system::error_code error_discared;
+    socket_.close( error_discared );
+}
+
+template< typename UnderlyingSocketType >
+template< typename ReceiveCallback >
+inline void
+message_socket< UnderlyingSocketType >::async_receive
+    ( ReceiveCallback const& callback )
+{
+    auto on_completion = [ this, callback ]
+        ( boost::system::error_code const& failure
+        , std::size_t bytes_received )
+    {
+        if ( failure ) 
+            reception_buffer_.resize( 0 );
+        else
+            reception_buffer_.resize( bytes_received );
+
+        callback( boost_to_std_error( failure )
+                , convert_endpoint( current_message_sender_ )
+                , reception_buffer_ );
+    };
+
+    reception_buffer_.resize( INPUT_BUFFER_SIZE );
+
+    socket_.async_receive_from( boost::asio::buffer( reception_buffer_ )
+                              , current_message_sender_
+                              , on_completion );
+}
+
+template< typename UnderlyingSocketType >
+template< typename SendCallback >
+inline void
+message_socket< UnderlyingSocketType >::async_send
+    ( buffer const& message
+    , endpoint_type const& to
+    , SendCallback const& callback )
+{
+    if ( message.size() > INPUT_BUFFER_SIZE )
+        callback( make_error_code( std::errc::value_too_large ) );
+    else {
+        // Copy the buffer as it has to live past the end of this call.
+        auto message_copy = std::make_shared< buffer >( message );
+        auto on_completion = [ this, callback, message_copy ]
+            ( boost::system::error_code const& failure
+            , std::size_t /* bytes_sent */ )
+        {
+            callback( boost_to_std_error( failure ) );
+        };
+
+        socket_.async_send_to( boost::asio::buffer( *message_copy )
+                             , convert_endpoint( to )
+                             , on_completion );
+    }
+}
+
+template< typename UnderlyingSocketType >
+inline typename message_socket< UnderlyingSocketType >::endpoint_type
+message_socket< UnderlyingSocketType >::local_endpoint
+    ( void )
+    const
+{ return convert_endpoint( socket_.local_endpoint() ); }
+
+template< typename UnderlyingSocketType >
+inline typename message_socket< UnderlyingSocketType >::underlying_socket_type
+message_socket< UnderlyingSocketType >::create_underlying_socket
+    ( boost::asio::io_service & io_service
+    , endpoint_type const& endpoint )
+{ 
+    auto const e = convert_endpoint( endpoint );
+
+    underlying_socket_type new_socket{ io_service, e.protocol() };
+
+    if ( e.address().is_v6() )
+        new_socket.set_option( boost::asio::ip::v6_only{ true } );
+
+    new_socket.bind( e ); 
+
+    return std::move( new_socket );
+}
+
+template< typename UnderlyingSocketType >
+template< typename EndpointType >
+inline typename message_socket< UnderlyingSocketType >::resolved_endpoints
+message_socket< UnderlyingSocketType >::resolve_endpoint
+    ( boost::asio::io_service & io_service
+    , EndpointType const& e )
+{
+    using protocol_type = typename underlying_socket_type::protocol_type;
+
+    typename protocol_type::resolver r{ io_service };
+    typename protocol_type::resolver::query q{ e.address(), e.service() };
+    // One raw endpoint (e.g. localhost) can be resolved to
+    // multiple endpoints (e.g. IPv4 / IPv6 address).
+    resolved_endpoints endpoints;
+
+    auto i = r.resolve( q );
+    for ( decltype( i ) end; i != end; ++i )
+        // Convert from underlying_endpoint_type to endpoint_type.
+        endpoints.push_back( convert_endpoint( *i ) );
+
+    return endpoints;
+}
+
+template< typename UnderlyingSocketType >
+inline typename message_socket< UnderlyingSocketType >::endpoint_type
+message_socket< UnderlyingSocketType >::convert_endpoint
+    ( underlying_endpoint_type const& e )
+{ return endpoint_type{ e.address(), e.port() }; }
+
+template< typename UnderlyingSocketType >
+inline typename message_socket< UnderlyingSocketType >::underlying_endpoint_type
+message_socket< UnderlyingSocketType >::convert_endpoint
+    ( endpoint_type const& e )
+{ return underlying_endpoint_type{ e.address_, e.port_ }; }
 
 } // namespace detail
 } // namespace kademlia

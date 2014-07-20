@@ -23,31 +23,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_CANDIDATE_HPP
-#define KADEMLIA_CANDIDATE_HPP
+#ifndef KADEMLIA_PEER_HPP
+#define KADEMLIA_PEER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
+#include <iosfwd>
+
 #include "id.hpp"
-#include "message_socket.hpp"
+#include "ip_endpoint.hpp"
 
 namespace kademlia {
 namespace detail {
 
 ///
-struct candidate
+struct peer final
 {
     id id_;
-    message_socket::endpoint_type endpoint_;
-    enum {
-        STATE_UNKNOWN,
-        STATE_CONTACTED,
-        STATE_RESPONDED,
-        STATE_TIMEOUTED,
-    } state_;
+    ip_endpoint endpoint_;
 };
+
+/**
+ *
+ */
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , peer const& p );
+
+/**
+ *
+ */
+inline bool
+operator==
+    ( const peer & a
+    , const peer & b )
+{ return a.id_ == b.id_ && a.endpoint_ == b.endpoint_; }
+
+/**
+ *
+ */
+inline bool
+operator!=
+    ( peer const& a
+    , peer const& b )
+{ return ! ( a == b ); }
 
 } // namespace detail
 } // namespace kademlia

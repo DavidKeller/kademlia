@@ -27,12 +27,12 @@
 #include "helpers/peer_factory.hpp"
 
 #include "routing_table.hpp"
-#include "message_socket.hpp"
+#include "ip_endpoint.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-using routing_table = kd::routing_table< kd::message_socket::endpoint_type >;
+using routing_table = kd::routing_table< kd::ip_endpoint >;
 
 /**
  *  Test routing_table::routing_table()
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE( fill_buckets_and_split_them )
     
     // This peer will be associated with every id.
     // Unicity applies only to id, not peer.
-    auto const test_peer( create_peer() );
+    auto const test_peer( create_endpoint() );
     
     // FIXME: Okay, not my best test.
     for ( std::size_t bucket_index = 0
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( discards_already_pushed_ids )
     std::default_random_engine random_engine;
 
     routing_table rt{ kd::id{ random_engine } };
-    auto const test_peer( create_peer() );
+    auto const test_peer( create_endpoint() );
     kd::id test_id;
     
     // Push two times the same peer.
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_SUITE( test_find )
 BOOST_AUTO_TEST_CASE( can_find_a_peer )
 {
     routing_table rt{ kd::id{} };
-    auto test_peer( create_peer() );
+    auto test_peer( create_endpoint() );
     kd::id test_id{ "a" };
     BOOST_REQUIRE( rt.push( test_id, test_peer ) );
  
@@ -142,15 +142,15 @@ BOOST_AUTO_TEST_CASE( can_find_a_closer_peer )
 { 
     routing_table rt{ kd::id{} };
     
-    auto test_peer1( create_peer() );
+    auto test_peer1( create_endpoint() );
     kd::id test_id1{ "1" };
     BOOST_REQUIRE( rt.push( test_id1, test_peer1 ) );
     
-    auto test_peer2( create_peer() );
+    auto test_peer2( create_endpoint() );
     kd::id test_id2{ "2" };
     BOOST_REQUIRE( rt.push( test_id2, test_peer2 ) );
     
-    auto test_peer3( create_peer() );
+    auto test_peer3( create_endpoint() );
     kd::id test_id3{ "4" };
     BOOST_REQUIRE( rt.push( test_id3, test_peer3 ) );
     
@@ -163,15 +163,15 @@ BOOST_AUTO_TEST_CASE( can_find_a_closer_peer )
 BOOST_AUTO_TEST_CASE( iterator_start_from_the_closest_k_bucket )
 {
     routing_table rt( kd::id{}, 1 );
-    auto test_peer1( create_peer( "192.168.0.1" ) );
+    auto test_peer1( create_endpoint( "192.168.0.1" ) );
     kd::id id1{ "1" };
     BOOST_REQUIRE( rt.push( id1, test_peer1 ) );
     
-    auto test_peer2( create_peer( "192.168.0.2" ) );
+    auto test_peer2( create_endpoint( "192.168.0.2" ) );
     kd::id id2{ "2" };
     BOOST_REQUIRE( rt.push( id2, test_peer2 ) );
     
-    auto test_peer3( create_peer( "192.168.0.3" ) );
+    auto test_peer3( create_endpoint( "192.168.0.3" ) );
     kd::id id3{ "4" };
     BOOST_REQUIRE( rt.push( id3, test_peer3 ) );
     
@@ -201,14 +201,14 @@ BOOST_AUTO_TEST_CASE( iterator_skip_empty_k_bucket )
 {
     routing_table rt{ kd::id{}, 1 };
     // Fill far k_bucket.
-    auto test_peer1( create_peer( "192.168.0.1" ) );
+    auto test_peer1( create_endpoint( "192.168.0.1" ) );
     kd::id id1{ "1" };
     BOOST_REQUIRE( rt.push( id1, test_peer1 ) );
     
     // Skip the next "2".
 
     // End with this one.
-    auto test_peer2( create_peer( "192.168.0.2" ) );
+    auto test_peer2( create_endpoint( "192.168.0.2" ) );
     kd::id id2{ "4" };
     BOOST_REQUIRE( rt.push( id2, test_peer2 ) );
     
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_SUITE( test_remove )
 BOOST_AUTO_TEST_CASE( can_remove_a_peer )
 {
     routing_table rt{ kd::id{} };
-    auto test_peer( create_peer() );
+    auto test_peer( create_endpoint() );
     kd::id test_id{};
     BOOST_REQUIRE( rt.push( test_id, test_peer ) );
     

@@ -23,12 +23,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <boost/asio/ip/udp.hpp>
+
+#include <kademlia/endpoint.hpp>
+
+#include "ip_endpoint.hpp"
 #include "message_socket.hpp"
 
 #include "helpers/common.hpp"
 
 namespace k = kademlia;
 namespace kd = kademlia::detail;
+
+using message_socket_type = kd::message_socket< boost::asio::ip::udp::socket >;
 
 /**
  *
@@ -39,31 +46,63 @@ BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
 {
     boost::asio::io_service io_service;
 
-    auto const port = get_temporary_listening_port();
-    BOOST_REQUIRE_THROW( kd::resolve_endpoint( io_service, { "error", port } )
-                       , std::exception );
+    {
+        k::endpoint const endpoint{ "error"
+                                  , "27980" };
+
+        BOOST_REQUIRE_THROW( 
+            message_socket_type::resolve_endpoint( io_service, endpoint );
+        , std::exception );
+    }
 }
+
+BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
+{
+    boost::asio::io_service io_service;
+
+    k::endpoint const endpoint{ "127.0.0.1"
+                              , "27980" };
+
+    auto const e = message_socket_type::resolve_endpoint( io_service, endpoint );
+
+    BOOST_REQUIRE_EQUAL( 1, e.size() );
+}
+
+
+BOOST_AUTO_TEST_CASE( ipv6_address_can_be_resolved )
+{
+    boost::asio::io_service io_service;
+
+    k::endpoint const endpoint{ "::1"
+                              , "27980" };
+
+    auto e = message_socket_type::resolve_endpoint( io_service, endpoint );
+    BOOST_REQUIRE_EQUAL( 1, e.size() );
+}
+
 
 BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
 {
     boost::asio::io_service io_service;
 
-    auto const port = get_temporary_listening_port();
-    auto e = kd::resolve_endpoint( io_service, { "127.0.0.1", port } );
-    BOOST_REQUIRE_EQUAL( 1, e.size() );
+    k::endpoint const endpoint( "127.0.0.1"
+                              , get_temporary_listening_port() );
 
-    BOOST_REQUIRE_NO_THROW( k::detail::create_socket( io_service, e.front() ) );
+    BOOST_REQUIRE_NO_THROW( 
+        message_socket_type::ipv4( io_service, endpoint );
+    );
 }
 
 BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
 {
     boost::asio::io_service io_service;
 
-    auto const port = get_temporary_listening_port();
-    auto e = kd::resolve_endpoint( io_service, { "::1", port } );
-    BOOST_REQUIRE_EQUAL( 1, e.size() );
+    k::endpoint const endpoint( "::1"
+                              , get_temporary_listening_port() );
     
-    BOOST_REQUIRE_NO_THROW( k::detail::create_socket( io_service, e.front() ) );
+    BOOST_REQUIRE_NO_THROW( 
+        message_socket_type::ipv6( io_service, endpoint );
+    );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

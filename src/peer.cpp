@@ -23,58 +23,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "message_socket.hpp"
-
-#include <boost/asio/ip/v6_only.hpp>
+#include "peer.hpp"
 
 namespace kademlia {
 namespace detail {
 
-/**
- *
- */
-message_socket
-create_socket
-    ( boost::asio::io_service & io_service
-    , message_socket::endpoint_type const& e )
-{ 
-    message_socket new_socket{ io_service, e.protocol() };
-
-    if ( e.address().is_v6() )
-        new_socket.set_option( boost::asio::ip::v6_only{ true } );
-
-    new_socket.bind( e ); 
-
-    return std::move( new_socket );
-}
-
-/**
- *
- */
-void
-graceful_close_socket
-    ( message_socket & s )
-{
-    boost::system::error_code error_discared;
-    s.close( error_discared );
-}
-
-/**
- *
- */
-resolved_endpoints
-resolve_endpoint
-    ( boost::asio::io_service & io_service
-    , endpoint const& e )
-{
-    message_socket::protocol_type::resolver r{ io_service };
-    message_socket::protocol_type::resolver::query q{ e.address(), e.service() };
-    // One raw endpoint (e.g. localhost) can be resolved to
-    // multiple endpoints (e.g. IPv4 / IPv6 address).
-    message_socket::protocol_type::resolver::iterator i = r.resolve(q), end;
-
-    return resolved_endpoints{ i, end };
-}
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , peer const& p )
+{ return out << p.id_ << "@" << p.endpoint_; }
 
 } // namespace detail
 } // namespace kademlia

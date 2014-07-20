@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_FIXTURE_TEST_CASE( unknown_message_are_dropped , fixture )
 {
-    kd::message_socket::endpoint_type const s;
+    kd::response_dispatcher::endpoint_type const s{};
     kd::header const h{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
     auto result = dispatcher_.dispatch_message( s, h, b.begin(), b.end() );
@@ -79,7 +79,7 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
 
     // Create the association.
     auto on_message_received = [ this ] 
-            ( kd::message_socket::endpoint_type const& s
+            ( kd::response_dispatcher::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
@@ -88,7 +88,7 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
                                 , on_message_received );
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
 
-    kd::message_socket::endpoint_type const s;
+    kd::response_dispatcher::endpoint_type const s{};
 
     // Send an unexpected message.
     auto result = dispatcher_.dispatch_message( s, h2, b.begin(), b.end() );
@@ -118,7 +118,7 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     // Create the association.
     auto on_message_received = [ this ] 
-            ( kd::message_socket::endpoint_type const& s
+            ( kd::response_dispatcher::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
@@ -130,7 +130,7 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     dispatcher_.push_association( h2.random_token_
                                 , on_message_received ); 
 
-    kd::message_socket::endpoint_type const s;
+    kd::response_dispatcher::endpoint_type const s{};
     auto result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );
     BOOST_REQUIRE( ! result );
     BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );

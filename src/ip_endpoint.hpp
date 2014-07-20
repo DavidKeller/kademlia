@@ -23,75 +23,57 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/session.hpp>
+#ifndef KADEMLIA_IP_ENDPOINT_HPP
+#define KADEMLIA_IP_ENDPOINT_HPP
 
-#include <utility>
-#include <boost/asio/ip/udp.hpp>
+#ifdef _MSC_VER
+#   pragma once
+#endif
 
-#include "message_socket.hpp"
-#include "engine.hpp"
+#include <iosfwd>
+
+#include <cstdint>
+#include <boost/asio/ip/address.hpp>
 
 namespace kademlia {
+namespace detail {
+
+///
+struct ip_endpoint final
+{
+    boost::asio::ip::address address_;
+    uint16_t port_;
+};
 
 /**
  *
  */
-struct session::impl final
-{
-    ///
-    using socket_type = boost::asio::ip::udp::socket;
-    ///
-    using engine_type = detail::engine< key_type
-                                      , data_type
-                                      , socket_type >;
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , ip_endpoint const& i );
 
-    /**
-     *
-     */
-    impl
-        ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4
-        , endpoint const& listen_on_ipv6 )
-        : engine_{ initial_peer, listen_on_ipv4, listen_on_ipv6 }
-    { }
+/**
+ *
+ */
+inline bool
+operator==
+    ( const ip_endpoint & a
+    , const ip_endpoint & b )
+{ return a.address_ == b.address_ && a.port_ == b.port_; }
 
-    ///
-    engine_type engine_;
-};
+/**
+ *
+ */
+inline bool
+operator!=
+    ( ip_endpoint const& a
+    , ip_endpoint const& b )
+{ return ! ( a == b ); }
 
-session::session
-    ( endpoint const& initial_peer
-    , endpoint const& listen_on_ipv4
-    , endpoint const& listen_on_ipv6 )
-    : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
-{ }
 
-session::~session
-    ( void )
-{ }
-
-void
-session::async_save
-    ( key_type const& key 
-    , data_type const& data
-    , save_handler_type handler )
-{ impl_->engine_.async_save( key, data, std::move( handler ) ); }
-
-void
-session::async_load
-    ( key_type const& key
-    , load_handler_type handler )
-{ impl_->engine_.async_load( key, std::move( handler ) ); }
-
-std::error_code
-session::run
-        ( void )
-{ return impl_->engine_.run(); }
-
-void
-session::abort
-        ( void )
-{ impl_->engine_.abort(); }
-
+} // namespace detail
 } // namespace kademlia
+
+#endif
 

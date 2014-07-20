@@ -29,6 +29,7 @@
 #include <utility>
 
 #include "id.hpp"
+#include "ip_endpoint.hpp"
 #include "message_socket.hpp"
 
 #include "find_value_context.hpp"
@@ -43,7 +44,7 @@ using data_type = std::vector< std::uint8_t >;
 using load_handler_type = std::function< void ( std::error_code const&, data_type const& ) >;
 
 using routing_table_peer = std::pair< kd::id
-                                    , kd::message_socket::endpoint_type >;
+                                    , kd::ip_endpoint >;
 
 using context = kd::find_value_context< load_handler_type, data_type >;
 

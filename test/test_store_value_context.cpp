@@ -29,7 +29,7 @@
 #include <utility>
 
 #include "id.hpp"
-#include "message_socket.hpp"
+#include "ip_endpoint.hpp"
 
 #include "store_value_context.hpp"
 
@@ -43,7 +43,7 @@ using save_handler_type = std::function< void ( std::error_code const& ) >;
 using data_type = std::vector< std::uint8_t >; 
 
 using routing_table_peer = std::pair< kd::id
-                                    , kd::message_socket::endpoint_type >;
+                                    , kd::ip_endpoint >;
 
 using context = kd::store_value_context< save_handler_type, data_type >;
 

@@ -40,13 +40,13 @@
 #include <kademlia/error.hpp>
 
 #include "timer.hpp"
+#include "ip_endpoint.hpp"
 #include "message_serializer.hpp"
 #include "response_dispatcher.hpp"
 #include "message_socket.hpp"
 #include "message.hpp"
 #include "routing_table.hpp"
 #include "value_store.hpp"
-#include "candidate.hpp"
 #include "find_value_context.hpp"
 #include "store_value_context.hpp"
 
@@ -58,21 +58,21 @@ namespace {
 // k 
 CXX11_CONSTEXPR std::size_t ROUTING_TABLE_BUCKET_SIZE{ 20 };
 // a
-CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_NODE_REQUESTS_COUNT{ 3 };
+CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_PEER_REQUESTS_COUNT{ 3 };
 // c
 CXX11_CONSTEXPR std::size_t REDUNDANT_SAVE_COUNT{ 3 };
 
 //
 CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
 //
-CXX11_CONSTEXPR std::chrono::milliseconds NODE_LOOKUP_TIMEOUT{ 20 };
+CXX11_CONSTEXPR std::chrono::milliseconds PEER_LOOKUP_TIMEOUT{ 20 };
 
 } // anonymous namespace
 
 /**
  *
  */
-template< typename KeyType, typename DataType, typename SubnetType >
+template< typename KeyType, typename DataType, typename UnderlyingSocketType >
 class engine final
 {
 public:
@@ -83,24 +83,24 @@ public:
     using data_type = DataType;
 
     ///
-    using subnet_type = SubnetType;
- 
+    using message_socket_type = message_socket< UnderlyingSocketType >;
+
 public:
     /**
      *
      */
     engine
         ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4
-        , endpoint const& listen_on_ipv6 )
+        , endpoint const& ipv4
+        , endpoint const& ipv6 )
         : random_engine_{ std::random_device{}() }
         , my_id_( random_engine_ )
         , io_service_{}
         , response_dispatcher_{}
         , timer_{ io_service_ }
         , message_serializer_{ my_id_ }
-        , subnet_ipv4_{ create_ipv4_subnet( io_service_, listen_on_ipv4 ) }
-        , subnet_ipv6_{ create_ipv6_subnet( io_service_, listen_on_ipv6 ) }
+        , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
+        , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
         , initial_peer_{ initial_peer }
         , routing_table_{ my_id_ }
         , value_store_{}
@@ -186,7 +186,10 @@ public:
 
 private:
     ///
-    using routing_table_type = routing_table< message_socket::endpoint_type >;
+    using endpoint_type = ip_endpoint;
+
+    ///
+    using routing_table_type = routing_table< endpoint_type >;
 
 private:
     /**
@@ -198,8 +201,8 @@ private:
     {
         io_service_.reset();
 
-        schedule_receive_on_subnet( subnet_ipv4_ );
-        schedule_receive_on_subnet( subnet_ipv6_ );
+        schedule_receive_on_socket( socket_ipv4_ );
+        schedule_receive_on_socket( socket_ipv6_ );
 
         async_discover_neighbors();
     }
@@ -208,18 +211,18 @@ private:
      *
      */
     void
-    schedule_receive_on_subnet
-        ( subnet_type & current_subnet )
+    schedule_receive_on_socket
+        ( message_socket_type & current_subnet )
     {
         auto on_new_message = [ this, &current_subnet ]
             ( std::error_code const& failure
-            , message_socket::endpoint_type const& sender
+            , endpoint_type const& sender
             , buffer const& message )
         {
             if ( ! failure )
                 handle_new_message( sender, message );
 
-            schedule_receive_on_subnet( current_subnet );
+            schedule_receive_on_socket( current_subnet );
         };
 
         current_subnet.async_receive( on_new_message );
@@ -228,52 +231,14 @@ private:
     /**
      *
      */
-    static subnet_type
-    create_ipv4_subnet
-        ( boost::asio::io_service & io_service
-        , endpoint const& ipv4_endpoint )
+    message_socket_type &
+    get_socket_for
+        ( endpoint_type const& e )
     {
-        auto endpoints = resolve_endpoint( io_service, ipv4_endpoint );
+        if ( e.address_.is_v4() )
+            return socket_ipv4_;
 
-        for ( auto const& i : endpoints )
-        {
-            if ( i.address().is_v4() )
-                return subnet_type{ create_socket( io_service, i ) };
-        }
-
-        throw std::system_error{ make_error_code( INVALID_IPV4_ADDRESS ) };
-    }
-
-    /**
-     *
-     */
-    static subnet_type
-    create_ipv6_subnet
-        ( boost::asio::io_service & io_service
-        , endpoint const& ipv6_endpoint )
-    {
-        auto endpoints = resolve_endpoint( io_service, ipv6_endpoint );
-
-        for ( auto const& i : endpoints )
-        {
-            if ( i.address().is_v6() )
-                return subnet_type{ create_socket( io_service, i ) };
-        }
-
-        throw std::system_error{ make_error_code( INVALID_IPV6_ADDRESS ) };
-    }
-
-    /**
-     *
-     */
-    subnet_type &
-    get_subnet_for
-        ( message_socket::endpoint_type const& e )
-    {
-        if ( e.address().is_v4() )
-            return subnet_ipv4_;
-
-        return subnet_ipv6_;
+        return socket_ipv6_;
     }
 
 
@@ -315,7 +280,7 @@ private:
      */
     void
     handle_new_request
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -328,8 +293,8 @@ private:
             case header::STORE_REQUEST: 
                 handle_store_request( sender, h, i, e );
                 break;
-            case header::FIND_NODE_REQUEST: 
-                handle_find_node_request( sender, h, i, e );
+            case header::FIND_PEER_REQUEST: 
+                handle_find_peer_request( sender, h, i, e );
                 break;
             case header::FIND_VALUE_REQUEST:
                 handle_find_value_request( sender, h, i, e );
@@ -347,7 +312,7 @@ private:
     void
     add_current_peer_to_routing_table
         ( id const& peer_id
-        , message_socket::endpoint_type const& peer_endpoint )
+        , endpoint_type const& peer_endpoint )
     { routing_table_.push( peer_id, peer_endpoint ); }
 
     /**
@@ -355,7 +320,7 @@ private:
      */
     void
     handle_ping_request
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , header const& h )
     {
         add_current_peer_to_routing_table( h.source_id_, sender );
@@ -370,7 +335,7 @@ private:
      */
     void
     handle_store_request
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -389,43 +354,43 @@ private:
      *
      */
     void
-    handle_find_node_request
-        ( message_socket::endpoint_type const& sender
+    handle_find_peer_request
+        ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
     {
         // Ensure the request is valid.
-        find_node_request_body request;
+        find_peer_request_body request;
         if ( deserialize( i, e, request ) )
             return;
 
         add_current_peer_to_routing_table( h.source_id_, sender );
 
-        send_find_node_response( sender
+        send_find_peer_response( sender
                                , h.random_token_
-                               , request.node_to_find_id_ );
+                               , request.peer_to_find_id_ );
     }
 
     /**
      *
      */
     void
-    send_find_node_response
-        ( message_socket::endpoint_type const& sender
+    send_find_peer_response
+        ( endpoint_type const& sender
         , id const& random_token
-        , id const& node_to_find_id )
+        , id const& peer_to_find_id )
     {
         // Find X closest peers and save
         // their location into the response..
-        find_node_response_body response;
+        find_peer_response_body response;
 
-        auto remaining_node = ROUTING_TABLE_BUCKET_SIZE;
-        for ( auto i = routing_table_.find( node_to_find_id )
+        auto remaining_peer = ROUTING_TABLE_BUCKET_SIZE;
+        for ( auto i = routing_table_.find( peer_to_find_id )
                  , e = routing_table_.end()
-            ; i != e && remaining_node > 0
-            ; ++i, -- remaining_node )
-            response.nodes_.push_back( { i->first, i->second } );
+            ; i != e && remaining_peer > 0
+            ; ++i, -- remaining_peer )
+            response.peers_.push_back( { i->first, i->second } );
 
         // Now send the response.
         async_send_response( random_token, response, sender );
@@ -436,7 +401,7 @@ private:
      */
     void
     handle_find_value_request
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -449,7 +414,7 @@ private:
 
         auto found = value_store_.find( request.value_to_find_ ); 
         if ( found == value_store_.end() )
-            send_find_node_response( sender
+            send_find_peer_response( sender
                                    , h.random_token_
                                    , request.value_to_find_ );
         else
@@ -470,8 +435,9 @@ private:
     {
         // Initial peer should know our neighbors, hence ask 
         // him which peers are close to our own id.
-        auto endoints_to_query = std::make_shared< resolved_endpoints >
-                ( resolve_endpoint( io_service_, initial_peer_ ) );
+        auto endoints_to_query 
+                = message_socket_type::resolve_endpoint( io_service_
+                                                       , initial_peer_ );
 
         async_search_ourselves( std::move( endoints_to_query ) );
     }
@@ -479,23 +445,24 @@ private:
     /**
      *
      */
+    template< typename ResolvedEndpointType >
     void
     async_search_ourselves
-        ( std::shared_ptr< resolved_endpoints > endpoints_to_query )
+        ( ResolvedEndpointType endpoints_to_query )
     { 
-        if ( endpoints_to_query->empty() )
+        if ( endpoints_to_query.empty() )
         {
             main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
             return;
         }
 
         // Retrieve the next endpoint to query.
-        auto const endpoint_to_query = endpoints_to_query->back();
-        endpoints_to_query->pop_back();
+        auto const endpoint_to_query = endpoints_to_query.back();
+        endpoints_to_query.pop_back();
 
         // On message received, process it.
         auto on_message_received = [ this ]
-            ( message_socket::endpoint_type const& s
+            ( endpoint_type const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
@@ -507,7 +474,7 @@ private:
         { async_search_ourselves( endpoints_to_query ); };
 
         async_send_request( id{ random_engine_ }
-                          , find_node_request_body{ my_id_ }
+                          , find_peer_request_body{ my_id_ }
                           , endpoint_to_query
                           , INITIAL_CONTACT_RECEIVE_TIMEOUT
                           , on_message_received
@@ -519,15 +486,15 @@ private:
      */
     void
     handle_initial_contact_response
-        ( message_socket::endpoint_type const& s
+        ( endpoint_type const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
     { 
-        if ( h.type_ != header::FIND_NODE_RESPONSE )
+        if ( h.type_ != header::FIND_PEER_RESPONSE )
             return ;
 
-        find_node_response_body response;
+        find_peer_response_body response;
         if ( deserialize( i, e, response ) )
             return;
 
@@ -535,8 +502,8 @@ private:
         routing_table_.push( h.source_id_, s );
 
         // And its known peers.
-        for ( auto const& node : response.nodes_ )
-            routing_table_.push( node.id_, node.endpoint_ );
+        for ( auto const& peer : response.peers_ )
+            routing_table_.push( peer.id_, peer.endpoint_ );
     }
 
     /**
@@ -547,10 +514,10 @@ private:
     async_store_value
         ( std::shared_ptr< store_value_context< HandlerType, data_type > > context )
     { 
-        find_node_request_body const request{ context->get_key() };
+        find_peer_request_body const request{ context->get_key() };
 
-        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_NODE_REQUESTS_COUNT ) )
-            async_send_find_node_request( request, c, context ); 
+        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_PEER_REQUESTS_COUNT ) )
+            async_send_find_peer_request( request, c, context ); 
     }
 
     /**
@@ -558,21 +525,21 @@ private:
      */
     template< typename HandlerType >
     void
-    async_send_find_node_request
-        ( find_node_request_body const& request
-        , candidate const& current_candidate
+    async_send_find_peer_request
+        ( find_peer_request_body const& request
+        , peer const& current_candidate
         , std::shared_ptr< store_value_context< HandlerType, data_type > > context )
     { 
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
-            ( message_socket::endpoint_type const& s
+            ( endpoint_type const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
         { 
             context->flag_candidate_as_valid( current_candidate.id_ );
 
-            handle_find_node_response( s, h, i, e, context );
+            handle_find_peer_response( s, h, i, e, context );
         };
 
         // On error, retry with another endpoint.
@@ -584,7 +551,7 @@ private:
             context->flag_candidate_as_invalid( current_candidate.id_ );
 
             // If no more requests are in flight
-            // we know the closest nodes hence ask
+            // we know the closest peers hence ask
             // them to store the value.
             if ( context->have_all_requests_completed() )
                 send_store_requests( context );
@@ -593,7 +560,7 @@ private:
         async_send_request( id{ random_engine_ }
                           , request
                           , current_candidate.endpoint_
-                          , NODE_LOOKUP_TIMEOUT 
+                          , PEER_LOOKUP_TIMEOUT 
                           , on_message_received
                           , on_error );
     }
@@ -608,7 +575,7 @@ private:
     {
         find_value_request_body const request{ context->get_key() };
 
-        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_NODE_REQUESTS_COUNT ) )
+        for ( auto const& c : context->select_new_closest_candidates( CONCURRENT_FIND_PEER_REQUESTS_COUNT ) )
             async_send_find_value_request( request, c, context );
     }
 
@@ -619,12 +586,12 @@ private:
     void
     async_send_find_value_request
         ( find_value_request_body const& request
-        , candidate const& current_candidate
+        , peer const& current_candidate
         , std::shared_ptr< find_value_context< HandlerType, data_type > > context )
     {
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
-            ( message_socket::endpoint_type const& s
+            ( endpoint_type const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
@@ -651,7 +618,7 @@ private:
         async_send_request( id{ random_engine_ }
                           , request
                           , current_candidate.endpoint_
-                          , NODE_LOOKUP_TIMEOUT 
+                          , PEER_LOOKUP_TIMEOUT 
                           , on_message_received
                           , on_error );
     }
@@ -662,7 +629,7 @@ private:
     template< typename HandlerType >
     void
     handle_find_value_response
-        ( message_socket::endpoint_type const& s
+        ( endpoint_type const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
@@ -671,8 +638,8 @@ private:
         // Add the initial peer to the routing_table.
         add_current_peer_to_routing_table( h.source_id_, s );
 
-        if ( h.type_ == header::FIND_NODE_RESPONSE )
-            handle_find_node_response( i, e, context );
+        if ( h.type_ == header::FIND_PEER_RESPONSE )
+            handle_find_peer_response( i, e, context );
         else if ( h.type_ == header::FIND_VALUE_RESPONSE )
             handle_find_value_response( i, e, context );
     }
@@ -682,16 +649,16 @@ private:
      */
     template< typename HandlerType >
     void
-    handle_find_node_response
+    handle_find_peer_response
         ( buffer::const_iterator i
         , buffer::const_iterator e
         , std::shared_ptr< find_value_context< HandlerType, data_type > > context )
     { 
-        find_node_response_body response;
+        find_peer_response_body response;
         if ( deserialize( i, e, response ) )
             return;
 
-        if ( context->are_these_candidates_closest( response.nodes_ ) )
+        if ( context->are_these_candidates_closest( response.peers_ ) )
             async_find_value( context );
         
         if ( context->have_all_requests_completed() )
@@ -720,8 +687,8 @@ private:
      */
     template< typename HandlerType >
     void
-    handle_find_node_response
-        ( message_socket::endpoint_type const& s
+    handle_find_peer_response
+        ( endpoint_type const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
@@ -730,15 +697,15 @@ private:
         // Add the initial peer to the routing_table.
         add_current_peer_to_routing_table( h.source_id_, s );
 
-        find_node_response_body response;
+        find_peer_response_body response;
         if ( deserialize( i, e, response ) )
             return;
 
         // If new candidate have been discovered, ask them.
-        if ( context->are_these_candidates_closest( response.nodes_ ) )
+        if ( context->are_these_candidates_closest( response.peers_ ) )
             async_store_value( context );
         // Else if all candidates have responded, 
-        // we know the closest nodes hence ask them
+        // we know the closest peers hence ask them
         // to store the value.
         else if ( context->have_all_requests_completed() )
             send_store_requests( context );
@@ -764,7 +731,7 @@ private:
     template< typename HandlerType >
     void
     send_store_request
-        ( candidate const& current_candidate
+        ( peer const& current_candidate
         , std::shared_ptr< store_value_context< HandlerType, data_type > > context )
     {
         store_value_request_body const request{ context->get_key()
@@ -779,7 +746,7 @@ private:
      */
     void
     handle_new_message
-        ( message_socket::endpoint_type const& sender
+        ( endpoint_type const& sender
         , buffer const& message )
     {
         auto i = message.begin(), e = message.end();
@@ -807,7 +774,7 @@ private:
     async_send_request
         ( id const& response_id
         , Request const& request
-        , message_socket::endpoint_type const& e
+        , endpoint_type const& e
         , timer::duration const& timeout
         , OnResponseReceived const& on_response_received
         , OnError const& on_error )
@@ -830,7 +797,7 @@ private:
         };
 
         // Serialize the request and send it.
-        get_subnet_for( e ).async_send( message, e, on_request_sent );
+        get_socket_for( e ).async_send( message, e, on_request_sent );
     }
 
     /**
@@ -841,7 +808,7 @@ private:
     async_send_request
         ( id const& response_id
         , Request const& request
-        , message_socket::endpoint_type const& e )
+        , endpoint_type const& e )
     { async_send_response( response_id, request, e ); }
 
     /**
@@ -852,7 +819,7 @@ private:
     async_send_response
         ( id const& response_id
         , Response const& response
-        , message_socket::endpoint_type const& e )
+        , endpoint_type const& e )
     { 
         auto message = message_serializer_.serialize( response, response_id );
 
@@ -861,7 +828,7 @@ private:
         { };
 
         // Serialize the message and send it.
-        get_subnet_for( e ).async_send( message, e, on_response_sent );
+        get_socket_for( e ).async_send( message, e, on_response_sent );
     }
 
     /**
@@ -907,9 +874,9 @@ private:
     ///
     message_serializer message_serializer_;
     ///
-    subnet_type subnet_ipv4_;
+    message_socket_type socket_ipv4_;
     ///
-    subnet_type subnet_ipv6_;
+    message_socket_type socket_ipv6_;
     ///
     endpoint initial_peer_;
     ///

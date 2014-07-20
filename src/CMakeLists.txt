@@ -29,26 +29,28 @@ set(kademlia_sources
     ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
     endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
-    error.cpp
     engine.hpp
+    error.cpp
     boost_to_std_error.hpp
-    id.cpp
     id.hpp
-    message.cpp
+    id.cpp
+    ip_endpoint.hpp
+    ip_endpoint.cpp
+    peer.hpp
+    peer.cpp
     message.hpp
-    message_serializer.cpp
+    message.cpp
     message_serializer.hpp
-    message_socket.cpp
+    message_serializer.cpp
     message_socket.hpp
-    response_dispatcher.cpp
     response_dispatcher.hpp
+    response_dispatcher.cpp
     routing_table.hpp
     value_context.hpp
     find_value_context.hpp
     store_value_context.hpp
-    subnet.hpp
-    timer.cpp
     timer.hpp
+    timer.cpp
     value_store.hpp
     buffer.hpp)
 
@@ -57,6 +59,7 @@ add_library(kademlia SHARED
 
 set_target_properties(kademlia 
     PROPERTIES 
+        MACOSX_RPATH ON
         COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
 
 add_library(kademlia_static STATIC

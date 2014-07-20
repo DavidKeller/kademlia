@@ -28,12 +28,10 @@
 #include <iostream>
 #include <boost/system/system_error.hpp>
 #include <boost/filesystem.hpp>
-
-#include "message_socket.hpp"
+#include <boost/asio/ip/udp.hpp>
 
 namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;
-namespace detail = kademlia::detail;
 
 namespace {
 
@@ -55,12 +53,13 @@ get_temporary_listening_port
     do  
     {
         ++ port;
-        detail::message_socket::endpoint_type const e
-                { detail::message_socket::protocol_type::v4() , port }; 
+        boost::asio::ip::udp::endpoint const e
+                { boost::asio::ip::udp::v4() , port }; 
 
         boost::asio::io_service io_service;
         // Try to open a socket at this address.
-        detail::message_socket{ io_service, e.protocol() }.bind( e, failure );
+        boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
+        socket.bind( e, failure );
     }
     while ( failure == boost::system::errc::address_in_use ); 
 

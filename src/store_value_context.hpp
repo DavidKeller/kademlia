@@ -57,19 +57,14 @@ public:
     store_value_context( detail::id const & key
                        , data_type const& data
                        , Iterator i, Iterator e
-                       , HandlerType && save_handler )
-        : value_context{ key, i, e }
-        , data_{ data }
-        , save_handler_{ std::forward< HandlerType >( save_handler ) }
-    { }
+                       , HandlerType && save_handler );
 
     /**
      *
      */
     void
     notify_caller
-        ( std::error_code const& failure )
-    { save_handler_( failure ); }
+        ( std::error_code const& failure );
 
     /**
      *
@@ -77,8 +72,7 @@ public:
     data_type const&
     get_data
         ( void )
-        const
-    { return data_; }
+        const;
 
 private:
     ///
@@ -86,6 +80,32 @@ private:
     ///
     save_handler_type save_handler_;
 };
+
+template< typename SaveHandlerType, typename DataType >
+template< typename Iterator, typename HandlerType >
+inline
+store_value_context< SaveHandlerType, DataType >::store_value_context
+    ( detail::id const & key
+    , data_type const& data
+    , Iterator i, Iterator e
+    , HandlerType && save_handler )
+        : value_context{ key, i, e }
+        , data_{ data }
+        , save_handler_{ std::forward< HandlerType >( save_handler ) }
+{ }
+
+template< typename SaveHandlerType, typename DataType >
+inline void
+store_value_context< SaveHandlerType, DataType >::notify_caller
+    ( std::error_code const& failure )
+{ save_handler_( failure ); }
+
+template< typename SaveHandlerType, typename DataType >
+inline typename store_value_context< SaveHandlerType, DataType >::data_type const&
+store_value_context< SaveHandlerType, DataType >::get_data
+    ( void )
+    const
+{ return data_; }
 
 } // namespace detail
 } // namespace kademlia
