@@ -160,7 +160,7 @@ public:
     {
         main_failure_.clear();
 
-        init( initial_peer );
+        bootstrap_thanks_to( initial_peer );
         
         while ( ! main_failure_ && io_service_.run_one() )
             io_service_.poll();
@@ -195,13 +195,23 @@ private:
      *
      */
     void
-    init
-        ( endpoint const& initial_peer )
+    start_message_reception
+        ( void )
     {
         io_service_.reset();
 
         schedule_receive_on_socket( socket_ipv4_ );
         schedule_receive_on_socket( socket_ipv6_ );
+    }
+
+    /**
+     *
+     */
+    void
+    bootstrap_thanks_to
+        ( endpoint const& initial_peer )
+    {
+        start_message_reception();
 
         async_discover_neighbors( initial_peer );
     }
