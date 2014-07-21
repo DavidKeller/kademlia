@@ -78,10 +78,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
 {
-    // Create Dummy initial peer.
-    k::endpoint const initial_peer( "127.0.0.1", "22222" );
-    
-    k::session s( initial_peer );
+    k::session s{};
     
     check_listening( "0.0.0.0", k::session::DEFAULT_PORT );
     check_listening( "::", k::session::DEFAULT_PORT );
@@ -95,12 +92,8 @@ BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
     
-    // Create Dummy initial peer.
-    k::endpoint const initial_peer( "127.0.0.1", "22222" );
-    
-    k::session s( initial_peer
-                , ipv4_endpoint
-                , ipv6_endpoint );
+    k::session s{ ipv4_endpoint
+                , ipv6_endpoint };
     
     check_listening( "127.0.0.1", port1 );
     check_listening( "::1", port2 );
@@ -114,11 +107,7 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
     
-    // Create Dummy initial peer.
-    k::endpoint const initial_peer( "127.0.0.1", "22222" );
-    
-    BOOST_REQUIRE_THROW( k::session s( initial_peer
-                                     , ipv4_endpoint
+    BOOST_REQUIRE_THROW( k::session s( ipv4_endpoint
                                      , ipv6_endpoint )
                        , std::exception );
 }
@@ -131,11 +120,7 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
     k::endpoint ipv4_endpoint{ "::", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
     
-    // Create Dummy initial peer.
-    k::endpoint const initial_peer( "127.0.0.1", "22222" );
-    
-    BOOST_REQUIRE_THROW( k::session s( initial_peer
-                                     , ipv4_endpoint
+    BOOST_REQUIRE_THROW( k::session s( ipv4_endpoint
                                      , ipv6_endpoint )
                        , std::exception );
 }

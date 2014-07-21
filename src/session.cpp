@@ -49,10 +49,9 @@ struct session::impl final
      *
      */
     impl
-        ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4
+        ( endpoint const& listen_on_ipv4
         , endpoint const& listen_on_ipv6 )
-        : engine_{ initial_peer, listen_on_ipv4, listen_on_ipv6 }
+        : engine_{ listen_on_ipv4, listen_on_ipv6 }
     { }
 
     ///
@@ -60,10 +59,9 @@ struct session::impl final
 };
 
 session::session
-    ( endpoint const& initial_peer
-    , endpoint const& listen_on_ipv4
+    ( endpoint const& listen_on_ipv4
     , endpoint const& listen_on_ipv6 )
-    : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
+        : impl_{ new impl{ listen_on_ipv4, listen_on_ipv6 } }
 { }
 
 session::~session
@@ -85,8 +83,8 @@ session::async_load
 
 std::error_code
 session::run
-        ( void )
-{ return impl_->engine_.run(); }
+    ( endpoint const& initial_peer )
+{ return impl_->engine_.run( initial_peer ); }
 
 void
 session::abort

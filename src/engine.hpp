@@ -37,6 +37,7 @@
 #include <memory>
 #include <boost/asio/io_service.hpp>
 
+#include <kademlia/endpoint.hpp>
 #include <kademlia/error.hpp>
 
 #include "timer.hpp"
@@ -90,21 +91,19 @@ public:
      *
      */
     engine
-        ( endpoint const& initial_peer
-        , endpoint const& ipv4
+        ( endpoint const& ipv4
         , endpoint const& ipv6 )
-        : random_engine_{ std::random_device{}() }
-        , my_id_( random_engine_ )
-        , io_service_{}
-        , response_dispatcher_{}
-        , timer_{ io_service_ }
-        , message_serializer_{ my_id_ }
-        , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
-        , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
-        , initial_peer_{ initial_peer }
-        , routing_table_{ my_id_ }
-        , value_store_{}
-        , main_failure_{}
+            : random_engine_{ std::random_device{}() }
+            , my_id_( random_engine_ )
+            , io_service_{}
+            , response_dispatcher_{}
+            , timer_{ io_service_ }
+            , message_serializer_{ my_id_ }
+            , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
+            , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
+            , routing_table_{ my_id_ }
+            , value_store_{}
+            , main_failure_{}
     { }
 
     /**
@@ -157,11 +156,11 @@ public:
      */
     std::error_code
     run
-        ( void ) 
+        ( endpoint const& initial_peer ) 
     {
         main_failure_.clear();
 
-        init();
+        init( initial_peer );
         
         while ( ! main_failure_ && io_service_.run_one() )
             io_service_.poll();
@@ -197,14 +196,14 @@ private:
      */
     void
     init
-        ( void )
+        ( endpoint const& initial_peer )
     {
         io_service_.reset();
 
         schedule_receive_on_socket( socket_ipv4_ );
         schedule_receive_on_socket( socket_ipv6_ );
 
-        async_discover_neighbors();
+        async_discover_neighbors( initial_peer );
     }
 
     /**
@@ -431,13 +430,13 @@ private:
      */
     void
     async_discover_neighbors
-        ( void )
+        ( endpoint const& initial_peer )
     {
         // Initial peer should know our neighbors, hence ask 
         // him which peers are close to our own id.
         auto endoints_to_query 
                 = message_socket_type::resolve_endpoint( io_service_
-                                                       , initial_peer_ );
+                                                       , initial_peer );
 
         async_search_ourselves( std::move( endoints_to_query ) );
     }
@@ -877,8 +876,6 @@ private:
     message_socket_type socket_ipv4_;
     ///
     message_socket_type socket_ipv6_;
-    ///
-    endpoint initial_peer_;
     ///
     routing_table_type routing_table_;
     ///
