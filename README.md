@@ -18,11 +18,10 @@ Initialization:
     // If an error occurs, this will throw.
     // Following runtime errors will be reported
     // through an std::error_code.
-    kademlia::session s;
+    kademlia::session s{ initial_peer };
     
     // Run the library main loop in a dedicated thread.
-    auto main_loop_result = std::async( &kademlia::session::run, &s
-                                      , initial_peer );
+    auto main_loop_result = std::async( &kademlia::session::run, &s );
     
     // [...]
 ```

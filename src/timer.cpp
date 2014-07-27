@@ -25,6 +25,8 @@
 
 #include "timer.hpp"
 
+#include <kademlia/error.hpp>
+
 namespace kademlia {
 namespace detail {
 
@@ -45,8 +47,10 @@ timer::schedule_next_tick
     { 
         // The current timeout has been canceled
         // hence stop right there.
-        if ( failure )
+        if ( failure == boost::asio::error::operation_aborted )
             return;
+        else if ( failure )
+            throw std::system_error{ make_error_code( TIMER_MALFUNCTION ) };
 
         // The callbacks to execute are the first
         // n callbacks with the same keys.

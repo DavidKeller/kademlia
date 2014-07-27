@@ -26,6 +26,7 @@
 #include <kademlia/session.hpp>
 
 #include <utility>
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 
 #include "message_socket.hpp"
@@ -49,19 +50,30 @@ struct session::impl final
      *
      */
     impl
-        ( endpoint const& listen_on_ipv4
+        ( endpoint const& initial_peer
+        , endpoint const& listen_on_ipv4
         , endpoint const& listen_on_ipv6 )
-        : engine_{ listen_on_ipv4, listen_on_ipv6 }
+            : io_service_{}
+            , engine_{ io_service_
+                     , initial_peer
+                     , listen_on_ipv4
+                     , listen_on_ipv6 }
+            , is_abort_requested_{}
     { }
 
     ///
+    boost::asio::io_service io_service_;
+    ///
     engine_type engine_;
+    ///
+    bool is_abort_requested_;
 };
 
 session::session
-    ( endpoint const& listen_on_ipv4
+    ( endpoint const& initial_peer
+    , endpoint const& listen_on_ipv4
     , endpoint const& listen_on_ipv6 )
-        : impl_{ new impl{ listen_on_ipv4, listen_on_ipv6 } }
+        : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
 { }
 
 session::~session
@@ -83,13 +95,28 @@ session::async_load
 
 std::error_code
 session::run
-    ( endpoint const& initial_peer )
-{ return impl_->engine_.run( initial_peer ); }
+    ( void )
+{
+    impl_->is_abort_requested_ = false;
+
+    while ( ! impl_->is_abort_requested_ )
+    {
+        impl_->io_service_.run_one();
+        impl_->io_service_.poll();
+    }
+
+    return make_error_code( RUN_ABORTED );
+}
 
 void
 session::abort
         ( void )
-{ impl_->engine_.abort(); }
+{ 
+    auto service_stopper = [ this ] ( void )
+    { impl_->is_abort_requested_ = true; };
+
+    impl_->io_service_.post( service_stopper );
+}
 
 } // namespace kademlia
 

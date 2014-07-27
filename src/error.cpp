@@ -86,6 +86,8 @@ struct kademlia_error_category : std::error_category
                 return "no valid neighbor remaing";
             case VALUE_NOT_FOUND:
                 return "value not found";
+            case TIMER_MALFUNCTION:
+                return "timer malfunction";
             default:
                 return "unknown error";
         }

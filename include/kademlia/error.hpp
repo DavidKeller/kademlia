@@ -57,6 +57,7 @@ enum error_type
     UNIMPLEMENTED,
     NO_VALID_NEIGHBOR_REMAINING,
     VALUE_NOT_FOUND,
+    TIMER_MALFUNCTION,
 };
 
 /**

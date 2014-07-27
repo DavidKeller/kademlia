@@ -91,11 +91,12 @@ public:
      *
      */
     engine
-        ( endpoint const& ipv4
+        ( boost::asio::io_service & io_service
+        , endpoint const& ipv4
         , endpoint const& ipv6 )
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
-            , io_service_{}
+            , io_service_{ io_service }
             , response_dispatcher_{}
             , timer_{ io_service_ }
             , message_serializer_{ my_id_ }
@@ -103,8 +104,32 @@ public:
             , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
             , routing_table_{ my_id_ }
             , value_store_{}
-            , main_failure_{}
-    { }
+    {
+        start_message_reception();
+    }
+
+    /**
+     *
+     */
+    engine
+        ( boost::asio::io_service & io_service
+        , endpoint const& initial_peer
+        , endpoint const& ipv4
+        , endpoint const& ipv6 )
+            : random_engine_{ std::random_device{}() }
+            , my_id_( random_engine_ )
+            , io_service_{ io_service }
+            , response_dispatcher_{}
+            , timer_{ io_service_ }
+            , message_serializer_{ my_id_ }
+            , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
+            , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
+            , routing_table_{ my_id_ }
+            , value_store_{}
+    { 
+        start_message_reception();
+        async_discover_neighbors( initial_peer );
+    }
 
     /**
      *
@@ -151,38 +176,6 @@ public:
         async_find_value( context );
     }
 
-    /**
-     *
-     */
-    std::error_code
-    run
-        ( endpoint const& initial_peer ) 
-    {
-        main_failure_.clear();
-
-        bootstrap_thanks_to( initial_peer );
-        
-        while ( ! main_failure_ && io_service_.run_one() )
-            io_service_.poll();
-        
-        io_service_.stop();
-
-        return main_failure_;
-    }
-
-    /**
-     *
-     */
-    void
-    abort
-        ( void )
-    { 
-        auto set_abort_flag = [ this ] ( void )
-        { main_failure_ = make_error_code( RUN_ABORTED ); };
-
-        io_service_.post( set_abort_flag );
-    }
-
 private:
     ///
     using endpoint_type = ip_endpoint;
@@ -198,22 +191,8 @@ private:
     start_message_reception
         ( void )
     {
-        io_service_.reset();
-
         schedule_receive_on_socket( socket_ipv4_ );
         schedule_receive_on_socket( socket_ipv6_ );
-    }
-
-    /**
-     *
-     */
-    void
-    bootstrap_thanks_to
-        ( endpoint const& initial_peer )
-    {
-        start_message_reception();
-
-        async_discover_neighbors( initial_peer );
     }
 
     /**
@@ -228,9 +207,11 @@ private:
             , endpoint_type const& sender
             , buffer const& message )
         {
-            if ( ! failure )
-                handle_new_message( sender, message );
-
+            // Reception failure are fatal.
+            if ( failure )
+                throw std::system_error{ failure };
+            
+            handle_new_message( sender, message );
             schedule_receive_on_socket( current_subnet );
         };
 
@@ -460,10 +441,8 @@ private:
         ( ResolvedEndpointType endpoints_to_query )
     { 
         if ( endpoints_to_query.empty() )
-        {
-            main_failure_ = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
-            return;
-        }
+            throw std::system_error
+                    { make_error_code( INITIAL_PEER_FAILED_TO_RESPOND ) };
 
         // Retrieve the next endpoint to query.
         auto const endpoint_to_query = endpoints_to_query.back();
@@ -875,7 +854,7 @@ private:
     ///
     id my_id_;
     ///
-    boost::asio::io_service io_service_;
+    boost::asio::io_service & io_service_;
     ///
     response_dispatcher response_dispatcher_;
     ///

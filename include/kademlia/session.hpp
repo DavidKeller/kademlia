@@ -76,7 +76,8 @@ public:
      */
     KADEMLIA_SYMBOL_VISIBILITY
     session
-        ( endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
+        ( endpoint const& initial_peer
+        , endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
     /**
@@ -126,7 +127,7 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     std::error_code
     run
-        ( endpoint const& initial_peer );
+        ( void );
 
     /**
      *
