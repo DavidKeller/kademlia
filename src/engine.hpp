@@ -96,7 +96,7 @@ public:
         , endpoint const& ipv6 )
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
-            , io_service_{ io_service }
+            , io_service_( io_service )
             , response_dispatcher_{}
             , timer_{ io_service_ }
             , message_serializer_{ my_id_ }
@@ -118,7 +118,7 @@ public:
         , endpoint const& ipv6 )
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
-            , io_service_{ io_service }
+            , io_service_( io_service )
             , response_dispatcher_{}
             , timer_{ io_service_ }
             , message_serializer_{ my_id_ }

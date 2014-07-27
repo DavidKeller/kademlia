@@ -63,7 +63,7 @@ public:
      */
     explicit sentry
         ( concurrent_guard & guard )
-            : guard_{ guard }
+            : guard_( guard )
     {
         bool expected = false; 
 
