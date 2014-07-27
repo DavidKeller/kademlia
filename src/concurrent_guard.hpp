@@ -1,13 +1,13 @@
-// Copyright (c) 2013-2014, David Keller
+// Copyright (c) 2013-2014, Davflag Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
+// modification, are permitted provflaged that the following conditions are met:
 //
 //     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above copyright
 //       notice, this list of conditions and the following disclaimer in the
-//       documentation and/or other materials provided with the distribution.
+//       documentation and/or other materials provflaged with the distribution.
 //     * Neither the name of the University of California, Berkeley nor the
 //       names of its contributors may be used to endorse or promote products
 //       derived from this software without specific prior written permission.
@@ -23,73 +23,97 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_ERROR_HPP
-#define KADEMLIA_ERROR_HPP
+#ifndef KADEMLIA_CONCURRENT_GUARD_HPP
+#define KADEMLIA_CONCURRENT_GUARD_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
-#include <system_error>
+#include <atomic>
 
 namespace kademlia {
+namespace detail {
 
 /**
- *
+ *  @brief This class ensure no concurrent access to the same
+ *         method is performed.
  */
-enum error_type 
+class concurrent_guard
 {
-    UNKNOWN = 1,
-    RUN_ABORTED,
-    INITIAL_PEER_FAILED_TO_RESPOND,
-    INVALID_ID,
-    TRUNCATED_ID,
-    TRUNCATED_HEADER,
-    TRUNCATED_ENDPOINT,
-    TRUNCATED_ADDRESS,
-    TRUNCATED_SIZE,
-    UNKNOWN_PROTOCOL_VERSION,
-    CORRUPTED_HEADER,
-    CORRUPTED_BODY,
-    UNASSOCIATED_MESSAGE_ID,
-    INVALID_IPV4_ADDRESS,
-    INVALID_IPV6_ADDRESS,
-    UNIMPLEMENTED,
-    NO_VALID_NEIGHBOR_REMAINING,
-    VALUE_NOT_FOUND,
-    TIMER_MALFUNCTION,
-    ALREADY_RUNNING,
+public:
+    /**
+     *
+     */
+    class sentry;
+
+private:
+    ///
+    std::atomic< bool > flag_;
 };
 
 /**
  *
  */
-std::error_category const&
-error_category
-    ( void );
+class concurrent_guard::sentry
+{
+public:
+    /**
+     *
+     */
+    explicit sentry
+        ( concurrent_guard & guard )
+            : guard_{ guard }
+    {
+        bool expected = false; 
 
-/**
- *
- */
-std::error_condition
-make_error_condition
-    ( error_type condition );
+        is_owner_of_flag_ = guard_.flag_.compare_exchange_strong( expected
+                                                                , true ); 
+    }
 
-/**
- *
- */
-std::error_code
-make_error_code
-    ( error_type code );
 
+    /**
+     *
+     */
+    ~sentry
+        ( void )
+    { 
+        if ( is_owner_of_flag_ )
+            guard_.flag_.exchange( false ); 
+    }
+
+    /**
+     *
+     */
+    sentry
+        ( sentry const& ) 
+        = delete;
+
+    /**
+     *
+     */
+    sentry &
+    operator=
+        ( sentry const& ) 
+        = delete;
+
+    /**
+     *
+     */
+    explicit operator bool
+        ( void )
+        const
+    { return is_owner_of_flag_; }
+
+private:
+    ///
+    concurrent_guard & guard_;
+    ///
+    bool is_owner_of_flag_;
+};
+
+} // namespace detail
 } // namespace kademlia
-
-namespace std {
-
-template <>
-struct is_error_condition_enum<kademlia::error_type> : true_type {};
-
-} // namespace std
 
 #endif
 

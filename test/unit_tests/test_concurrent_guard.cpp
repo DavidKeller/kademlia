@@ -23,73 +23,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_ERROR_HPP
-#define KADEMLIA_ERROR_HPP
+#include "helpers/common.hpp"
+#include "concurrent_guard.hpp"
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
+namespace k = kademlia;
+namespace kd = k::detail;
 
-#include <system_error>
+BOOST_AUTO_TEST_SUITE( test_construction )
 
-namespace kademlia {
-
-/**
- *
- */
-enum error_type 
+BOOST_AUTO_TEST_CASE( can_be_default_constructed )
 {
-    UNKNOWN = 1,
-    RUN_ABORTED,
-    INITIAL_PEER_FAILED_TO_RESPOND,
-    INVALID_ID,
-    TRUNCATED_ID,
-    TRUNCATED_HEADER,
-    TRUNCATED_ENDPOINT,
-    TRUNCATED_ADDRESS,
-    TRUNCATED_SIZE,
-    UNKNOWN_PROTOCOL_VERSION,
-    CORRUPTED_HEADER,
-    CORRUPTED_BODY,
-    UNASSOCIATED_MESSAGE_ID,
-    INVALID_IPV4_ADDRESS,
-    INVALID_IPV6_ADDRESS,
-    UNIMPLEMENTED,
-    NO_VALID_NEIGHBOR_REMAINING,
-    VALUE_NOT_FOUND,
-    TIMER_MALFUNCTION,
-    ALREADY_RUNNING,
-};
+    kd::concurrent_guard{};
+}
 
-/**
- *
- */
-std::error_category const&
-error_category
-    ( void );
+BOOST_AUTO_TEST_CASE( can_construct_sentry )
+{
+    kd::concurrent_guard guard{};
+    kd::concurrent_guard::sentry{ guard };
+}
 
-/**
- *
- */
-std::error_condition
-make_error_condition
-    ( error_type condition );
+BOOST_AUTO_TEST_CASE( can_detect_concurrent_construction )
+{
+    kd::concurrent_guard guard;
 
-/**
- *
- */
-std::error_code
-make_error_code
-    ( error_type code );
+    {
+        kd::concurrent_guard::sentry sentry{ guard };
 
-} // namespace kademlia
+        BOOST_REQUIRE( sentry );
 
-namespace std {
+        BOOST_REQUIRE( ! kd::concurrent_guard::sentry{ guard } );
+    }
 
-template <>
-struct is_error_condition_enum<kademlia::error_type> : true_type {};
+    BOOST_REQUIRE( kd::concurrent_guard::sentry{ guard } );
+}
 
-} // namespace std
-
-#endif
+BOOST_AUTO_TEST_SUITE_END()
 

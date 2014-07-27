@@ -31,6 +31,7 @@
 
 #include "message_socket.hpp"
 #include "engine.hpp"
+#include "concurrent_guard.hpp"
 
 namespace kademlia {
 
@@ -59,6 +60,7 @@ struct session::impl final
                      , listen_on_ipv4
                      , listen_on_ipv6 }
             , is_abort_requested_{}
+            , concurrent_guard_{}
     { }
 
     ///
@@ -67,6 +69,8 @@ struct session::impl final
     engine_type engine_;
     ///
     bool is_abort_requested_;
+    ///
+    detail::concurrent_guard concurrent_guard_;
 };
 
 session::session
@@ -97,6 +101,11 @@ std::error_code
 session::run
     ( void )
 {
+    // Protect against concurrent invocation of this method.
+    detail::concurrent_guard::sentry s{ impl_->concurrent_guard_ };
+    if ( ! s )
+        return make_error_code( ALREADY_RUNNING );
+
     impl_->is_abort_requested_ = false;
 
     while ( ! impl_->is_abort_requested_ )

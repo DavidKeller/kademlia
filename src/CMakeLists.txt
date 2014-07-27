@@ -49,6 +49,7 @@ set(kademlia_sources
     value_context.hpp
     find_value_context.hpp
     store_value_context.hpp
+    concurrent_guard.hpp
     timer.hpp
     timer.cpp
     value_store.hpp

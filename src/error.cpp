@@ -88,6 +88,8 @@ struct kademlia_error_category : std::error_category
                 return "value not found";
             case TIMER_MALFUNCTION:
                 return "timer malfunction";
+            case ALREADY_RUNNING:
+                return "already running";
             default:
                 return "unknown error";
         }
