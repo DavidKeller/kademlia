@@ -26,6 +26,7 @@
 #include "executable.hpp"
 
 #include <cstdlib>
+#include <iostream>
 #include <system_error>
 
 #include <boost/program_options.hpp>
@@ -48,12 +49,8 @@ parse_configuration
 {
     configuration c;
 
-    po::options_description options( "Mandatory arguments" );
-    options.add_options()
-        ( "help,h", "Print accepted arguments\n" )
-
-        ( "version,v", "Print version\n" )
-
+    po::options_description mandatory( "Mandatory arguments" );
+    mandatory.add_options()
         ( "clients-count,c"
         , po::value< std::size_t >( &c.clients_count )
         , "Set the simulated clients count\n" )
@@ -63,19 +60,28 @@ parse_configuration
         , "Set the total messages sent by simulated clients count\n" )
         ;
 
+    po::options_description optional( "Misc arguments" );
+    optional.add_options()
+        ( "help,h", "Print accepted arguments\n" )
+
+        ( "version,v", "Print version\n" );
+
+    po::options_description all;
+    all.add( mandatory ).add( optional );
     po::variables_map variables;
-    po::store( po::parse_command_line( argc, argv, options ), variables );
+    po::store( po::parse_command_line( argc, argv, all ), variables );
     po::notify( variables );
+
+    if ( variables.count( "version" ) )
+    {
+        std::cout << argv[ 0 ] << " version " PACKAGE_VERSION << std::endl;
+        return make_error_code( std::errc::operation_canceled );
+    }
 
     if ( variables.count( "help" ) || ! variables.count( "clients-count" )
        || variables.count( "messages-count" ) )
     {
-        std::cout << argv[ 0 ] << " usage: " << options << std::endl;
-        return make_error_code( std::errc::operation_canceled );
-    }
-    if ( variables.count( "version" ) )
-    {
-        std::cout << argv[ 0 ] << " version " << std::endl;
+        std::cout << argv[ 0 ] << " usage:\n" << all << std::endl;
         return make_error_code( std::errc::operation_canceled );
     }
 
