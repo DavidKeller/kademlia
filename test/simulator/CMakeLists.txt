@@ -23,3 +23,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/src)
+
+add_executable(net_simulator
+    fake_socket.hpp
+    application.hpp
+    application.cpp
+    executable.hpp
+    executable.cpp
+    configuration.hpp
+    main.cpp)
+
+target_link_libraries(net_simulator 
+    kademlia_static
+    ${Boost_LIBRARIES})
+

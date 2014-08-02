@@ -64,6 +64,7 @@ find_package(Boost REQUIRED COMPONENTS
     system
     chrono
     filesystem 
+    program_options
     unit_test_framework)
 # Crypto
 find_package(Botan REQUIRED)
