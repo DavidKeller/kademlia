@@ -84,23 +84,33 @@ public:
      *
      */
     template< typename Callback >
-    boost::system::error_code
+    void
     async_receive_from
         ( boost::asio::mutable_buffer const& 
         , endpoint_type & 
-        , Callback )
-    { return boost::system::error_code{}; }
+        , Callback callback )
+    { 
+        auto on_completion = [ callback ] ( void )
+        { callback( boost::system::error_code{}, 0 ); }; 
+
+        io_service_.post( on_completion );
+    }
 
     /**
      *
      */
     template< typename Callback >
-    boost::system::error_code
+    void
     async_send_to
         ( boost::asio::const_buffer const& 
         , endpoint_type const& 
-        , Callback )
-    { return boost::system::error_code{}; }
+        , Callback callback )
+    { 
+        auto on_completion = [ callback ] ( void )
+        { callback( boost::system::error_code{}, 0 ); }; 
+
+        io_service_.post( on_completion );
+    }
 
 private:
     ///
