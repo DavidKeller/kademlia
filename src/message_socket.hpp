@@ -306,13 +306,6 @@ message_socket< UnderlyingSocketType >::async_send
 }
 
 template< typename UnderlyingSocketType >
-inline typename message_socket< UnderlyingSocketType >::endpoint_type
-message_socket< UnderlyingSocketType >::local_endpoint
-    ( void )
-    const
-{ return convert_endpoint( socket_.local_endpoint() ); }
-
-template< typename UnderlyingSocketType >
 inline typename message_socket< UnderlyingSocketType >::underlying_socket_type
 message_socket< UnderlyingSocketType >::create_underlying_socket
     ( boost::asio::io_service & io_service

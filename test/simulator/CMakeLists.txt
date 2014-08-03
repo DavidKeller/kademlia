@@ -36,5 +36,7 @@ add_executable(net_simulator
 
 target_link_libraries(net_simulator 
     kademlia_static
-    ${Boost_LIBRARIES})
+    ${Boost_LIBRARIES} 
+    ${BOTAN_LIBRARIES} 
+    ${CMAKE_THREAD_LIBS_INIT})
 

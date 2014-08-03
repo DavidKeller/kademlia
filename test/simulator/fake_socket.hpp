@@ -30,9 +30,81 @@
 #   pragma once
 #endif
 
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/ip/udp.hpp>
+
+/**
+ *
+ */
 class fake_socket
 {
+public:
+    ///
+    using endpoint_type = boost::asio::ip::udp::endpoint;
 
+    ///
+    using protocol_type = boost::asio::ip::udp;
+
+public:
+    /**
+     *
+     */
+    fake_socket
+        ( boost::asio::io_service & io_service
+        , boost::asio::ip::udp const & protocol )
+        : io_service_( io_service )
+    { }
+
+    /**
+     *
+     */
+    template< typename Option >
+    void 
+    set_option
+        ( Option const& )
+    { }
+
+    /**
+     *
+     */
+    boost::system::error_code
+    bind
+        ( endpoint_type const& )
+    { return boost::system::error_code{}; }
+
+    /**
+     *
+     */
+    boost::system::error_code
+    close
+        ( boost::system::error_code & failure )
+    { return failure; }
+
+    /**
+     *
+     */
+    template< typename Callback >
+    boost::system::error_code
+    async_receive_from
+        ( boost::asio::mutable_buffer const& 
+        , endpoint_type & 
+        , Callback )
+    { return boost::system::error_code{}; }
+
+    /**
+     *
+     */
+    template< typename Callback >
+    boost::system::error_code
+    async_send_to
+        ( boost::asio::const_buffer const& 
+        , endpoint_type const& 
+        , Callback )
+    { return boost::system::error_code{}; }
+
+private:
+    ///
+    boost::asio::io_service & io_service_;
 };
 
 #endif

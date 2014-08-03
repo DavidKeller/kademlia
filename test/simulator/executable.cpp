@@ -25,6 +25,7 @@
 
 #include "executable.hpp"
 
+#include <stdexcept>
 #include <cstdlib>
 #include <iostream>
 #include <system_error>
@@ -57,8 +58,7 @@ parse_configuration
 
         ( "messages-count,m"
         , po::value< std::size_t >( &c.total_messages_count )
-        , "Set the total messages sent by simulated clients count\n" )
-        ;
+        , "Set the total messages sent by simulated clients count\n" );
 
     po::options_description optional( "Misc arguments" );
     optional.add_options()
@@ -78,12 +78,15 @@ parse_configuration
         return make_error_code( std::errc::operation_canceled );
     }
 
-    if ( variables.count( "help" ) || ! variables.count( "clients-count" )
-       || variables.count( "messages-count" ) )
+    if ( variables.count( "help" ) )
     {
         std::cout << argv[ 0 ] << " usage:\n" << all << std::endl;
         return make_error_code( std::errc::operation_canceled );
-    }
+    } 
+    
+    if ( ! variables.count( "clients-count" ) 
+       || ! variables.count( "messages-count" ) )
+        throw std::invalid_argument( "a required argument is missing" );
 
     return std::move( c );
 }
@@ -98,7 +101,7 @@ run
     auto configuration = parse_configuration( argc, argv );
 
     if ( ! configuration )
-        return EXIT_FAILURE;
+        return EXIT_SUCCESS;
 
     application::run( configuration.v() );
 

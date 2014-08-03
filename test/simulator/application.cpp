@@ -25,9 +25,12 @@
 
 #include "application.hpp"
 
-#include <string>
+#include <memory>
+
+#include <boost/asio/io_service.hpp>
 
 #include "fake_socket.hpp"
+#include "buffer.hpp"
 #include "engine.hpp"
 
 namespace kademlia {
@@ -35,9 +38,37 @@ namespace application {
 
 namespace {
 
-using test_engine = detail::engine< std::string
-                                  , std::string
+using test_engine = detail::engine< detail::buffer
+                                  , detail::buffer
                                   , fake_socket >;
+
+using engine_ptr = std::shared_ptr< test_engine >;
+
+std::vector< engine_ptr >
+create_engines
+    ( boost::asio::io_service & io_service
+    , configuration const& c )
+{
+    std::vector< engine_ptr > engines;
+    for ( std::size_t i = 0; i != c.clients_count; ++i )
+    {
+        auto e = std::make_shared< test_engine >( io_service
+                                                , endpoint( "0.0.0.0", 5555 )
+                                                , endpoint( "::", 5555 ) );
+        engines.push_back( e );
+    }
+
+    return std::move( engines );
+}
+
+void
+schedule_tasks
+    ( boost::asio::io_service & io_service
+    , std::vector< engine_ptr > & engines
+    , std::size_t total_messages_count )
+{
+
+}
 
 } // anonymous namespace
 
@@ -45,7 +76,12 @@ void
 run
     ( configuration const& c )
 {
+    boost::asio::io_service io_service;
 
+    auto engines = create_engines( io_service, c );
+    schedule_tasks( io_service, engines, c.total_messages_count );
+
+    io_service.run();
 }
 
 } // namespace application
