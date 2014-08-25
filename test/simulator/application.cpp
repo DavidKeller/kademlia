@@ -44,6 +44,18 @@ using test_engine = detail::engine< detail::buffer
 
 using engine_ptr = std::shared_ptr< test_engine >;
 
+/**
+ *
+ */
+template< typename BufferType >
+detail::buffer
+to_buffer
+    ( BufferType const& b )
+{ return detail::buffer( std::begin( b ), std::end( b ) ); }
+
+/**
+ *
+ */
 std::vector< engine_ptr >
 create_engines
     ( boost::asio::io_service & io_service
@@ -61,13 +73,79 @@ create_engines
     return std::move( engines );
 }
 
+/**
+ *
+ */
+void
+schedule_load
+    ( engine_ptr const& e
+    , std::size_t value )
+{
+    auto const b = to_buffer( std::to_string( value ) );
+
+    auto check_load = [ b ] 
+            ( std::error_code const& failure 
+            , detail::buffer const& buffer )
+    {
+        if ( failure )
+            throw std::system_error{ failure };
+
+        if ( b != buffer )
+            throw std::runtime_error{ "loaded value is incorrect" };
+    };
+
+    e->async_load( b, check_load );
+}
+
+/**
+ *
+ */
+void
+schedule_save
+    ( engine_ptr const& e
+    , std::size_t value )
+{
+    auto const b = to_buffer( std::to_string( value ) );
+
+    auto check_save = [] 
+            ( std::error_code const& failure )
+    { 
+        if ( failure ) 
+            throw std::system_error{ failure }; 
+    };
+
+    e->async_save( b, b, check_save );
+}
+
+/**
+ *
+ */
 void
 schedule_tasks
     ( boost::asio::io_service & io_service
     , std::vector< engine_ptr > & engines
     , std::size_t total_messages_count )
 {
+    auto i = engines.begin(), e = engines.end();
 
+    // For each message to send.
+    for ( std::size_t sent_messages_count = 0
+        ; sent_messages_count != total_messages_count
+        ; ++ sent_messages_count )
+    {
+        // If the last peer has been reached, then
+        // restart with the first one.
+        if ( i == e ) 
+            i = engines.begin();
+
+        if ( sent_messages_count % 2 )
+            schedule_load( *i, sent_messages_count - 1 );
+        else
+            schedule_save( *i, sent_messages_count );
+
+        // Next task will be scheduled with the next peer.
+        ++ i;
+    }
 }
 
 } // anonymous namespace

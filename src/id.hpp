@@ -69,14 +69,23 @@ public:
     ///
     using value_to_hash_type = std::vector< std::uint8_t >;
 
+    /**
+     *
+     */
     template<typename BlockType>
     struct abstract_reference
     {
+        /**
+         *
+         */
         operator bool
             ( void )
             const
         { return ( current_block_ & mask_ ) != 0; }
 
+        /**
+         *
+         */
         abstract_reference &
         operator=
             ( bool value )
@@ -89,6 +98,9 @@ public:
             return *this;
         }
 
+        /**
+         *
+         */
         template<typename OtherBlockType>
         bool
         operator==
@@ -136,34 +148,52 @@ public:
     id 
         ( value_to_hash_type const& value );
 
+    /**
+     *
+     */
     blocks_type::iterator
     begin
         ( void )
     { return blocks_.begin(); }
 
+    /**
+     *
+     */
     blocks_type::iterator
     end
         ( void )
     { return blocks_.end(); }
 
+    /**
+     *
+     */
     blocks_type::const_iterator
     begin
         ( void )
         const
     { return blocks_.begin(); }
 
+    /**
+     *
+     */
     blocks_type::const_iterator
     end
         ( void )
         const
     { return blocks_.end(); }
 
+    /**
+     *
+     */
     bool
     operator==
         ( id const& o )
         const
     { return o.blocks_ == blocks_; }
 
+    /**
+     *
+     */
     bool
     operator!=
         ( id const& o )
@@ -192,23 +222,33 @@ public:
     { return reference{ get_block( index ), get_mask( index ) }; }
 
 private:
+    /**
+     *
+     */
     block_type &
     get_block
         ( std::size_t index )
     { return blocks_[ index / BIT_PER_BLOCK ]; }
 
+    /**
+     *
+     */
     const block_type &
     get_block
         ( std::size_t index )
         const
     { return blocks_[ index / BIT_PER_BLOCK ]; }
 
+    /**
+     *
+     */
     static block_type 
     get_mask
         ( std::size_t index )
     { return 0x80 >> index % BIT_PER_BLOCK; }
 
 private:
+    ///
     blocks_type blocks_;
 };
 

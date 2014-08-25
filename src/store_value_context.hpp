@@ -91,7 +91,7 @@ store_value_context< SaveHandlerType, DataType >::store_value_context
     , HandlerType && save_handler )
         : value_context{ key, i, e }
         , data_{ data }
-        , save_handler_{ std::forward< HandlerType >( save_handler ) }
+        , save_handler_( std::forward< HandlerType >( save_handler ) )
 { }
 
 template< typename SaveHandlerType, typename DataType >
