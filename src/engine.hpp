@@ -231,7 +231,6 @@ private:
         return socket_ipv6_;
     }
 
-
     /**
      *
      */

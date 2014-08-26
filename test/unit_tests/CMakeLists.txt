@@ -25,6 +25,7 @@
 
 # Include implementation headers.
 include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
+include_directories(BEFORE ${CMAKE_SOURCE_DIR}/test)
 
 # Run all tests, timeouting if it takes more than 30 seconds.
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
@@ -37,11 +38,12 @@ set_target_properties(test_helpers_common PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 macro(build_and_run_test source_file)
+    cmake_parse_arguments(ARG "" "" "LIBRARIES" ${ARGN})
     get_filename_component(test_name ${source_file} NAME_WE)
-    add_executable(${test_name} ${source_file} ${ARGN}) 
-    target_link_libraries(${test_name} 
+    add_executable(${test_name} ${source_file} ${ARG_UNPARSED_ARGUMENTS})
+    target_link_libraries(${test_name}
         test_helpers_common 
-        kademlia_static 
+        ${ARG_LIBRARIES}
         ${Boost_LIBRARIES} 
         ${BOTAN_LIBRARIES} 
         ${CMAKE_THREAD_LIBS_INIT})
@@ -49,16 +51,18 @@ macro(build_and_run_test source_file)
     add_test(${test_name} ${test_name})
 endmacro()
 
-build_and_run_test(test_id.cpp)
-build_and_run_test(test_message.cpp)
-build_and_run_test(test_value_context.cpp)
-build_and_run_test(test_store_value_context.cpp)
-build_and_run_test(test_find_value_context.cpp)
-build_and_run_test(test_response_dispatcher.cpp)
-build_and_run_test(test_timer.cpp)
-build_and_run_test(test_message_socket.cpp)
-build_and_run_test(test_r.cpp)
-build_and_run_test(test_routing_table.cpp helpers/peer_factory.hpp)
-build_and_run_test(test_session.cpp)
-build_and_run_test(test_concurrent_guard.cpp)
+build_and_run_test(test_id.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_message.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_value_context.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_store_value_context.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_find_value_context.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_response_dispatcher.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_timer.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_r.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_routing_table.cpp helpers/peer_factory.hpp LIBRARIES kademlia_static)
+build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
+
+build_and_run_test(test_fake_socket.cpp LIBRARIES net_simulator_impl)
 

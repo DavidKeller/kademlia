@@ -25,16 +25,19 @@
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/src)
 
-add_executable(net_simulator
+add_library(net_simulator_impl STATIC
     fake_socket.hpp
     application.hpp
     application.cpp
     executable.hpp
     executable.cpp
-    configuration.hpp
+    configuration.hpp)
+
+add_executable(net_simulator
     main.cpp)
 
 target_link_libraries(net_simulator 
+    net_simulator_impl
     kademlia_static
     ${Boost_LIBRARIES} 
     ${BOTAN_LIBRARIES} 
