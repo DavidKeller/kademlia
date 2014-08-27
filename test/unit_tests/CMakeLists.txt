@@ -60,5 +60,5 @@ build_and_run_test(test_routing_table.cpp helpers/peer_factory.hpp LIBRARIES kad
 build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
 
-build_and_run_test(test_fake_socket.cpp LIBRARIES net_simulator_impl)
+build_and_run_test(test_fake_socket.cpp LIBRARIES simulator_impl)
 

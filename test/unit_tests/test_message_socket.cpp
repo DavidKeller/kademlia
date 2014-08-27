@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
         k::endpoint const endpoint{ "error"
                                   , "27980" };
 
-        BOOST_REQUIRE_THROW( 
+        BOOST_REQUIRE_THROW(
             message_socket_type::resolve_endpoint( io_service, endpoint );
         , std::exception );
     }
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
     k::endpoint const endpoint( "127.0.0.1"
                               , get_temporary_listening_port() );
 
-    BOOST_REQUIRE_NO_THROW( 
+    BOOST_REQUIRE_NO_THROW(
         message_socket_type::ipv4( io_service, endpoint );
     );
 }
@@ -99,8 +99,8 @@ BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
 
     k::endpoint const endpoint( "::1"
                               , get_temporary_listening_port() );
-    
-    BOOST_REQUIRE_NO_THROW( 
+
+    BOOST_REQUIRE_NO_THROW(
         message_socket_type::ipv6( io_service, endpoint );
     );
 }

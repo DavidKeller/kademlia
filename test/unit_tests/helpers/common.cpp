@@ -50,27 +50,27 @@ get_temporary_listening_port
 {
     boost::system::error_code failure;
 
-    do  
+    do
     {
         ++ port;
         boost::asio::ip::udp::endpoint const e
-                { boost::asio::ip::udp::v4() , port }; 
+                { boost::asio::ip::udp::v4() , port };
 
         boost::asio::io_service io_service;
         // Try to open a socket at this address.
         boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
         socket.bind( e, failure );
     }
-    while ( failure == boost::system::errc::address_in_use ); 
+    while ( failure == boost::system::errc::address_in_use );
 
     return port;
 }
 
 /**
  *  When we are using boost as a shared (i.e. BOOST_TEST_DYN_LINK
- *  macro is defined), BOOST_TEST_ALTERNATIVE_INIT_API macro is 
+ *  macro is defined), BOOST_TEST_ALTERNATIVE_INIT_API macro is
  *  automatically defined by boost unit-test config header.
- *  Hence don't bother searching this macro definition in 
+ *  Hence don't bother searching this macro definition in
  *  this project build or source files.
  *
  *  That means with shared version of unit-test library, unit_test_main
@@ -90,7 +90,7 @@ init_unit_test
 
 boost::unit_test::test_suite *
 init_unit_test_suite
-    ( int 
+    ( int
     , char* [] )
 { return nullptr; }
 

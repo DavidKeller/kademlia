@@ -41,15 +41,15 @@ BOOST_AUTO_TEST_CASE( random_generated_id_are_different )
 {
     std::default_random_engine random_engine;
 
-    BOOST_REQUIRE_NE( kd::id{ random_engine } 
+    BOOST_REQUIRE_NE( kd::id{ random_engine }
                     , kd::id{ random_engine } );
 }
 
 BOOST_AUTO_TEST_CASE( emptry_string_generated_id_is_valid )
 {
     kd::id const new_id{ "" };
-    
-    auto equal_to_zero = [] ( kd::id::block_type v ) 
+
+    auto equal_to_zero = [] ( kd::id::block_type v )
     { return ! v; };
 
     BOOST_REQUIRE( std::all_of( new_id.begin()

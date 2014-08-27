@@ -37,18 +37,18 @@ namespace {
  */
 struct kademlia_error_category : std::error_category
 {
-    char const* 
+    char const*
     name
-        ( void ) 
+        ( void )
         const CXX11_NOEXCEPT override
     {
         return "kademlia";
     }
 
-    std::string 
+    std::string
     message
-        ( int condition ) 
-        const CXX11_NOEXCEPT override 
+        ( int condition )
+        const CXX11_NOEXCEPT override
     {
         switch ( condition )
         {

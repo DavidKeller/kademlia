@@ -72,8 +72,8 @@ id::id
     // The output of the generator is treated as boolean value.
     std::uniform_int_distribution<> distribution
             ( std::numeric_limits< block_type >::min()
-            , std::numeric_limits< block_type >::max() ); 
-    
+            , std::numeric_limits< block_type >::max() );
+
     std::generate( blocks_.begin(), blocks_.end()
                  , std::bind( distribution, std::ref( random_engine ) ) );
 }
@@ -81,7 +81,7 @@ id::id
 id::id
     ( std::string s )
 {
-    auto CXX11_CONSTEXPR STRING_MAX_SIZE = BLOCKS_COUNT * HEX_CHAR_PER_BLOCK; 
+    auto CXX11_CONSTEXPR STRING_MAX_SIZE = BLOCKS_COUNT * HEX_CHAR_PER_BLOCK;
 
     if ( s.size() > STRING_MAX_SIZE )
         throw std::system_error{ make_error_code( INVALID_ID ) };
@@ -94,13 +94,13 @@ id::id
         blocks_[ i ] = to_block( s.substr( i * HEX_CHAR_PER_BLOCK
                                          , HEX_CHAR_PER_BLOCK ) );
 }
-    
-id::id 
+
+id::id
     ( value_to_hash_type const& value )
 {
     Botan::SHA_160_SSE2 hasher{};
     auto const result = hasher.process( value.data(), value.size() );
-    assert( BIT_SIZE == hasher.output_length() * 8 
+    assert( BIT_SIZE == hasher.output_length() * 8
           && "an id can't be constructed from a sha1 result" );
     std::copy( result.begin(), result.end(), blocks_.data() );
 }
@@ -118,8 +118,8 @@ operator<<
 
     auto const previous_flags = out.flags();
 
-    out << std::hex 
-        << std::setfill( '0' ) 
+    out << std::hex
+        << std::setfill( '0' )
         << std::setw( HEX_CHAR_PER_BLOCK );
 
     std::copy( i, e, std::ostream_iterator< std::uint64_t >{ out } );

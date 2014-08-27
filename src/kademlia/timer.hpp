@@ -53,7 +53,7 @@ public:
     /**
      *
      */
-    explicit 
+    explicit
     timer
         ( boost::asio::io_service & io_service );
 
@@ -63,11 +63,11 @@ public:
     template< typename Callback >
     void
     expires_from_now
-        ( duration const& timeout 
+        ( duration const& timeout
         , Callback const& on_timer_expired );
 
 private:
-    /// 
+    ///
     using time_point = clock::time_point;
 
     ///
@@ -76,7 +76,7 @@ private:
     ///
     using timeouts = std::multimap< time_point, callback >;
 
-    /// 
+    ///
     using deadline_timer = boost::asio::basic_waitable_timer< clock >;
 
 private:
@@ -91,13 +91,13 @@ private:
     ///
     deadline_timer timer_;
     ///
-    timeouts timeouts_; 
+    timeouts timeouts_;
 };
 
 template< typename Callback >
 void
 timer::expires_from_now
-    ( duration const& timeout 
+    ( duration const& timeout
     , Callback const& on_timer_expired )
 {
     auto expiration_time = clock::now() + timeout;

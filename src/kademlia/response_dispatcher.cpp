@@ -37,7 +37,7 @@ response_dispatcher::push_association
     ( id const& message_id
     , callback const& on_message_received )
 {
-    auto i = associations_.emplace( message_id, on_message_received ); 
+    auto i = associations_.emplace( message_id, on_message_received );
     assert( i.second && "an id can't be registered twice" );
 }
 
@@ -54,13 +54,13 @@ response_dispatcher::dispatch_message
     , buffer::const_iterator e )
 {
     auto association = associations_.find( h.random_token_ );
-    if ( association == associations_.end() ) 
+    if ( association == associations_.end() )
         return make_error_code( UNASSOCIATED_MESSAGE_ID );
 
     association->second( sender, h, i, e );
     associations_.erase( association );
 
-    return std::error_code{}; 
+    return std::error_code{};
 }
 
 } // namespace detail

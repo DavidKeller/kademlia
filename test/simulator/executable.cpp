@@ -82,9 +82,9 @@ parse_configuration
     {
         std::cout << argv[ 0 ] << " usage:\n" << all << std::endl;
         return make_error_code( std::errc::operation_canceled );
-    } 
-    
-    if ( ! variables.count( "clients-count" ) 
+    }
+
+    if ( ! variables.count( "clients-count" )
        || ! variables.count( "messages-count" ) )
         throw std::invalid_argument( "a required argument is missing" );
 

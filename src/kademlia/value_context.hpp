@@ -86,7 +86,7 @@ public:
     have_all_requests_completed
         ( void )
         const;
-    
+
     /**
      *
      */
@@ -163,7 +163,7 @@ value_context::value_context
         : key_{ key }
         , in_flight_requests_count_{ 0 }
         , candidates_{}
-{ 
+{
     for ( ; i != e; ++i )
         add_candidate( peer{ i->first, i->second } );
 }
@@ -171,26 +171,26 @@ value_context::value_context
 inline void
 value_context::flag_candidate_as_valid
     ( id const& candidate_id )
-{ 
+{
     auto i = find_candidate( candidate_id );
-    if ( i == candidates_.end() 
+    if ( i == candidates_.end()
        && i->second.state_ == candidate::STATE_CONTACTED )
         return;
 
-    -- in_flight_requests_count_; 
+    -- in_flight_requests_count_;
     i->second.state_ = candidate::STATE_RESPONDED;
 }
 
 inline void
 value_context::flag_candidate_as_invalid
     ( id const& candidate_id )
-{ 
+{
     auto i = find_candidate( candidate_id );
-    if ( i == candidates_.end() 
+    if ( i == candidates_.end()
        && i->second.state_ == candidate::STATE_CONTACTED )
         return;
 
-    -- in_flight_requests_count_; 
+    -- in_flight_requests_count_;
     i->second.state_ = candidate::STATE_TIMEOUTED;
 }
 
@@ -203,7 +203,7 @@ value_context::select_new_closest_candidates
     // Iterate over all candidates until we picked
     // candidates_max_count not-contacted candidates.
     for ( auto i = candidates_.begin(), e = candidates_.end()
-        ; i != e && in_flight_requests_count_ < max_count 
+        ; i != e && in_flight_requests_count_ < max_count
         ; ++ i)
     {
         if ( i->second.state_ == candidate::STATE_UNKNOWN )
@@ -226,7 +226,7 @@ value_context::select_closest_valid_candidates
     // Iterate over all candidates until we picked
     // candidates_max_count not-contacted candidates.
     for ( auto i = candidates_.begin(), e = candidates_.end()
-        ; i != e && candidates.size() < max_count 
+        ; i != e && candidates.size() < max_count
         ; ++ i)
     {
         if ( i->second.state_ == candidate::STATE_RESPONDED )

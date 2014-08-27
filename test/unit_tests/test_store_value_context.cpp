@@ -40,7 +40,7 @@ namespace {
 
 using save_handler_type = std::function< void ( std::error_code const& ) >;
 
-using data_type = std::vector< std::uint8_t >; 
+using data_type = std::vector< std::uint8_t >;
 
 using routing_table_peer = std::pair< kd::id
                                     , kd::ip_endpoint >;

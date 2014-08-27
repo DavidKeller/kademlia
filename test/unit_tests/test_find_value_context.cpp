@@ -38,7 +38,7 @@ namespace kd = k::detail;
 
 namespace {
 
-using data_type = std::vector< std::uint8_t >; 
+using data_type = std::vector< std::uint8_t >;
 
 using load_handler_type = std::function< void ( std::error_code const&, data_type const& ) >;
 
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE( can_notify_error_to_caller )
 
     std::error_code last_failure;
     auto handler = [ &last_failure ] ( std::error_code const& failure, data_type const& data )
-    { 
-        last_failure = failure; 
+    {
+        last_failure = failure;
         BOOST_REQUIRE( data.empty() );
     };
 

@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 BOOST_AUTO_TEST_CASE( can_select_candidates )
 {
     std::vector< routing_table_peer > candidates;
-    kd::ip_endpoint const default_address{}; 
+    kd::ip_endpoint const default_address{};
     candidates.emplace_back( kd::id{ "7" }, default_address );
     candidates.emplace_back( kd::id{ "3" }, default_address );
     candidates.emplace_back( kd::id{ "6" }, default_address );
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE( can_select_candidates )
     test_context c{ key, candidates.begin(), candidates.end() };
 
     BOOST_REQUIRE( c.have_all_requests_completed() );
-    auto closest_candidates = c.select_new_closest_candidates( 2 ); 
+    auto closest_candidates = c.select_new_closest_candidates( 2 );
     BOOST_REQUIRE( ! c.have_all_requests_completed() );
     BOOST_REQUIRE_EQUAL( 2, closest_candidates.size() );
     BOOST_REQUIRE_EQUAL( kd::id{ "1" }, closest_candidates[ 0 ].id_ );
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE( can_select_candidates )
     c.flag_candidate_as_invalid( kd::id{ "2" } );
     BOOST_REQUIRE( c.have_all_requests_completed() );
 
-    closest_candidates = c.select_new_closest_candidates( 2 ); 
+    closest_candidates = c.select_new_closest_candidates( 2 );
     BOOST_REQUIRE( ! c.have_all_requests_completed() );
     BOOST_REQUIRE_EQUAL( 2, closest_candidates.size() );
     BOOST_REQUIRE_EQUAL( kd::id{ "3" }, closest_candidates[ 0 ].id_ );
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE( can_select_candidates )
 BOOST_AUTO_TEST_CASE( can_add_candidates )
 {
     std::vector< routing_table_peer > candidates;
-    kd::ip_endpoint const default_address{}; 
+    kd::ip_endpoint const default_address{};
     candidates.emplace_back( kd::id{ "7" }, default_address );
 
     kd::id const our_id{};

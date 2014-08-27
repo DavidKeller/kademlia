@@ -80,12 +80,13 @@ create_engines
 void
 schedule_load
     ( engine_ptr const& e
-    , std::size_t value )
+    , std::size_t value
+    , std::size_t & received_messages_count )
 {
     auto const b = to_buffer( std::to_string( value ) );
 
-    auto check_load = [ b ] 
-            ( std::error_code const& failure 
+    auto check_load = [ b, &received_messages_count ]
+            ( std::error_code const& failure
             , detail::buffer const& buffer )
     {
         if ( failure )
@@ -93,6 +94,8 @@ schedule_load
 
         if ( b != buffer )
             throw std::runtime_error{ "loaded value is incorrect" };
+
+        ++ received_messages_count;
     };
 
     e->async_load( b, check_load );
@@ -104,15 +107,18 @@ schedule_load
 void
 schedule_save
     ( engine_ptr const& e
-    , std::size_t value )
+    , std::size_t value
+    , std::size_t & sent_messages_count )
 {
     auto const b = to_buffer( std::to_string( value ) );
 
-    auto check_save = [] 
+    auto check_save = [ &sent_messages_count ]
             ( std::error_code const& failure )
-    { 
-        if ( failure ) 
-            throw std::system_error{ failure }; 
+    {
+        if ( failure )
+            throw std::system_error{ failure };
+
+        ++ sent_messages_count;
     };
 
     e->async_save( b, b, check_save );
@@ -125,7 +131,9 @@ void
 schedule_tasks
     ( boost::asio::io_service & io_service
     , std::vector< engine_ptr > & engines
-    , std::size_t total_messages_count )
+    , std::size_t total_messages_count
+    , std::size_t & sent_messages_count
+    , std::size_t & received_messages_count )
 {
     auto i = engines.begin(), e = engines.end();
 
@@ -136,13 +144,15 @@ schedule_tasks
     {
         // If the last peer has been reached, then
         // restart with the first one.
-        if ( i == e ) 
+        if ( i == e )
             i = engines.begin();
 
         if ( sent_messages_count % 2 )
-            schedule_load( *i, sent_messages_count - 1 );
+            schedule_load( *i, sent_messages_count - 1
+                         , received_messages_count );
         else
-            schedule_save( *i, sent_messages_count );
+            schedule_save( *i, sent_messages_count
+                         , sent_messages_count );
 
         // Next task will be scheduled with the next peer.
         ++ i;
@@ -156,11 +166,35 @@ run
     ( configuration const& c )
 {
     boost::asio::io_service io_service;
+    boost::asio::io_service::work work( io_service );
 
     auto engines = create_engines( io_service, c );
-    schedule_tasks( io_service, engines, c.total_messages_count );
+    std::size_t sent_messages_count = 0;
+    std::size_t received_messages_count = 0;
+    schedule_tasks( io_service, engines
+                  , c.total_messages_count
+                  , sent_messages_count
+                  , received_messages_count );
 
-    io_service.run();
+    io_service.poll();
+
+    if ( c.total_messages_count != sent_messages_count )
+    {
+        std::ostringstream error;
+        error << "the requested and sent messages count mismatch [ "
+              << c.total_messages_count << " != "
+              << sent_messages_count << " ]";
+        throw std::runtime_error( error.str() );
+    }
+
+    if ( sent_messages_count != received_messages_count )
+    {
+        std::ostringstream error;
+        error << "the sent and received messages count mismatch [ "
+              << sent_messages_count << " != "
+              << received_messages_count << " ]";
+        throw std::runtime_error( error.str() );
+    }
 }
 
 } // namespace application

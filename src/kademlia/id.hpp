@@ -89,7 +89,7 @@ public:
         abstract_reference &
         operator=
             ( bool value )
-        { 
+        {
             if ( value )
                 current_block_ |= mask_;
             else
@@ -122,7 +122,7 @@ public:
     /**
      *  @brief Construct a null id.
      */
-    id 
+    id
         ( void )
         : blocks_{ }
     { }
@@ -133,19 +133,19 @@ public:
     explicit
     id
         ( std::default_random_engine & random_engine );
-    
+
     /**
      *  @brief Construct an id from a string representation.
      */
     explicit
-    id 
+    id
         ( std::string value );
 
     /**
      *  @brief Construct an id by hashing a value.
      */
     explicit
-    id 
+    id
         ( value_to_hash_type const& value );
 
     /**
@@ -242,7 +242,7 @@ private:
     /**
      *
      */
-    static block_type 
+    static block_type
     get_mask
         ( std::size_t index )
     { return 0x80 >> index % BIT_PER_BLOCK; }
@@ -259,7 +259,7 @@ inline bool
 operator<
     ( id const& a
     , id const& b )
-{ 
+{
     return std::lexicographical_compare( a.begin(), a.end()
                                        , b.begin(), b.end() );
 }
@@ -286,7 +286,7 @@ distance
                   , result.begin()
                   , std::bit_xor< id::block_type >{} );
 
-    return result; 
+    return result;
 }
 
 } // namespace detail

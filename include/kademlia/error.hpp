@@ -37,7 +37,7 @@ namespace kademlia {
 /**
  *
  */
-enum error_type 
+enum error_type
 {
     UNKNOWN = 1,
     RUN_ABORTED,

@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( can_serialize_header )
                                    , header_in.random_token_.begin()
                                    , header_in.random_token_.end() );
 }
- 
+
 BOOST_AUTO_TEST_CASE( can_serialize_find_peer_request_body )
 {
     std::default_random_engine random_engine;
@@ -94,20 +94,20 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
     std::default_random_engine random_engine;
 
     kd::find_peer_response_body body_out;
-   
+
     for ( std::size_t i = 0; i < 10; ++ i)
     {
         static std::string const IPS[2] =
             { "::1"
             , "127.0.0.1" };
 
-        kd::peer new_peer = 
+        kd::peer new_peer =
             { kd::id{ random_engine }
             , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
               , std::uint16_t( 1024 + i ) } };
 
         body_out.peers_.push_back( std::move( new_peer ) );
-    } 
+    }
 
     kd::buffer buffer;
     kd::serialize( body_out, buffer );
@@ -124,13 +124,13 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
                                    , body_in.peers_.begin()
                                    , body_in.peers_.end() );
 }
- 
+
 BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )
 {
     std::default_random_engine random_engine;
 
     kd::find_value_request_body const body_out{ kd::id{ random_engine } };
-   
+
     kd::buffer buffer;
     kd::serialize( body_out, buffer );
 
@@ -142,12 +142,12 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )
     BOOST_REQUIRE_EQUAL( body_out.value_to_find_
                        , body_in.value_to_find_ );
 }
- 
+
 BOOST_AUTO_TEST_CASE( can_serialize_find_value_response_body )
 {
     kd::find_value_response_body body_out
     { std::vector< std::uint8_t >( 4096 ) };
-   
+
     std::generate( body_out.data_.begin()
                  , body_out.data_.end()
                  , std::rand );
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( can_serialize_store_value_request_body )
     kd::store_value_request_body body_out
             { kd::id{ random_engine }
             , std::vector< std::uint8_t >( 4096 ) };
-   
+
     std::generate( body_out.data_value_.begin()
                  , body_out.data_value_.end()
                  , std::rand );
@@ -196,6 +196,6 @@ BOOST_AUTO_TEST_CASE( can_serialize_store_value_request_body )
                                    , body_in.data_value_.begin()
                                    , body_in.data_value_.end() );
 }
-        
+
 BOOST_AUTO_TEST_SUITE_END()
 

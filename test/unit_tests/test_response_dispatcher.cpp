@@ -70,7 +70,7 @@ BOOST_FIXTURE_TEST_CASE( unknown_message_are_dropped , fixture )
 
 BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
 {
-    kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST 
+    kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST
                        , kd::id{}, kd::id{ "1" } };
     kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
@@ -78,7 +78,7 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
 
     // Create the association.
-    auto on_message_received = [ this ] 
+    auto on_message_received = [ this ]
             ( kd::response_dispatcher::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
@@ -117,18 +117,18 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
 
     BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
     // Create the association.
-    auto on_message_received = [ this ] 
+    auto on_message_received = [ this ]
             ( kd::response_dispatcher::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
             , kd::buffer::const_iterator )
-    { 
-        messages_received_.push_back( h.random_token_ ); 
+    {
+        messages_received_.push_back( h.random_token_ );
     };
     dispatcher_.push_association( h1.random_token_
                                 , on_message_received );
     dispatcher_.push_association( h2.random_token_
-                                , on_message_received ); 
+                                , on_message_received );
 
     kd::response_dispatcher::endpoint_type const s{};
     auto result = dispatcher_.dispatch_message( s, h1, b.begin(), b.end() );

@@ -79,7 +79,7 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
     BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
     BOOST_REQUIRE_EQUAL( 0, timeouts_received_ );
 
-    // This new expiration should trigger a cancel of the current 
+    // This new expiration should trigger a cancel of the current
     // timeout (infinite), hence one task execution +
     // the execution of the new timeout (immediate).
     auto const immediate = kd::timer::duration::zero();

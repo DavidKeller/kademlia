@@ -65,7 +65,7 @@ check_listening
     ( std::string const& ip
     , std::uint16_t port )
 {
-    auto udp_failure = create_socket< udp::socket >( ip, port ); 
+    auto udp_failure = create_socket< udp::socket >( ip, port );
     BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, udp_failure );
 }
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
     k::endpoint initial_peer{ "127.0.0.1", 12345 };
 
     k::session s{ initial_peer };
-    
+
     check_listening( "0.0.0.0", k::session::DEFAULT_PORT );
     check_listening( "::", k::session::DEFAULT_PORT );
 }
@@ -93,12 +93,12 @@ BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
     std::uint16_t const port2 = get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
-    
+
     k::endpoint const initial_peer{ "127.0.0.1", 12345 };
     k::session s{ initial_peer
                 , ipv4_endpoint
                 , ipv6_endpoint };
-    
+
     check_listening( "127.0.0.1", port1 );
     check_listening( "::1", port2 );
 }
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
     std::uint16_t const port2 = get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
-    
+
     k::endpoint const initial_peer{ "127.0.0.1", 12345 };
     BOOST_REQUIRE_THROW( k::session s( initial_peer
                                      , ipv4_endpoint
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
     std::uint16_t const port2 = get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "::", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
-    
+
     k::endpoint const initial_peer{ "127.0.0.1", 12345 };
     BOOST_REQUIRE_THROW( k::session s( initial_peer
                                      , ipv4_endpoint

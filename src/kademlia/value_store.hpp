@@ -45,7 +45,7 @@ struct value_store_key_hasher
     using argument_type = Container;
     using result_type = std::size_t;
 
-    result_type 
+    result_type
     operator()
         ( argument_type const& key )
         const

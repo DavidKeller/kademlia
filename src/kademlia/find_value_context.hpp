@@ -104,8 +104,8 @@ template< typename LoadHandlerType, typename DataType >
 inline void
 find_value_context< LoadHandlerType, DataType >::notify_caller
     ( data_type const& data )
-{ 
-    load_handler_( std::error_code{}, data ); 
+{
+    load_handler_( std::error_code{}, data );
     is_finished_ = true;
 }
 
@@ -113,8 +113,8 @@ template< typename LoadHandlerType, typename DataType >
 inline void
 find_value_context< LoadHandlerType, DataType >::notify_caller
     ( std::error_code const& failure )
-{ 
-    load_handler_( failure, data_type{} ); 
+{
+    load_handler_( failure, data_type{} );
     is_finished_ = true;
 }
 

@@ -39,9 +39,9 @@
 #include <string>
 #include <cstdint>
 
-std::string 
+std::string
 get_capture_path
-    ( std::string const & capture_name ); 
+    ( std::string const & capture_name );
 
 std::uint16_t
 get_temporary_listening_port

@@ -43,8 +43,8 @@ timer::schedule_next_tick
     // This will cancel any pending task.
     timer_.expires_at( expiration_time );
 
-    auto fire = [ this ]( boost::system::error_code const& failure ) 
-    { 
+    auto fire = [ this ]( boost::system::error_code const& failure )
+    {
         // The current timeout has been canceled
         // hence stop right there.
         if ( failure == boost::asio::error::operation_aborted )
@@ -63,7 +63,7 @@ timer::schedule_next_tick
         timeouts_.erase( begin, end );
 
         // If there is a remaining timeout, schedule it.
-        if ( ! timeouts_.empty() ) 
+        if ( ! timeouts_.empty() )
             schedule_next_tick( timeouts_.begin()->first );
     };
 

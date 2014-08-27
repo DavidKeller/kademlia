@@ -108,7 +108,7 @@ public:
      *
      */
     template< typename Option >
-    void 
+    void
     set_option
         ( Option const& )
     { }
@@ -147,13 +147,18 @@ public:
         ( boost::asio::mutable_buffer const& buffer
         , endpoint_type & from
         , Callback callback )
-    { 
+    {
         // Check if there is packets waiting.
         if ( pending_writes_.empty() )
+        {
             // No packet are waiting, hence register that
             // the current socket is waiting for packet.
-            pending_reads_.push_back( { buffer, from, std::move( callback ) } ); 
-        else 
+            boost::asio::io_service::work work( io_service_ );
+            pending_reads_.push_back( { buffer, from
+                                      , std::move( work )
+                                      , std::move( callback ) } );
+        }
+        else
             // A packet is waiting to be read, so read it
             // asynchronously.
             async_execute_read( buffer, from, callback );
@@ -168,20 +173,20 @@ public:
         ( boost::asio::const_buffer const& buffer
         , endpoint_type const& to
         , Callback callback )
-    { 
+    {
         // Ensure the destination socket is listening.
         auto target = get_socket( to );
         if ( ! target )
-        {
             callback( make_error_code( boost::system::errc::network_unreachable )
                     , 0ULL );
-            return;
-        }
-
         // Check if it's not waiting for any packet.
-        if ( target->pending_reads_.empty() )
+        else if ( target->pending_reads_.empty() )
+        {
+            boost::asio::io_service::work work( io_service_ );
             target->pending_writes_.push_back( { buffer, local_endpoint_
-                                             , std::move( callback ) } );
+                                               , std::move( work )
+                                               , std::move( callback ) } );
+        }
         else
             // It's already waiting for the current packet.
             async_execute_write( target, buffer, callback );
@@ -198,6 +203,7 @@ private:
     {
         boost::asio::mutable_buffer buffer_;
         endpoint_type & source_;
+        boost::asio::io_service::work work_;
         callback_type callback_;
     };
 
@@ -206,6 +212,7 @@ private:
     {
         boost::asio::const_buffer buffer_;
         endpoint_type const& source_;
+        boost::asio::io_service::work work_;
         callback_type callback_;
     };
 
@@ -224,7 +231,7 @@ private:
 
         ++ last_allocated_ipv4_;
 
-        assert( last_allocated_ipv4_ != 0UL 
+        assert( last_allocated_ipv4_ != 0UL
               && "allocated more than 2^32 ipv4" );
 
         boost::asio::ip::address_v4 const ipv4( last_allocated_ipv4_ );
@@ -283,7 +290,7 @@ private:
         ( boost::asio::const_buffer const& from
         , boost::asio::mutable_buffer const& to )
     {
-        auto const source_size = boost::asio::buffer_size( from ); 
+        auto const source_size = boost::asio::buffer_size( from );
         assert( source_size <= boost::asio::buffer_size( to )
               && "can't store message into target buffer" );
 
@@ -304,9 +311,9 @@ private:
         ( fake_socket * target
         , boost::asio::const_buffer const& buffer
         , Callback callback )
-    { 
+    {
         auto perform_write = [ this, target, buffer, callback ] ( void )
-        { 
+        {
             // Retrieve the read task of the packet.
             assert( ! target->pending_reads_.empty() );
             pending_read & t = target->pending_reads_.front();
@@ -324,7 +331,7 @@ private:
                        , copied_bytes_count );
 
             target->pending_reads_.pop_front();
-        }; 
+        };
 
         io_service_.post( perform_write );
     }
@@ -338,7 +345,7 @@ private:
         ( boost::asio::mutable_buffer const& buffer
         , endpoint_type & from
         , Callback callback )
-    { 
+    {
         auto perform_read = [ this, buffer, &from, callback ] ( void )
         {
             // Retrieve the write task of the packet.
@@ -347,7 +354,7 @@ private:
 
             // Fill the provided buffer and endpoint.
             from  = t.source_;
-            auto const copied_bytes_count = copy_buffer( t.buffer_, buffer ); 
+            auto const copied_bytes_count = copy_buffer( t.buffer_, buffer );
 
             // Now inform the writeer that data has been sent.
             t.callback_( boost::system::error_code()

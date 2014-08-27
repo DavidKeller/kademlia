@@ -51,18 +51,18 @@ class session final
 public:
     ///
     using key_type = std::vector< std::uint8_t >;
- 
+
     ///
     using data_type = std::vector< std::uint8_t >;
- 
+
     ///
-    using save_handler_type = std::function 
-            < void 
+    using save_handler_type = std::function
+            < void
                 ( std::error_code const& error )
             >;
     ///
-    using load_handler_type = std::function 
-            < void 
+    using load_handler_type = std::function
+            < void
                 ( std::error_code const& error
                 , data_type const& data )
             >;
@@ -108,7 +108,7 @@ public:
     KADEMLIA_SYMBOL_VISIBILITY
     void
     async_save
-        ( key_type const& key 
+        ( key_type const& key
         , data_type const& data
         , save_handler_type handler );
 

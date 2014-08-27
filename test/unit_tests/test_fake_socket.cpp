@@ -50,7 +50,6 @@ BOOST_AUTO_TEST_CASE( can_be_created )
 BOOST_AUTO_TEST_CASE( does_not_invoke_receive_callback_until_data_is_received )
 {
     a::io_service io_service;
-    a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     k::fake_socket s( io_service, endpoint.protocol() );
 
@@ -58,11 +57,11 @@ BOOST_AUTO_TEST_CASE( does_not_invoke_receive_callback_until_data_is_received )
 
     kd::buffer buffer( 32 );
 
-    auto on_receive = [] 
-        ( boost::system::error_code const& 
+    auto on_receive = []
+        ( boost::system::error_code const&
         , std::size_t )
     { BOOST_FAIL( "unexpected call" ); };
- 
+
     s.async_receive_from( boost::asio::buffer( buffer )
                         , endpoint
                         , on_receive );
@@ -73,7 +72,6 @@ BOOST_AUTO_TEST_CASE( does_not_invoke_receive_callback_until_data_is_received )
 BOOST_AUTO_TEST_CASE( invokes_send_callback_when_host_is_unreachable )
 {
     a::io_service io_service;
-    a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     k::fake_socket s( io_service, endpoint.protocol() );
 
@@ -81,14 +79,14 @@ BOOST_AUTO_TEST_CASE( invokes_send_callback_when_host_is_unreachable )
 
     kd::buffer buffer( 32 );
 
-    auto on_send = [] 
+    auto on_send = []
         ( boost::system::error_code const& failure
         , std::size_t bytes_count )
-    { 
+    {
         BOOST_REQUIRE( failure );
         BOOST_REQUIRE_EQUAL( 0, bytes_count );
     };
- 
+
     s.async_send_to( boost::asio::buffer( buffer )
                    , endpoint
                    , on_send );
@@ -110,21 +108,21 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
     kd::buffer sent( 32 );
 
     bool receive_callback_called = false;
-    auto on_receive = [ &receive_callback_called, &sent ] 
+    auto on_receive = [ &receive_callback_called, &sent ]
         ( boost::system::error_code const& failure
         , std::size_t bytes_count )
-    { 
-        receive_callback_called = true; 
+    {
+        receive_callback_called = true;
         BOOST_REQUIRE( ! failure );
         BOOST_REQUIRE_EQUAL( sent.size(), bytes_count );
     };
- 
+
     receiver.async_receive_from( boost::asio::buffer( received )
                                , endpoint
                                , on_receive );
 
     std::iota( sent.begin(), sent.end(), 1 );
-    auto on_send = [ &sent, &received ] 
+    auto on_send = [ &sent, &received ]
         ( boost::system::error_code const& failure
         , std::size_t bytes_count )
     {
@@ -132,9 +130,9 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
         BOOST_REQUIRE_EQUAL( sent.size(), bytes_count );
         received.resize( bytes_count );
     };
- 
+
     sender.async_send_to( boost::asio::buffer( sent )
-                        , receiver.local_endpoint() 
+                        , receiver.local_endpoint()
                         , on_send );
 
     BOOST_REQUIRE_LT( 0ULL, io_service.poll() );
@@ -146,7 +144,6 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
 BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
 {
     a::io_service io_service;
-    a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     k::fake_socket s( io_service, endpoint.protocol() );
 
@@ -156,7 +153,7 @@ BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
     std::iota( sent.begin(), sent.end(), 1 );
 
     bool send_callback_called = false;
-    auto on_send = [ &send_callback_called ] 
+    auto on_send = [ &send_callback_called ]
         ( boost::system::error_code const& failure
         , std::size_t bytes_count )
     {

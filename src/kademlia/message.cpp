@@ -41,7 +41,7 @@ serialize_integer
 {
     // Cast the integer as unsigned because
     // right shifting signed is UB.
-    using unsigned_integer_type 
+    using unsigned_integer_type
             = typename std::make_unsigned< IntegerType >::type;
 
     for ( auto i = 0u; i < sizeof( value ); ++i )
@@ -144,7 +144,7 @@ deserialize
     , header::type & t )
 {
     if ( std::distance( i, e ) < 1 )
-        return make_error_code( TRUNCATED_HEADER ); 
+        return make_error_code( TRUNCATED_HEADER );
 
     v = static_cast< header::version >( *i & 0xf );
     t = static_cast< header::type >( *i >> 4 );
@@ -157,7 +157,7 @@ deserialize
     return std::error_code{};
 }
 
-enum 
+enum
     { KADEMLIA_ENDPOINT_SERIALIZATION_IPV4 = 1
     , KADEMLIA_ENDPOINT_SERIALIZATION_IPV6 = 2 };
 
@@ -197,7 +197,7 @@ deserialize_address
     typename Address::bytes_type buffer;
     if ( std::size_t( std::distance( i, e ) ) < buffer.size() )
         return make_error_code( TRUNCATED_ADDRESS );
-    
+
     std::copy_n( i, buffer.size(), buffer.begin() );
     std::advance( i, buffer.size() );
 
@@ -216,7 +216,7 @@ deserialize
     , boost::asio::ip::address & address )
 {
     if ( std::distance( i, e ) < 1 )
-        return make_error_code( TRUNCATED_ENDPOINT ); 
+        return make_error_code( TRUNCATED_ENDPOINT );
 
     auto const protocol = *i++;
     if ( protocol == KADEMLIA_ENDPOINT_SERIALIZATION_IPV4 )
@@ -249,12 +249,12 @@ deserialize
  */
 inline void
 serialize
-    ( peer const& n  
+    ( peer const& n
     , buffer & b )
 {
-    serialize( n.id_, b ); 
-    serialize_integer( n.endpoint_.port_, b ); 
-    serialize( n.endpoint_.address_, b ); 
+    serialize( n.id_, b );
+    serialize_integer( n.endpoint_.port_, b );
+    serialize( n.endpoint_.address_, b );
 }
 
 /**
@@ -266,15 +266,15 @@ deserialize
     , buffer::const_iterator e
     , peer & n )
 {
-    auto failure = deserialize( i, e, n.id_ ); 
+    auto failure = deserialize( i, e, n.id_ );
     if ( failure )
         return failure;
 
-    failure = deserialize_integer( i, e, n.endpoint_.port_ ); 
+    failure = deserialize_integer( i, e, n.endpoint_.port_ );
     if ( failure )
         return failure;
 
-    return deserialize( i, e, n.endpoint_.address_ ); 
+    return deserialize( i, e, n.endpoint_.address_ );
 }
 
 } // anonymous namespace
@@ -343,7 +343,7 @@ deserialize
     std::uint64_t size;
     auto failure = deserialize_integer( i, e, size );
 
-    for ( 
+    for (
         ; size > 0 && ! failure
         ; -- size )
     {

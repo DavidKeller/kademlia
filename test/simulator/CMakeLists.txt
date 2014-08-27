@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-add_library(net_simulator_impl STATIC
+add_library(simulator_impl STATIC
     fake_socket.hpp
     application.hpp
     application.cpp
@@ -31,11 +31,11 @@ add_library(net_simulator_impl STATIC
     executable.cpp
     configuration.hpp)
 
-add_executable(net_simulator
+add_executable(simulator
     main.cpp)
 
-target_link_libraries(net_simulator 
-    net_simulator_impl
+target_link_libraries(simulator 
+    simulator_impl
     kademlia_static
     ${Boost_LIBRARIES} 
     ${BOTAN_LIBRARIES} 

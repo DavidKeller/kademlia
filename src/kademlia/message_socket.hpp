@@ -147,13 +147,13 @@ public:
      *
      */
     endpoint_type
-    local_endpoint 
-        ( void ) 
+    local_endpoint
+        ( void )
         const;
 
 private:
     ///
-    using underlying_socket_type = UnderlyingSocketType; 
+    using underlying_socket_type = UnderlyingSocketType;
 
     ///
     using underlying_endpoint_type = typename underlying_socket_type::endpoint_type;
@@ -234,7 +234,7 @@ message_socket< UnderlyingSocketType >::ipv6
 }
 
 template< typename UnderlyingSocketType >
-inline 
+inline
 message_socket< UnderlyingSocketType >::message_socket
     ( boost::asio::io_service & io_service
     , endpoint_type const& e )
@@ -244,7 +244,7 @@ message_socket< UnderlyingSocketType >::message_socket
 { }
 
 template< typename UnderlyingSocketType >
-inline 
+inline
 message_socket< UnderlyingSocketType >::~message_socket
     ( void )
 {
@@ -262,7 +262,7 @@ message_socket< UnderlyingSocketType >::async_receive
         ( boost::system::error_code const& failure
         , std::size_t bytes_received )
     {
-        if ( failure ) 
+        if ( failure )
             reception_buffer_.resize( 0 );
         else
             reception_buffer_.resize( bytes_received );
@@ -310,7 +310,7 @@ inline typename message_socket< UnderlyingSocketType >::underlying_socket_type
 message_socket< UnderlyingSocketType >::create_underlying_socket
     ( boost::asio::io_service & io_service
     , endpoint_type const& endpoint )
-{ 
+{
     auto const e = convert_endpoint( endpoint );
 
     underlying_socket_type new_socket{ io_service, e.protocol() };
@@ -318,7 +318,7 @@ message_socket< UnderlyingSocketType >::create_underlying_socket
     if ( e.address().is_v6() )
         new_socket.set_option( boost::asio::ip::v6_only{ true } );
 
-    new_socket.bind( e ); 
+    new_socket.bind( e );
 
     return std::move( new_socket );
 }

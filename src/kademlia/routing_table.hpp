@@ -97,7 +97,7 @@ public:
      *  Count the number of peer in the routing table.
      *  @note Complexity: O(1).
      */
-    std::size_t 
+    std::size_t
     peer_count
         ( void )
         const
@@ -116,25 +116,25 @@ public:
         , peer_type const& new_peer )
     {
         auto const target_k_bucket = find_closest_k_bucket( peer_id );
-            
+
         // If there is room in the bucket.
-        if ( target_k_bucket->size() == k_bucket_size_ ) 
+        if ( target_k_bucket->size() == k_bucket_size_ )
             return false;
-            
+
         auto const end = target_k_bucket->end();
-        
+
         // Check if the peer is not already known.
         auto is_peer_known = [&peer_id] ( value_type const& entry )
         { return entry.first == peer_id; };
         if ( std::find_if( target_k_bucket->begin(), end, is_peer_known ) != end )
             return false;
-        
-        target_k_bucket->insert( end, value_type{ peer_id, new_peer } ); 
+
+        target_k_bucket->insert( end, value_type{ peer_id, new_peer } );
         ++ peer_count_;
-        
+
         return true;
     }
-    
+
     /**
      *  Remove a peer from the routing table.
      *  @return true if the peer has been removed.
@@ -146,20 +146,20 @@ public:
     {
         // Find the closer bucket.
         auto bucket = find_closest_k_bucket( peer_id );
-        
+
         // Check if the peer is inside.
         auto is_peer_known = [&peer_id] ( value_type const& entry )
         { return entry.first == peer_id; };
         auto i = std::find_if( bucket->begin(), bucket->end(), is_peer_known );
-        
+
         // If the peer wasn't inside.
         if ( i == bucket->end() )
             return false;
-        
+
         // Remove it.
         bucket->erase( i );
         -- peer_count_;
-        
+
         return true;
     }
 
@@ -180,19 +180,19 @@ public:
 
         return iterator( &k_buckets_, i, i->begin() );
     }
-    
+
     /**
      *  @return An iterator to the end of the routing table.
      */
     iterator
     end
         ( void )
-    { 
-        assert( k_buckets_.size() > 0 
+    {
+        assert( k_buckets_.size() > 0
               && "routing_table must always contains k_buckets" );
         auto const first_k_bucket = k_buckets_.begin();
-        
-        return iterator( &k_buckets_, first_k_bucket, first_k_bucket->end() ); 
+
+        return iterator( &k_buckets_, first_k_bucket, first_k_bucket->end() );
     }
 
 
@@ -212,7 +212,7 @@ public:
             << "\t\"peer_count\": " << table.peer_count_ << ',' << std::endl
             << "\t\"k_bucket_size\": " << table.k_bucket_size_<< ',' << std::endl
             << "\t\"k_buckets\": " << std::endl;
-        
+
         for ( std::size_t i = 0, e = table.k_buckets_.size(); i != e; ++i )
         {
             out << "\t{" << std::endl
@@ -244,14 +244,14 @@ private:
         // i.e. the index of the first different bit
         // in the id of the new peer vs our id is equal to the
         // index of the closest bucket in the buckets container.
-        std::size_t bit_index = 0; 
+        std::size_t bit_index = 0;
         while ( bit_index < id::BIT_SIZE - 1
               && id_to_find[ bit_index ] == my_id_[ bit_index ] )
             ++ bit_index;
 
         return std::next( k_buckets_.begin(), bit_index );
     }
-   
+
 private:
     /// This contains buckets up to id bit count.
     k_buckets k_buckets_;
@@ -264,7 +264,7 @@ private:
 };
 
 /**
- * 
+ *
  */
 template< typename PeerType >
 class routing_table< PeerType >::iterator
@@ -311,24 +311,24 @@ private:
         ( void )
     {
         ++ current_entry_;
-        
+
         // If the current entry is not at the end of the bucket
         // then there is nothing more to do.
         if ( current_entry_ != current_k_bucket_->end() )
             return;
-        
+
         // If the current bucket is already the first (far)
         // then there is nothing more to do, we reach the end of the routing table.
         if ( current_k_bucket_ == k_buckets_->begin() )
             return;
-        
+
         // Go to the next non-empty bucket and start from its first entry.
         do
             -- current_k_bucket_;
         while ( current_k_bucket_->empty() && current_k_bucket_ != k_buckets_->begin() );
         current_entry_ = current_k_bucket_->begin();
     }
-       
+
     /**
      *
      */
@@ -336,7 +336,7 @@ private:
     equal
         ( iterator const& o )
         const
-    { 
+    {
         return k_buckets_ == o.k_buckets_
                 && current_k_bucket_ == o.current_k_bucket_
                 && current_entry_ == o.current_entry_;
@@ -345,7 +345,7 @@ private:
     /**
      *
      */
-    typename routing_table::value_type & 
+    typename routing_table::value_type &
     dereference
         ( void )
         const

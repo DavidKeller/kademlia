@@ -65,10 +65,10 @@ public:
         ( concurrent_guard & guard )
             : guard_( guard )
     {
-        bool expected = false; 
+        bool expected = false;
 
         is_owner_of_flag_ = guard_.flag_.compare_exchange_strong( expected
-                                                                , true ); 
+                                                                , true );
     }
 
 
@@ -77,16 +77,16 @@ public:
      */
     ~sentry
         ( void )
-    { 
+    {
         if ( is_owner_of_flag_ )
-            guard_.flag_.exchange( false ); 
+            guard_.flag_.exchange( false );
     }
 
     /**
      *
      */
     sentry
-        ( sentry const& ) 
+        ( sentry const& )
         = delete;
 
     /**
@@ -94,7 +94,7 @@ public:
      */
     sentry &
     operator=
-        ( sentry const& ) 
+        ( sentry const& )
         = delete;
 
     /**

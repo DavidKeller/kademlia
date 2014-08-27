@@ -86,7 +86,7 @@ session::~session
 
 void
 session::async_save
-    ( key_type const& key 
+    ( key_type const& key
     , data_type const& data
     , save_handler_type handler )
 { impl_->engine_.async_save( key, data, std::move( handler ) ); }
@@ -120,7 +120,7 @@ session::run
 void
 session::abort
         ( void )
-{ 
+{
     auto service_stopper = [ this ] ( void )
     { impl_->is_abort_requested_ = true; };
 

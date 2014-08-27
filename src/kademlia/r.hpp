@@ -49,7 +49,7 @@ template< typename ReturnType >
 class r
 {
 public:
-    /// Exception type thrown when a value is accessed 
+    /// Exception type thrown when a value is accessed
     /// while the r contains an error.
     using exception_type = std::system_error;
 
@@ -62,7 +62,7 @@ public:
 public:
     /**
      *  @brief Construct this initialized with
-     *         a value whose emplace constructor 
+     *         a value whose emplace constructor
      *         arguments are provided
      *         to this constructor.
      *  @tparam Args Value constructor arguments type.
@@ -70,7 +70,7 @@ public:
      */
     template< typename ...Args >
     r
-        ( Args &&... args) 
+        ( Args &&... args)
         : error_{ }
     { construct_value( std::forward< Args >( args )... ); }
 
@@ -80,8 +80,8 @@ public:
      */
     r
         ( error_type const & error )
-        : error_{ error } 
-    { } 
+        : error_{ error }
+    { }
 
     /**
      *  @brief Construct this initialized with an error.
@@ -89,8 +89,8 @@ public:
      */
     r
         ( error_type & error )
-        : r{ const_cast< error_type const & >( error ) } 
-    { } 
+        : r{ const_cast< error_type const & >( error ) }
+    { }
 
     /**
      *  @brief Construct this initialized with an error.
@@ -98,8 +98,8 @@ public:
      */
     r
         ( error_type && error )
-        : r{ const_cast< error_type const & >( error ) } 
-    { } 
+        : r{ const_cast< error_type const & >( error ) }
+    { }
 
     /**
      *  @brief Copy constructor.
@@ -151,7 +151,7 @@ public:
     r &
     operator=
         ( r && other )
-    { 
+    {
         destruct_value_if_present();
         error_ = other.error_;
 
@@ -166,7 +166,7 @@ public:
     r &
     operator=
         ( error_type const & error )
-    { 
+    {
         assert( error && "unexpected success error code" );
         destruct_value_if_present();
         error_ = error;
@@ -182,7 +182,7 @@ public:
     r &
     operator=
         ( value_type const & value )
-    { 
+    {
         destruct_value_if_present();
         error_.clear();
         construct_value( value );
@@ -198,7 +198,7 @@ public:
     r &
     operator=
         ( value_type && value )
-    { 
+    {
         destruct_value_if_present();
         error_.clear();
         construct_value( std::move( value ) );
@@ -209,10 +209,10 @@ public:
     /**
      *  @brief bool operator used to check if this
      *         has been initialized with a value.
-     *  @return true if initliazed from a value, 
+     *  @return true if initliazed from a value,
      *          false otherwise.
      */
-    explicit 
+    explicit
     operator bool() const CXX11_NOEXCEPT
     { return ! error_; }
 
@@ -223,7 +223,7 @@ public:
      *  @throw exception_type
      */
     value_type &
-    v() 
+    v()
     { return access_value_or_throw(); }
 
     /**
@@ -247,7 +247,7 @@ private:
      */
     template< typename ...Args >
     void
-    construct_value 
+    construct_value
         ( Args &&... args )
     { ::new(&value_) value_type( std::forward< Args >( args )... ); }
 
@@ -264,11 +264,11 @@ private:
      */
     value_type &
     access_value_or_throw()
-    { 
-        if (! *this) 
+    {
+        if (! *this)
             throw exception_type{ error_ };
 
-        return reinterpret_cast< value_type & >( value_ ); 
+        return reinterpret_cast< value_type & >( value_ );
     }
 
     /**
@@ -276,11 +276,11 @@ private:
      */
     value_type const &
     access_value_or_throw() const
-    { 
-        if (! *this) 
+    {
+        if (! *this)
             throw exception_type{ error_ };
 
-        return reinterpret_cast< value_type const & >( value_ ); 
+        return reinterpret_cast< value_type const & >( value_ );
     }
 
 
