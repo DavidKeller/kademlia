@@ -23,74 +23,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_RESPONSE_DISPATCHER_HPP
-#define KADEMLIA_RESPONSE_DISPATCHER_HPP
-
-#ifdef _MSC_VER
-#   pragma once
-#endif
-
-#include <map>
-#include <functional>
-
-#include "id.hpp"
-#include "ip_endpoint.hpp"
-#include "message.hpp"
+#include "kademlia/peer.hpp"
 
 namespace kademlia {
 namespace detail {
 
-///
-class response_dispatcher final
-{
-public:
-    ///
-    using endpoint_type = ip_endpoint;
-
-    ///
-    using callback = std::function< void
-            ( endpoint_type const& sender
-            , header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e ) >;
-
-public:
-    /**
-     *
-     */
-    void
-    push_association
-        ( id const& message_id
-        , callback const& on_message_received );
-
-    /**
-     *
-     */
-    bool
-    remove_association
-        ( id const& message_id );
-
-    /**
-     *
-     */
-    std::error_code
-    dispatch_message
-        ( endpoint_type const& sender
-        , header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e );
-
-private:
-    ///
-    using associations = std::map< id, callback >;
-
-private:
-    ///
-    associations associations_;
-};
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , peer const& p )
+{ return out << p.id_ << "@" << p.endpoint_; }
 
 } // namespace detail
 } // namespace kademlia
-
-#endif
 

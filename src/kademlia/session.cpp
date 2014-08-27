@@ -29,9 +29,9 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 
-#include "message_socket.hpp"
-#include "engine.hpp"
-#include "concurrent_guard.hpp"
+#include "kademlia/message_socket.hpp"
+#include "kademlia/engine.hpp"
+#include "kademlia/concurrent_guard.hpp"
 
 namespace kademlia {
 

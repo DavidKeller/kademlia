@@ -25,9 +25,7 @@
 
 #include <iostream>
 
-#include "executable.hpp"
-#include "fake_socket.hpp"
-#include "engine.hpp"
+#include "simulator/executable.hpp"
 
 int
 main

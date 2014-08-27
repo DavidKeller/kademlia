@@ -27,7 +27,7 @@
 
 #include <system_error>
 
-#include "id.hpp"
+#include "kademlia/id.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

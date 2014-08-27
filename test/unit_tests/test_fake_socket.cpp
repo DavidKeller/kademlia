@@ -29,7 +29,7 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include "buffer.hpp"
+#include "kademlia/buffer.hpp"
 #include "simulator/fake_socket.hpp"
 
 namespace k = kademlia;

@@ -23,15 +23,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "application.hpp"
+#include "simulator/application.hpp"
 
 #include <memory>
 
 #include <boost/asio/io_service.hpp>
 
-#include "fake_socket.hpp"
-#include "buffer.hpp"
-#include "engine.hpp"
+#include "simulator/fake_socket.hpp"
+
+#include "kademlia/buffer.hpp"
+#include "kademlia/engine.hpp"
 
 namespace kademlia {
 namespace application {

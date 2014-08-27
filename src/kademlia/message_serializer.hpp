@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2014, David Keller
+// Copyright (c) 2014, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -23,89 +23,78 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_STORE_VALUE_CONTEXT_HPP
-#define KADEMLIA_STORE_VALUE_CONTEXT_HPP
+#ifndef KADEMLIA_MESSAGE_SERIALIZER_HPP
+#define KADEMLIA_MESSAGE_SERIALIZER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
-#include <system_error>
+#include <memory>
 
-#include "value_context.hpp"
+#include "kademlia/message.hpp"
 
 namespace kademlia {
 namespace detail {
 
-///
-template< typename SaveHandlerType, typename DataType >
-class store_value_context final
-    : public value_context
+/**
+ *
+ */
+class message_serializer
 {
 public:
-    ///
-    using save_handler_type = SaveHandlerType;
-
-    ///
-    using data_type = DataType;
-
-public:
     /**
      *
      */
-    template< typename Iterator, typename HandlerType >
-    store_value_context( detail::id const & key
-                       , data_type const& data
-                       , Iterator i, Iterator e
-                       , HandlerType && save_handler );
+    message_serializer
+        ( id const& my_id );
 
     /**
      *
      */
-    void
-    notify_caller
-        ( std::error_code const& failure );
+    template< typename Message >
+    buffer
+    serialize
+        ( Message const& message
+        , id const& token );
 
     /**
      *
      */
-    data_type const&
-    get_data
-        ( void )
-        const;
+    buffer
+    serialize
+        ( header::type const& type
+        , id const& token );
+
+private:
+    /**
+     *
+     */
+    header
+    generate_header
+        ( header::type const& type
+        , id const& token );
 
 private:
     ///
-    data_type data_;
-    ///
-    save_handler_type save_handler_;
+    id const& my_id_;
 };
 
-template< typename SaveHandlerType, typename DataType >
-template< typename Iterator, typename HandlerType >
-inline
-store_value_context< SaveHandlerType, DataType >::store_value_context
-    ( detail::id const & key
-    , data_type const& data
-    , Iterator i, Iterator e
-    , HandlerType && save_handler )
-        : value_context{ key, i, e }
-        , data_{ data }
-        , save_handler_( std::forward< HandlerType >( save_handler ) )
-{ }
+template< typename Message >
+buffer
+message_serializer::serialize
+    ( Message const& message
+    , id const& token )
+{
+    auto const type = message_traits< Message >::TYPE_ID;
+    auto const header = generate_header( type, token );
 
-template< typename SaveHandlerType, typename DataType >
-inline void
-store_value_context< SaveHandlerType, DataType >::notify_caller
-    ( std::error_code const& failure )
-{ save_handler_( failure ); }
+    buffer b;
+    detail::serialize( header, b );
+    detail::serialize( message, b );
 
-template< typename SaveHandlerType, typename DataType >
-inline typename store_value_context< SaveHandlerType, DataType >::data_type const&
-store_value_context< SaveHandlerType, DataType >::get_data
-    ( void )
-    const
-{ return data_; }
+    return std::move( b );
+}
 
 } // namespace detail
 } // namespace kademlia

@@ -40,16 +40,16 @@
 #include <kademlia/endpoint.hpp>
 #include <kademlia/error.hpp>
 
-#include "timer.hpp"
-#include "ip_endpoint.hpp"
-#include "message_serializer.hpp"
-#include "response_dispatcher.hpp"
-#include "message_socket.hpp"
-#include "message.hpp"
-#include "routing_table.hpp"
-#include "value_store.hpp"
-#include "find_value_context.hpp"
-#include "store_value_context.hpp"
+#include "kademlia/timer.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/message_serializer.hpp"
+#include "kademlia/response_dispatcher.hpp"
+#include "kademlia/message_socket.hpp"
+#include "kademlia/message.hpp"
+#include "kademlia/routing_table.hpp"
+#include "kademlia/value_store.hpp"
+#include "kademlia/find_value_context.hpp"
+#include "kademlia/store_value_context.hpp"
 
 namespace kademlia {
 namespace detail {

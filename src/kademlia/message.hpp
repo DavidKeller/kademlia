@@ -40,9 +40,9 @@
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
-#include "peer.hpp"
-#include "id.hpp"
-#include "buffer.hpp"
+#include "kademlia/peer.hpp"
+#include "kademlia/id.hpp"
+#include "kademlia/buffer.hpp"
 
 namespace kademlia {
 namespace detail {

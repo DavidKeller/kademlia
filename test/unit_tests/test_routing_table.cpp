@@ -26,8 +26,8 @@
 #include "helpers/common.hpp"
 #include "helpers/peer_factory.hpp"
 
-#include "routing_table.hpp"
-#include "ip_endpoint.hpp"
+#include "kademlia/routing_table.hpp"
+#include "kademlia/ip_endpoint.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

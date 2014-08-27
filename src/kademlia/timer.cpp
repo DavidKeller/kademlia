@@ -23,56 +23,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_PEER_HPP
-#define KADEMLIA_PEER_HPP
+#include "kademlia/timer.hpp"
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
-
-#include <iosfwd>
-
-#include "id.hpp"
-#include "ip_endpoint.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-///
-struct peer final
+timer::timer
+    ( boost::asio::io_service & io_service )
+    : timer_{ io_service }
+    , timeouts_{}
+{}
+
+void
+timer::schedule_next_tick
+    ( time_point const& expiration_time )
 {
-    id id_;
-    ip_endpoint endpoint_;
-};
+    // This will cancel any pending task.
+    timer_.expires_at( expiration_time );
 
-/**
- *
- */
-std::ostream &
-operator<<
-    ( std::ostream & out
-    , peer const& p );
+    auto fire = [ this ]( boost::system::error_code const& failure ) 
+    { 
+        // The current timeout has been canceled
+        // hence stop right there.
+        if ( failure == boost::asio::error::operation_aborted )
+            return;
+        else if ( failure )
+            throw std::system_error{ make_error_code( TIMER_MALFUNCTION ) };
 
-/**
- *
- */
-inline bool
-operator==
-    ( const peer & a
-    , const peer & b )
-{ return a.id_ == b.id_ && a.endpoint_ == b.endpoint_; }
+        // The callbacks to execute are the first
+        // n callbacks with the same keys.
+        auto begin = timeouts_.begin();
+        auto end = timeouts_.upper_bound( begin->first );
+        // Call the user callbacks.
+        for ( auto i = begin; i != end; ++ i)
+            i->second();
+        // And remove the timeout.
+        timeouts_.erase( begin, end );
 
-/**
- *
- */
-inline bool
-operator!=
-    ( peer const& a
-    , peer const& b )
-{ return ! ( a == b ); }
+        // If there is a remaining timeout, schedule it.
+        if ( ! timeouts_.empty() ) 
+            schedule_next_tick( timeouts_.begin()->first );
+    };
+
+    timer_.async_wait( fire );
+}
 
 } // namespace detail
 } // namespace kademlia
-
-#endif
 

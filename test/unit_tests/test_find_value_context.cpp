@@ -28,11 +28,10 @@
 #include <vector>
 #include <utility>
 
-#include "id.hpp"
-#include "ip_endpoint.hpp"
-#include "message_socket.hpp"
+#include "kademlia/id.hpp"
+#include "kademlia/ip_endpoint.hpp"
 
-#include "find_value_context.hpp"
+#include "kademlia/find_value_context.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

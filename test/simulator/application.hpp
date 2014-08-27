@@ -30,7 +30,7 @@
 #   pragma once
 #endif
 
-#include "configuration.hpp"
+#include "simulator/configuration.hpp"
 
 namespace kademlia {
 namespace application {

@@ -27,8 +27,8 @@
 
 #include <kademlia/endpoint.hpp>
 
-#include "ip_endpoint.hpp"
-#include "message_socket.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/message_socket.hpp"
 
 #include "helpers/common.hpp"
 

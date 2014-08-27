@@ -1,4 +1,4 @@
-// Copyright (c) 2014, David Keller
+// Copyright (c) 2013-2014, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -23,41 +23,56 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "message_serializer.hpp"
+#ifndef KADEMLIA_PEER_HPP
+#define KADEMLIA_PEER_HPP
+
+#ifdef _MSC_VER
+#   pragma once
+#endif
+
+#include <iosfwd>
+
+#include "kademlia/id.hpp"
+#include "kademlia/ip_endpoint.hpp"
 
 namespace kademlia {
 namespace detail {
 
-message_serializer::message_serializer
-    ( id const& my_id )
-    : my_id_{ my_id }
-{ }
-
-header
-message_serializer::generate_header
-    ( header::type const& type
-    , id const& token )
+///
+struct peer final
 {
-    return header
-            { detail::header::V1
-            , type
-            , my_id_
-            , token };
-}
+    id id_;
+    ip_endpoint endpoint_;
+};
 
-buffer
-message_serializer::serialize
-    ( header::type const& type
-    , id const& token )
-{
-    auto const header = generate_header( type, token );
+/**
+ *
+ */
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , peer const& p );
 
-    buffer b;
-    detail::serialize( header, b );
+/**
+ *
+ */
+inline bool
+operator==
+    ( const peer & a
+    , const peer & b )
+{ return a.id_ == b.id_ && a.endpoint_ == b.endpoint_; }
 
-    return std::move( b );
-}
+/**
+ *
+ */
+inline bool
+operator!=
+    ( peer const& a
+    , peer const& b )
+{ return ! ( a == b ); }
 
 } // namespace detail
 } // namespace kademlia
+
+#endif
 

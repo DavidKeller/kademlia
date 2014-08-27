@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "executable.hpp"
+#include "simulator/executable.hpp"
 
 #include <stdexcept>
 #include <cstdlib>
@@ -32,9 +32,9 @@
 
 #include <boost/program_options.hpp>
 
-#include "configuration.hpp"
-#include "application.hpp"
-#include "r.hpp"
+#include "simulator/configuration.hpp"
+#include "simulator/application.hpp"
+#include "kademlia/r.hpp"
 
 namespace kademlia {
 namespace executable {

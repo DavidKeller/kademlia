@@ -23,48 +23,5 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(kademlia_sources
-    ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
-    session.cpp
-    ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
-    endpoint.cpp
-    ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
-    engine.hpp
-    error.cpp
-    boost_to_std_error.hpp
-    id.hpp
-    id.cpp
-    ip_endpoint.hpp
-    ip_endpoint.cpp
-    peer.hpp
-    peer.cpp
-    message.hpp
-    message.cpp
-    message_serializer.hpp
-    message_serializer.cpp
-    message_socket.hpp
-    response_dispatcher.hpp
-    response_dispatcher.cpp
-    routing_table.hpp
-    value_context.hpp
-    find_value_context.hpp
-    store_value_context.hpp
-    concurrent_guard.hpp
-    timer.hpp
-    timer.cpp
-    value_store.hpp
-    buffer.hpp)
-
-add_library(kademlia SHARED
-    ${kademlia_sources})
-
-set_target_properties(kademlia 
-    PROPERTIES 
-        MACOSX_RPATH ON
-        COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
-
-add_library(kademlia_static STATIC
-    ${kademlia_sources})
-
-target_link_libraries(kademlia ${Boost_LIBRARIES} ${BOTAN_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_subdirectory(kademlia)
 

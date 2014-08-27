@@ -23,53 +23,74 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "timer.hpp"
+#ifndef KADEMLIA_RESPONSE_DISPATCHER_HPP
+#define KADEMLIA_RESPONSE_DISPATCHER_HPP
 
-#include <kademlia/error.hpp>
+#ifdef _MSC_VER
+#   pragma once
+#endif
+
+#include <map>
+#include <functional>
+
+#include "kademlia/id.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/message.hpp"
 
 namespace kademlia {
 namespace detail {
 
-timer::timer
-    ( boost::asio::io_service & io_service )
-    : timer_{ io_service }
-    , timeouts_{}
-{}
-
-void
-timer::schedule_next_tick
-    ( time_point const& expiration_time )
+///
+class response_dispatcher final
 {
-    // This will cancel any pending task.
-    timer_.expires_at( expiration_time );
+public:
+    ///
+    using endpoint_type = ip_endpoint;
 
-    auto fire = [ this ]( boost::system::error_code const& failure ) 
-    { 
-        // The current timeout has been canceled
-        // hence stop right there.
-        if ( failure == boost::asio::error::operation_aborted )
-            return;
-        else if ( failure )
-            throw std::system_error{ make_error_code( TIMER_MALFUNCTION ) };
+    ///
+    using callback = std::function< void
+            ( endpoint_type const& sender
+            , header const& h
+            , buffer::const_iterator i
+            , buffer::const_iterator e ) >;
 
-        // The callbacks to execute are the first
-        // n callbacks with the same keys.
-        auto begin = timeouts_.begin();
-        auto end = timeouts_.upper_bound( begin->first );
-        // Call the user callbacks.
-        for ( auto i = begin; i != end; ++ i)
-            i->second();
-        // And remove the timeout.
-        timeouts_.erase( begin, end );
+public:
+    /**
+     *
+     */
+    void
+    push_association
+        ( id const& message_id
+        , callback const& on_message_received );
 
-        // If there is a remaining timeout, schedule it.
-        if ( ! timeouts_.empty() ) 
-            schedule_next_tick( timeouts_.begin()->first );
-    };
+    /**
+     *
+     */
+    bool
+    remove_association
+        ( id const& message_id );
 
-    timer_.async_wait( fire );
-}
+    /**
+     *
+     */
+    std::error_code
+    dispatch_message
+        ( endpoint_type const& sender
+        , header const& h
+        , buffer::const_iterator i
+        , buffer::const_iterator e );
+
+private:
+    ///
+    using associations = std::map< id, callback >;
+
+private:
+    ///
+    associations associations_;
+};
 
 } // namespace detail
 } // namespace kademlia
+
+#endif
 

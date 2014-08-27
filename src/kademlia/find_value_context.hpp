@@ -32,7 +32,7 @@
 
 #include <system_error>
 
-#include "value_context.hpp"
+#include "kademlia/value_context.hpp"
 
 namespace kademlia {
 namespace detail {

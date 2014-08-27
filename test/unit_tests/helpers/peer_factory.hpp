@@ -28,9 +28,9 @@
 
 #include <cstdlib>
 
-#include "id.hpp"
-#include "ip_endpoint.hpp"
-#include "peer.hpp"
+#include "kademlia/id.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/peer.hpp"
 
 inline kademlia::detail::ip_endpoint
 create_endpoint

@@ -23,81 +23,41 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_MESSAGE_SERIALIZER_HPP
-#define KADEMLIA_MESSAGE_SERIALIZER_HPP
-
-#ifdef _MSC_VER
-#   pragma once
-#endif
-
-#include <memory>
-
-#include "message.hpp"
+#include "kademlia/message_serializer.hpp"
 
 namespace kademlia {
 namespace detail {
 
-/**
- *
- */
-class message_serializer
-{
-public:
-    /**
-     *
-     */
-    message_serializer
-        ( id const& my_id );
+message_serializer::message_serializer
+    ( id const& my_id )
+    : my_id_{ my_id }
+{ }
 
-    /**
-     *
-     */
-    template< typename Message >
-    buffer
-    serialize
-        ( Message const& message
-        , id const& token );
-
-    /**
-     *
-     */
-    buffer
-    serialize
-        ( header::type const& type
-        , id const& token );
-
-private:
-    /**
-     *
-     */
-    header
-    generate_header
-        ( header::type const& type
-        , id const& token );
-
-private:
-    ///
-    id const& my_id_;
-};
-
-template< typename Message >
-buffer
-message_serializer::serialize
-    ( Message const& message
+header
+message_serializer::generate_header
+    ( header::type const& type
     , id const& token )
 {
-    auto const type = message_traits< Message >::TYPE_ID;
+    return header
+            { detail::header::V1
+            , type
+            , my_id_
+            , token };
+}
+
+buffer
+message_serializer::serialize
+    ( header::type const& type
+    , id const& token )
+{
     auto const header = generate_header( type, token );
 
     buffer b;
     detail::serialize( header, b );
-    detail::serialize( message, b );
 
     return std::move( b );
 }
 
 } // namespace detail
 } // namespace kademlia
-
-#endif
 

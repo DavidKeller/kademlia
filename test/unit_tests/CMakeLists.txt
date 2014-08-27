@@ -23,10 +23,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Include implementation headers.
-include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
-include_directories(BEFORE ${CMAKE_SOURCE_DIR}/test)
-
 # Run all tests, timeouting if it takes more than 30 seconds.
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 

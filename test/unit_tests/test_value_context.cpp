@@ -29,9 +29,9 @@
 #include <vector>
 #include <utility>
 
-#include "id.hpp"
-#include "message_socket.hpp"
-#include "value_context.hpp"
+#include "kademlia/id.hpp"
+#include "kademlia/message_socket.hpp"
+#include "kademlia/value_context.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

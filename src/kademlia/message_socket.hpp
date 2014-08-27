@@ -39,9 +39,9 @@
 #include <kademlia/error.hpp>
 #include <kademlia/detail/cxx11_macros.hpp>
 
-#include "buffer.hpp"
-#include "ip_endpoint.hpp"
-#include "boost_to_std_error.hpp"
+#include "kademlia/buffer.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/boost_to_std_error.hpp"
 
 namespace kademlia {
 namespace detail {

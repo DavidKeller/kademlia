@@ -41,7 +41,7 @@
 
 #include <kademlia/detail/cxx11_macros.hpp>
 
-#include "id.hpp"
+#include "kademlia/id.hpp"
 
 namespace kademlia {
 namespace detail {

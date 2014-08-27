@@ -28,7 +28,7 @@
 #include <vector>
 #include <kademlia/error.hpp>
 
-#include "response_dispatcher.hpp"
+#include "kademlia/response_dispatcher.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

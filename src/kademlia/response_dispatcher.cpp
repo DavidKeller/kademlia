@@ -23,16 +23,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "peer.hpp"
+#include "kademlia/response_dispatcher.hpp"
+
+#include <cassert>
+
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-std::ostream &
-operator<<
-    ( std::ostream & out
-    , peer const& p )
-{ return out << p.id_ << "@" << p.endpoint_; }
+void
+response_dispatcher::push_association
+    ( id const& message_id
+    , callback const& on_message_received )
+{
+    auto i = associations_.emplace( message_id, on_message_received ); 
+    assert( i.second && "an id can't be registered twice" );
+}
+
+bool
+response_dispatcher::remove_association
+    ( id const& message_id )
+{ return associations_.erase( message_id ) > 0; }
+
+std::error_code
+response_dispatcher::dispatch_message
+    ( endpoint_type const& sender
+    , header const& h
+    , buffer::const_iterator i
+    , buffer::const_iterator e )
+{
+    auto association = associations_.find( h.random_token_ );
+    if ( association == associations_.end() ) 
+        return make_error_code( UNASSOCIATED_MESSAGE_ID );
+
+    association->second( sender, h, i, e );
+    associations_.erase( association );
+
+    return std::error_code{}; 
+}
 
 } // namespace detail
 } // namespace kademlia

@@ -28,7 +28,7 @@
 #include <vector>
 #include <kademlia/error.hpp>
 
-#include "timer.hpp"
+#include "kademlia/timer.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
