@@ -63,6 +63,13 @@ create_engines
     , configuration const& c )
 {
     std::vector< engine_ptr > engines;
+
+    {
+        auto e = std::make_shared< test_engine >( io_service
+                                                , endpoint( "0.0.0.0", 5555 )
+                                                , endpoint( "::", 5555 ) );
+    }
+
     for ( std::size_t i = 0; i != c.clients_count; ++i )
     {
         auto e = std::make_shared< test_engine >( io_service
@@ -166,7 +173,6 @@ run
     ( configuration const& c )
 {
     boost::asio::io_service io_service;
-    boost::asio::io_service::work work( io_service );
 
     auto engines = create_engines( io_service, c );
     std::size_t sent_messages_count = 0;
@@ -176,7 +182,7 @@ run
                   , sent_messages_count
                   , received_messages_count );
 
-    io_service.poll();
+    io_service.run();
 
     if ( c.total_messages_count != sent_messages_count )
     {

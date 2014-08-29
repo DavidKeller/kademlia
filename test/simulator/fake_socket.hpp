@@ -55,6 +55,9 @@ public:
     ///
     using endpoint_type = protocol_type::endpoint;
 
+    ///
+    enum { FIXED_PORT = 27980 };
+
 public:
     /**
      *
@@ -63,9 +66,9 @@ public:
         ( boost::asio::io_service & io_service
         , protocol_type const& )
         : io_service_( io_service )
-        , local_endpoint_( generate_unique_endpoint() )
+        , local_endpoint_()
         , pending_reads_()
-    { add_route_to_socket( local_endpoint_, this ); }
+    { }
 
     /**
      *
@@ -82,7 +85,8 @@ public:
         : io_service_( o.io_service_ )
         , local_endpoint_( o.local_endpoint_ )
         , pending_reads_( std::move( o.pending_reads_ ) )
-    { add_route_to_socket( local_endpoint_, this ); }
+        , pending_writes_( std::move( o.pending_writes_ ) )
+    { add_route_to_socket( local_endpoint(), this ); }
 
     /**
      *
@@ -98,10 +102,8 @@ public:
     ~fake_socket
         ( void )
     {
-        // This socket does'nt must no longer
-        // read messages.
-        if ( get_socket( local_endpoint_ ) == this )
-            add_route_to_socket( local_endpoint_, nullptr );
+        boost::system::error_code ignored;
+        close( ignored );
     }
 
     /**
@@ -127,8 +129,21 @@ public:
      */
     boost::system::error_code
     bind
-        ( endpoint_type const& )
-    { return boost::system::error_code{}; }
+        ( endpoint_type const& e )
+    {
+        // Only fixe port is handled right now.
+        if ( e.port() != FIXED_PORT )
+            return make_error_code( boost::system::errc::invalid_argument );
+
+        // Generate our local address.
+        if ( e.address().is_v4() )
+            local_endpoint( generate_unique_ipv4_endpoint( e.port() ) );
+        else
+            local_endpoint( generate_unique_ipv6_endpoint( e.port() ) );
+
+        add_route_to_socket( local_endpoint(), this );
+        return boost::system::error_code();
+    }
 
     /**
      *
@@ -136,7 +151,19 @@ public:
     boost::system::error_code
     close
         ( boost::system::error_code & failure )
-    { return failure = boost::system::error_code{}; }
+    {
+        // This socket does'nt must no longer
+        // read messages.
+        if ( get_socket( local_endpoint() ) == this )
+        {
+            add_route_to_socket( local_endpoint(), nullptr );
+            failure.clear();
+        }
+        else
+            failure = make_error_code( boost::system::errc::not_connected );
+
+        return failure;
+    }
 
     /**
      *
@@ -192,6 +219,28 @@ public:
             async_execute_write( target, buffer, callback );
     }
 
+    /**
+     *
+     */
+    static boost::asio::ip::address_v4 &
+    get_last_allocated_ipv4
+        ( void )
+    {
+        static boost::asio::ip::address_v4 ipv4_{};
+        return ipv4_;
+    }
+
+    /**
+     *
+     */
+    static boost::asio::ip::address_v6 &
+    get_last_allocated_ipv6
+        ( void )
+    {
+        static boost::asio::ip::address_v6 ipv6_{};
+        return ipv6_;
+    }
+
 private:
     ///
     using callback_type = std::function
@@ -217,25 +266,133 @@ private:
     };
 
     ///
-    using router = std::vector< fake_socket * >;
+    class router
+    {
+    public:
+        ///
+        using socket_ptr = fake_socket *;
+
+    public:
+        /**
+         *
+         */
+        socket_ptr &
+        operator[]
+            ( endpoint_type const& e )
+        {
+            if ( e.address().is_v4() )
+                return get_socket_from( ipv4_sockets_
+                                      , e.address().to_v4() );
+            else
+                return get_socket_from( ipv6_sockets_
+                                      , e.address().to_v6() );
+        }
+
+    private:
+        ///
+        using sockets_pool = std::vector< socket_ptr >;
+
+    private:
+        /**
+         *
+         */
+        template< typename IpAddress >
+        static std::size_t
+        address_as_index
+            ( IpAddress const& address )
+        {
+            std::size_t index = 0ULL;
+
+            auto const bytes = address.to_bytes();
+            for ( std::size_t i = 0, e = bytes.size(); i != e; ++ i )
+            {
+                assert( index >> 56 == 0 /* no bytes are lost by next shift */ );
+                index <<= 8;
+                index |= bytes[ i ];
+            }
+
+            return index;
+        }
+
+        /**
+         *
+         */
+        template< typename IpAddress >
+        socket_ptr &
+        get_socket_from
+            ( sockets_pool & sockets
+            , IpAddress const& address )
+        {
+            auto const index = address_as_index( address );
+
+            if ( index >= sockets.size() )
+                sockets.resize( index + 1 );
+
+            return sockets[ index ];
+        }
+
+    private:
+        ///
+        sockets_pool ipv4_sockets_;
+        ///
+        sockets_pool ipv6_sockets_;
+    };
 
 private:
+    /**
+     *
+     */
+    void
+    local_endpoint
+        ( endpoint_type const& e )
+    { local_endpoint_ = e; }
+
+    /**
+     *
+     */
+    template< typename IpAddress >
+    static IpAddress &
+    increment_address
+        ( IpAddress & address )
+    {
+        auto bytes = address.to_bytes();
+
+        // While current byte overflows on increment, increment next byte.
+        auto i = bytes.rbegin(), e = bytes.rend();
+        for ( ; i != e && ( ++ *i ) == 0; ++i )
+            continue;
+
+        assert( i != e /* all ip address have been allocated */ );
+
+        return address = IpAddress{ bytes };
+    }
+
     /**
      *  @note This function is not thread safe.
      */
     static endpoint_type
-    generate_unique_endpoint
-        ( void )
+    generate_unique_ipv4_endpoint
+        ( std::uint16_t const& port )
     {
-        static std::uint32_t last_allocated_ipv4_ = 0UL;
+        auto & last_allocated_ipv4 = get_last_allocated_ipv4();
+        increment_address( last_allocated_ipv4 );
 
-        ++ last_allocated_ipv4_;
+        boost::asio::ip::address_v4 const ipv4( last_allocated_ipv4 );
+        return endpoint_type( ipv4, port );
+    }
 
-        assert( last_allocated_ipv4_ != 0UL
-              && "allocated more than 2^32 ipv4" );
+    /**
+     *  @note This function is not thread safe.
+     */
+    static endpoint_type
+    generate_unique_ipv6_endpoint
+        ( std::uint16_t const& port )
+    {
+        auto & last_allocated_ipv6 = get_last_allocated_ipv6();
+        increment_address( last_allocated_ipv6 );
 
-        boost::asio::ip::address_v4 const ipv4( last_allocated_ipv4_ );
-        return endpoint_type( ipv4, 27980 );
+        boost::asio::ip::address_v6 const ipv6( last_allocated_ipv6 );
+        return endpoint_type( ipv6, port );
     }
 
     /**
@@ -256,15 +413,7 @@ private:
     add_route_to_socket
         ( endpoint_type const& e
         , fake_socket * s )
-    {
-        assert( e.address().is_v4() );
-
-        auto const index = e.address().to_v4().to_ulong();
-        if ( index >= get_router().size() )
-            get_router().resize( index + 1 );
-
-        get_router().at( index ) = s;
-    }
+    { get_router()[ e ] = s; }
 
     /**
      *
@@ -272,15 +421,7 @@ private:
     static fake_socket *
     get_socket
         ( endpoint_type const& e )
-    {
-        assert( e.address().is_v4() );
-
-        auto const index = e.address().to_v4().to_ulong();
-        if ( index >= get_router().size() )
-            return nullptr;
-
-        return get_router().at( index );
-    }
+    { return get_router()[ e ]; }
 
     /**
      *

@@ -99,8 +99,13 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
     a::io_service io_service;
     a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
+    endpoint.port( k::fake_socket::FIXED_PORT );
+
     k::fake_socket receiver( io_service, endpoint.protocol() );
+    BOOST_REQUIRE(! receiver.bind( endpoint ) );
+
     k::fake_socket sender( io_service, endpoint.protocol() );
+    BOOST_REQUIRE(! sender.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 
@@ -145,7 +150,10 @@ BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
 {
     a::io_service io_service;
     boost::asio::ip::udp::endpoint endpoint;
+    endpoint.port( k::fake_socket::FIXED_PORT );
+
     k::fake_socket s( io_service, endpoint.protocol() );
+    BOOST_REQUIRE(! s.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 
@@ -162,7 +170,7 @@ BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
         send_callback_called = true;
     };
 
-    endpoint.address( boost::asio::ip::address_v4( uint32_t( -1 ) ) );
+    endpoint.address( boost::asio::ip::address_v4::any() );
 
     s.async_send_to( boost::asio::buffer( sent )
                    , endpoint, on_send );
