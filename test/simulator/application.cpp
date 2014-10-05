@@ -31,6 +31,7 @@
 
 #include "simulator/fake_socket.hpp"
 
+#include "kademlia/log.hpp"
 #include "kademlia/buffer.hpp"
 #include "kademlia/engine.hpp"
 
@@ -64,17 +65,30 @@ create_engines
 {
     std::vector< engine_ptr > engines;
 
+    endpoint const ipv4_listen( "0.0.0.0", fake_socket::FIXED_PORT );
+    endpoint const ipv6_listen( "::", fake_socket::FIXED_PORT );
+
+    // Create bootstrap node.
     {
         auto e = std::make_shared< test_engine >( io_service
-                                                , endpoint( "0.0.0.0", 5555 )
-                                                , endpoint( "::", 5555 ) );
+                                                , ipv4_listen
+                                                , ipv6_listen );
+        engines.push_back( e );
     }
 
-    for ( std::size_t i = 0; i != c.clients_count; ++i )
+    // Get the address of the bootstrap node.
+    auto const first_peer_ipv4
+            = fake_socket::get_last_allocated_ipv4().to_string();
+    endpoint const first_peer( first_peer_ipv4
+                             , fake_socket::FIXED_PORT );
+
+    // Create nodes.
+    for ( std::size_t i = 0ULL; i != c.clients_count; ++i )
     {
         auto e = std::make_shared< test_engine >( io_service
-                                                , endpoint( "0.0.0.0", 5555 )
-                                                , endpoint( "::", 5555 ) );
+                                                , first_peer
+                                                , ipv4_listen
+                                                , ipv6_listen );
         engines.push_back( e );
     }
 
@@ -103,9 +117,37 @@ schedule_load
             throw std::runtime_error{ "loaded value is incorrect" };
 
         ++ received_messages_count;
+
+        LOG_DEBUG( simulator, nullptr ) << "received message id '"
+                << received_messages_count
+                << "'." << std::endl;
     };
 
     e->async_load( b, check_load );
+}
+
+/**
+ *
+ */
+template< typename Engines >
+void
+schedule_loads
+    ( Engines const& engines
+    , boost::asio::io_service & io_service
+    , std::size_t total_messages_count )
+{
+    LOG_DEBUG( simulator, nullptr ) << "loading '"
+            << total_messages_count
+            << "' messages." << std::endl;
+
+    std::size_t received_messages_count = 0ULL;
+    for ( auto i = 0ULL; i != total_messages_count; ++i )
+        schedule_load( engines[ i % engines.size() ]
+                     , i
+                     , received_messages_count );
+
+    while ( total_messages_count != received_messages_count )
+        io_service.run_one();
 }
 
 /**
@@ -126,6 +168,10 @@ schedule_save
             throw std::system_error{ failure };
 
         ++ sent_messages_count;
+
+        LOG_DEBUG( simulator, nullptr ) << "sent message id '"
+                << sent_messages_count
+                << "'." << std::endl;
     };
 
     e->async_save( b, b, check_save );
@@ -134,36 +180,25 @@ schedule_save
 /**
  *
  */
+template< typename Engines >
 void
-schedule_tasks
-    ( boost::asio::io_service & io_service
-    , std::vector< engine_ptr > & engines
-    , std::size_t total_messages_count
-    , std::size_t & sent_messages_count
-    , std::size_t & received_messages_count )
+schedule_saves
+    ( Engines const& engines
+    , boost::asio::io_service & io_service
+    , std::size_t total_messages_count )
 {
-    auto i = engines.begin(), e = engines.end();
+    LOG_DEBUG( simulator, nullptr ) << "saving '"
+            << total_messages_count
+            << "' messages." << std::endl;
 
-    // For each message to send.
-    for ( std::size_t sent_messages_count = 0
-        ; sent_messages_count != total_messages_count
-        ; ++ sent_messages_count )
-    {
-        // If the last peer has been reached, then
-        // restart with the first one.
-        if ( i == e )
-            i = engines.begin();
+    std::size_t sent_messages_count = 0ULL;
+    for ( auto i = 0ULL; i != total_messages_count; ++i )
+        schedule_save( engines[ i % engines.size() ]
+                     , i
+                     , sent_messages_count );
 
-        if ( sent_messages_count % 2 )
-            schedule_load( *i, sent_messages_count - 1
-                         , received_messages_count );
-        else
-            schedule_save( *i, sent_messages_count
-                         , sent_messages_count );
-
-        // Next task will be scheduled with the next peer.
-        ++ i;
-    }
+    while ( total_messages_count != sent_messages_count )
+        io_service.run_one();
 }
 
 } // anonymous namespace
@@ -172,35 +207,19 @@ void
 run
     ( configuration const& c )
 {
+#if KADEMLIA_ENABLE_DEBUG
+    for ( auto const& module : c.log_modules )
+        detail::enable_log_for( module );
+#endif
+
     boost::asio::io_service io_service;
 
     auto engines = create_engines( io_service, c );
-    std::size_t sent_messages_count = 0;
-    std::size_t received_messages_count = 0;
-    schedule_tasks( io_service, engines
-                  , c.total_messages_count
-                  , sent_messages_count
-                  , received_messages_count );
 
-    io_service.run();
+    io_service.poll();
 
-    if ( c.total_messages_count != sent_messages_count )
-    {
-        std::ostringstream error;
-        error << "the requested and sent messages count mismatch [ "
-              << c.total_messages_count << " != "
-              << sent_messages_count << " ]";
-        throw std::runtime_error( error.str() );
-    }
-
-    if ( sent_messages_count != received_messages_count )
-    {
-        std::ostringstream error;
-        error << "the sent and received messages count mismatch [ "
-              << sent_messages_count << " != "
-              << received_messages_count << " ]";
-        throw std::runtime_error( error.str() );
-    }
+    schedule_saves( engines, io_service, c.total_messages_count );
+    schedule_loads( engines, io_service, c.total_messages_count );
 }
 
 } // namespace application

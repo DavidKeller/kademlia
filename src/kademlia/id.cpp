@@ -86,7 +86,7 @@ id::id
     if ( s.size() > STRING_MAX_SIZE )
         throw std::system_error{ make_error_code( INVALID_ID ) };
 
-    // Insert trailing 0.
+    // Insert leading 0.
     s.insert( s.begin(), STRING_MAX_SIZE - s.size(), '0' );
 
     assert( s.size() == STRING_MAX_SIZE && "string padding failed" );

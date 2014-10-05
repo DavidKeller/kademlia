@@ -30,7 +30,7 @@ namespace detail {
 
 message_serializer::message_serializer
     ( id const& my_id )
-    : my_id_{ my_id }
+    : my_id_( my_id )
 { }
 
 header

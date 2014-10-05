@@ -97,9 +97,9 @@ public:
     message_socket
         ( message_socket && o )
 #ifdef _MSC_VER
-        : reception_buffer_{ std::move( o.reception_buffer_ ) }
-        , current_message_sender_{ std::move( o.current_message_sender_ ) }
-        , socket_{ std::move( o.socket_ ) }
+        : reception_buffer_( std::move( o.reception_buffer_ ) )
+        , current_message_sender_( std::move( o.current_message_sender_ ) )
+        , socket_( std::move( o.socket_ ) )
     { }
 #else
         = default;
@@ -238,9 +238,9 @@ inline
 message_socket< UnderlyingSocketType >::message_socket
     ( boost::asio::io_service & io_service
     , endpoint_type const& e )
-    : reception_buffer_{}
-    , current_message_sender_{}
-    , socket_{ create_underlying_socket( io_service, e ) }
+    : reception_buffer_( INPUT_BUFFER_SIZE )
+    , current_message_sender_()
+    , socket_( create_underlying_socket( io_service, e ) )
 { }
 
 template< typename UnderlyingSocketType >
@@ -262,21 +262,20 @@ message_socket< UnderlyingSocketType >::async_receive
         ( boost::system::error_code const& failure
         , std::size_t bytes_received )
     {
-        if ( failure )
-            reception_buffer_.resize( 0 );
-        else
-            reception_buffer_.resize( bytes_received );
+        auto i = reception_buffer_.begin(), e = i;
+
+        if ( ! failure )
+            std::advance( e, bytes_received );
 
         callback( boost_to_std_error( failure )
                 , convert_endpoint( current_message_sender_ )
-                , reception_buffer_ );
+                , i, e );
     };
 
-    reception_buffer_.resize( INPUT_BUFFER_SIZE );
-
+    assert( reception_buffer_.size() == INPUT_BUFFER_SIZE );
     socket_.async_receive_from( boost::asio::buffer( reception_buffer_ )
                               , current_message_sender_
-                              , on_completion );
+                              , std::move( on_completion ) );
 }
 
 template< typename UnderlyingSocketType >
@@ -301,8 +300,18 @@ message_socket< UnderlyingSocketType >::async_send
 
         socket_.async_send_to( boost::asio::buffer( *message_copy )
                              , convert_endpoint( to )
-                             , on_completion );
+                             , std::move( on_completion ) );
     }
+}
+
+template< typename UnderlyingSocketType >
+inline typename message_socket< UnderlyingSocketType >::endpoint_type
+message_socket< UnderlyingSocketType >::local_endpoint
+    ( void )
+    const
+{
+    return endpoint_type{ socket_.local_endpoint().address()
+                        , socket_.local_endpoint().port() };
 }
 
 template< typename UnderlyingSocketType >

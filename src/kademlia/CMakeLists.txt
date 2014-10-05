@@ -34,6 +34,8 @@ set(kademlia_sources
     boost_to_std_error.hpp
     id.hpp
     id.cpp
+    log.hpp
+    log.cpp
     ip_endpoint.hpp
     ip_endpoint.cpp
     peer.hpp

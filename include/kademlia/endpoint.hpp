@@ -70,12 +70,9 @@ public:
     endpoint
         ( address_type const& address
         , service_numeric_type const& service )
-            : address_{ address }, service_{}
-    {
-        std::ostringstream service_numeric;
-        service_numeric << service;
-        service_ = service_numeric.str();
-    }
+            : address_{ address }
+            , service_{ std::to_string( service ) }
+    { }
 
     /**
      *

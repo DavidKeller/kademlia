@@ -54,10 +54,11 @@ public:
      *
      */
     template< typename Iterator, typename HandlerType >
-    store_value_context( detail::id const & key
-                       , data_type const& data
-                       , Iterator i, Iterator e
-                       , HandlerType && save_handler );
+    store_value_context
+        ( detail::id const & key
+        , data_type const& data
+        , Iterator i, Iterator e
+        , HandlerType && save_handler );
 
     /**
      *
@@ -89,8 +90,8 @@ store_value_context< SaveHandlerType, DataType >::store_value_context
     , data_type const& data
     , Iterator i, Iterator e
     , HandlerType && save_handler )
-        : value_context{ key, i, e }
-        , data_{ data }
+        : value_context( key, i, e )
+        , data_( data )
         , save_handler_( std::forward< HandlerType >( save_handler ) )
 { }
 

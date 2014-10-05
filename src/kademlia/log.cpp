@@ -23,31 +23,61 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_CONFIGURATION_HPP
-#define KADEMLIA_CONFIGURATION_HPP
+#include "kademlia/log.hpp"
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
-
-#include <cstddef>
-#ifdef KADEMLIA_ENABLE_DEBUG
-#   include <vector>
-#   include <string>
-#endif
+#include <ctime>
+#include <iostream>
+#include <iomanip>
+#include <set>
 
 namespace kademlia {
+namespace detail {
 
-struct configuration
+namespace {
+
+using enabled_modules_log_type = std::set< std::string >;
+
+enabled_modules_log_type &
+get_enabled_modules
+    ( void )
 {
-#ifdef KADEMLIA_ENABLE_DEBUG
-    std::vector< std::string > log_modules;
-#endif
-    std::size_t clients_count;
-    std::size_t total_messages_count;
-};
+    static enabled_modules_log_type enabled_modules_;
+    return enabled_modules_;
+}
 
+} // anonymous namespace
+
+std::ostream &
+get_debug_log
+    ( char const * module
+    , void const * thiz )
+{
+    auto now = time( nullptr );
+    return std::cout << std::put_time( std::localtime( &now ), "%T" )
+                     << " [debug] (" << module << " @ "
+                     << std::hex << ( std::uintptr_t( thiz ) & 0xffff )
+                     << std::dec << ") ";
+}
+
+/**
+ *
+ */
+void
+enable_log_for
+    ( std::string const& module )
+{ get_enabled_modules().insert( module ); }
+
+/**
+ *
+ */
+bool
+is_log_enabled
+    ( std::string const& module )
+{
+    return get_enabled_modules().count( "*" ) > 0
+            || get_enabled_modules().count( module ) > 0;
+}
+
+} // namespace detail
 } // namespace kademlia
-
-#endif
 

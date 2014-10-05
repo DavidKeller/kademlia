@@ -35,6 +35,7 @@
 #include "simulator/configuration.hpp"
 #include "simulator/application.hpp"
 #include "kademlia/r.hpp"
+#include "kademlia/log.hpp"
 
 namespace kademlia {
 namespace executable {
@@ -62,6 +63,11 @@ parse_configuration
 
     po::options_description optional( "Misc arguments" );
     optional.add_options()
+#if KADEMLIA_ENABLE_DEBUG
+        ( "logged-module,l"
+        , po::value< std::vector< std::string > >( &c.log_modules )
+        , "Enable the specified module log\n" )
+#endif
         ( "help,h", "Print accepted arguments\n" )
 
         ( "version,v", "Print version\n" );

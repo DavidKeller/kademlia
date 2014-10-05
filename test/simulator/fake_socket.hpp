@@ -162,6 +162,9 @@ public:
         else
             failure = make_error_code( boost::system::errc::not_connected );
 
+        pending_reads_.clear();
+        pending_writes_.clear();
+
         return failure;
     }
 
@@ -173,7 +176,7 @@ public:
     async_receive_from
         ( boost::asio::mutable_buffer const& buffer
         , endpoint_type & from
-        , Callback callback )
+        , Callback && callback )
     {
         // Check if there is packets waiting.
         if ( pending_writes_.empty() )
@@ -183,12 +186,13 @@ public:
             boost::asio::io_service::work work( io_service_ );
             pending_reads_.push_back( { buffer, from
                                       , std::move( work )
-                                      , std::move( callback ) } );
+                                      , std::forward< Callback >( callback ) } );
         }
         else
             // A packet is waiting to be read, so read it
             // asynchronously.
-            async_execute_read( buffer, from, callback );
+            async_execute_read( buffer, from
+                              , std::forward< Callback >( callback ) );
     }
 
     /**
@@ -199,7 +203,7 @@ public:
     async_send_to
         ( boost::asio::const_buffer const& buffer
         , endpoint_type const& to
-        , Callback callback )
+        , Callback && callback )
     {
         // Ensure the destination socket is listening.
         auto target = get_socket( to );
@@ -212,11 +216,12 @@ public:
             boost::asio::io_service::work work( io_service_ );
             target->pending_writes_.push_back( { buffer, local_endpoint_
                                                , std::move( work )
-                                               , std::move( callback ) } );
+                                               , std::forward< Callback >( callback ) } );
         }
         else
             // It's already waiting for the current packet.
-            async_execute_write( target, buffer, callback );
+            async_execute_write( target, buffer
+                               , std::forward< Callback >( callback ) );
     }
 
     /**
@@ -226,7 +231,8 @@ public:
     get_last_allocated_ipv4
         ( void )
     {
-        static boost::asio::ip::address_v4 ipv4_{};
+        using boost::asio::ip::address_v4;
+        static auto ipv4_ = address_v4::from_string( "10.0.0.0" );
         return ipv4_;
     }
 
@@ -237,7 +243,8 @@ public:
     get_last_allocated_ipv6
         ( void )
     {
-        static boost::asio::ip::address_v6 ipv6_{};
+        using boost::asio::ip::address_v6;
+        static auto ipv6_ = address_v6::from_string( "fc00::" );
         return ipv6_;
     }
 
@@ -304,7 +311,9 @@ private:
             std::size_t index = 0ULL;
 
             auto const bytes = address.to_bytes();
-            for ( std::size_t i = 0, e = bytes.size(); i != e; ++ i )
+            // Skip the first byte as it's used to
+            // mark the address as private (e.g. 10.x.x.x or fc00::).
+            for ( std::size_t i = 1, e = bytes.size(); i != e; ++ i )
             {
                 assert( index >> 56 == 0 /* no bytes are lost by next shift */ );
                 index <<= 8;
@@ -377,8 +386,7 @@ private:
         auto & last_allocated_ipv4 = get_last_allocated_ipv4();
         increment_address( last_allocated_ipv4 );
 
-        boost::asio::ip::address_v4 const ipv4( last_allocated_ipv4 );
-        return endpoint_type( ipv4, port );
+        return endpoint_type( last_allocated_ipv4, port );
     }
 
     /**
@@ -391,8 +399,7 @@ private:
         auto & last_allocated_ipv6 = get_last_allocated_ipv6();
         increment_address( last_allocated_ipv6 );
 
-        boost::asio::ip::address_v6 const ipv6( last_allocated_ipv6 );
-        return endpoint_type( ipv6, port );
+        return endpoint_type( last_allocated_ipv6, port );
     }
 
     /**
@@ -451,24 +458,24 @@ private:
     async_execute_write
         ( fake_socket * target
         , boost::asio::const_buffer const& buffer
-        , Callback callback )
+        , Callback && callback )
     {
         auto perform_write = [ this, target, buffer, callback ] ( void )
         {
             // Retrieve the read task of the packet.
             assert( ! target->pending_reads_.empty() );
-            pending_read & t = target->pending_reads_.front();
+            pending_read & p = target->pending_reads_.front();
 
             // Fill the read task buffer and endpoint.
-            t.source_ = local_endpoint_;
-            auto const copied_bytes_count = copy_buffer( buffer, t.buffer_ );
+            auto const copied_bytes_count = copy_buffer( buffer, p.buffer_ );
+            p.source_ = local_endpoint_;
 
             // Inform the writer that data has been writeen.
             callback( boost::system::error_code()
                     , copied_bytes_count );
 
             // Inform the reader that data has been read.
-            t.callback_( boost::system::error_code()
+            p.callback_( boost::system::error_code()
                        , copied_bytes_count );
 
             target->pending_reads_.pop_front();
@@ -485,22 +492,23 @@ private:
     async_execute_read
         ( boost::asio::mutable_buffer const& buffer
         , endpoint_type & from
-        , Callback callback )
+        , Callback && callback )
     {
         auto perform_read = [ this, buffer, &from, callback ] ( void )
         {
             // Retrieve the write task of the packet.
             assert( ! pending_writes_.empty() );
-            pending_write & t = pending_writes_.front();
+            pending_write & w = pending_writes_.front();
 
             // Fill the provided buffer and endpoint.
-            from  = t.source_;
-            auto const copied_bytes_count = copy_buffer( t.buffer_, buffer );
+            from = w.source_;
+            auto const copied_bytes_count = copy_buffer( w.buffer_, buffer );
 
             // Now inform the writeer that data has been sent.
-            t.callback_( boost::system::error_code()
+            w.callback_( boost::system::error_code()
                        , copied_bytes_count );
-            // Inform the readr that data has been readd.
+
+            // Inform the reader that data has been readd.
             callback( boost::system::error_code()
                     , copied_bytes_count );
 

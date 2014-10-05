@@ -31,13 +31,22 @@ add_library(simulator_impl STATIC
     executable.cpp
     configuration.hpp)
 
-add_executable(simulator
-    main.cpp)
-
-target_link_libraries(simulator 
-    simulator_impl
+target_link_libraries(simulator_impl
     kademlia_static
     ${Boost_LIBRARIES} 
     ${BOTAN_LIBRARIES} 
     ${CMAKE_THREAD_LIBS_INIT})
 
+add_executable(simulator
+    main.cpp)
+
+target_link_libraries(simulator
+    simulator_impl)
+
+#target_link_libraries(simulator
+#    kademlia_static
+#    simulator_impl
+#    ${Boost_LIBRARIES} 
+#    ${BOTAN_LIBRARIES} 
+#    ${CMAKE_THREAD_LIBS_INIT})
+#

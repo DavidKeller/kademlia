@@ -204,7 +204,7 @@ value_context::select_new_closest_candidates
     // candidates_max_count not-contacted candidates.
     for ( auto i = candidates_.begin(), e = candidates_.end()
         ; i != e && in_flight_requests_count_ < max_count
-        ; ++ i)
+        ; ++ i )
     {
         if ( i->second.state_ == candidate::STATE_UNKNOWN )
         {
@@ -227,7 +227,7 @@ value_context::select_closest_valid_candidates
     // candidates_max_count not-contacted candidates.
     for ( auto i = candidates_.begin(), e = candidates_.end()
         ; i != e && candidates.size() < max_count
-        ; ++ i)
+        ; ++ i )
     {
         if ( i->second.state_ == candidate::STATE_RESPONDED )
             candidates.push_back( i->second.peer_ );
@@ -271,17 +271,17 @@ inline void
 value_context::add_candidate
     ( peer const& p )
 {
-    auto const distance = detail::distance( p.id_, key_ );
+    auto const d = distance( p.id_, key_ );
     candidate const c{ p, candidate::STATE_UNKNOWN };
-    candidates_.emplace( distance, c );
+    candidates_.emplace( d, c );
 }
 
 inline value_context::candidates_type::iterator
 value_context::find_candidate
     ( id const& candidate_id )
 {
-    auto const distance = detail::distance( candidate_id, key_ );
-    return candidates_.find( distance );
+    auto const d = distance( candidate_id, key_ );
+    return candidates_.find( d );
 }
 
 } // namespace detail

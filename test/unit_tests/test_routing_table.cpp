@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( can_find_a_closer_peer )
     kd::id test_id3{ "4" };
     BOOST_REQUIRE( rt.push( test_id3, test_peer3 ) );
 
-    // test_peer2 is the closer peer.
+    // test_peer2 is the closest peer.
     auto i = rt.find( kd::id{ "6" } );
     BOOST_REQUIRE( i != rt.end() );
     BOOST_REQUIRE_EQUAL( test_peer2, i->second );

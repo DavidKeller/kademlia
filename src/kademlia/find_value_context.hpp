@@ -95,9 +95,9 @@ find_value_context< LoadHandlerType, DataType >::find_value_context
     ( id const & searched_key
     , Iterator i, Iterator e
     , HandlerType && load_handler )
-        : value_context{ searched_key, i, e }
-        , load_handler_{ std::forward< HandlerType >( load_handler ) }
-        , is_finished_{}
+        : value_context( searched_key, i, e )
+        , load_handler_( std::forward< HandlerType >( load_handler ) )
+        , is_finished_()
 { }
 
 template< typename LoadHandlerType, typename DataType >
@@ -105,7 +105,7 @@ inline void
 find_value_context< LoadHandlerType, DataType >::notify_caller
     ( data_type const& data )
 {
-    load_handler_( std::error_code{}, data );
+    load_handler_( std::error_code(), data );
     is_finished_ = true;
 }
 

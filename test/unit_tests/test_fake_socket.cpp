@@ -226,5 +226,55 @@ BOOST_AUTO_TEST_CASE( can_detect_closed_socket )
     BOOST_REQUIRE_LE( 0ULL, io_service.poll() );
 }
 
+BOOST_AUTO_TEST_CASE( can_send_and_receive_messages_to_self )
+{
+    a::io_service io_service;
+    a::io_service::work work(io_service);
+    boost::asio::ip::udp::endpoint endpoint;
+    endpoint.port( k::fake_socket::FIXED_PORT );
+
+    k::fake_socket sender( io_service, endpoint.protocol() );
+    BOOST_REQUIRE(! sender.bind( endpoint ) );
+
+    BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
+
+    kd::buffer received( 64 );
+    kd::buffer sent( 32 );
+
+    bool receive_callback_called = false;
+    auto on_receive = [ &receive_callback_called, &sent ]
+        ( boost::system::error_code const& failure
+        , std::size_t bytes_count )
+    {
+        receive_callback_called = true;
+        BOOST_REQUIRE( ! failure );
+        BOOST_REQUIRE_EQUAL( sent.size(), bytes_count );
+    };
+
+    sender.async_receive_from( boost::asio::buffer( received )
+                             , endpoint
+                             , on_receive );
+
+    std::iota( sent.begin(), sent.end(), 1 );
+    auto on_send = [ &sent, &received ]
+        ( boost::system::error_code const& failure
+        , std::size_t bytes_count )
+    {
+        BOOST_REQUIRE( ! failure );
+        BOOST_REQUIRE_EQUAL( sent.size(), bytes_count );
+        received.resize( bytes_count );
+    };
+
+    sender.async_send_to( boost::asio::buffer( sent )
+                        , sender.local_endpoint()
+                        , on_send );
+
+    BOOST_REQUIRE_LT( 0ULL, io_service.poll() );
+    BOOST_REQUIRE( receive_callback_called );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( sent.begin(), sent.end()
+                                   , received.begin(), received.end() );
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
 

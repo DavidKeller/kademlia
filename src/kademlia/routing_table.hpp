@@ -42,6 +42,7 @@
 #include <kademlia/detail/cxx11_macros.hpp>
 
 #include "kademlia/id.hpp"
+#include "kademlia/log.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -76,6 +77,9 @@ public:
         , peer_count_( 0 ), k_bucket_size_( k_bucket_size )
     {
         assert( k_bucket_size_ > 0 && "k_bucket size must be > 0" );
+
+        LOG_DEBUG( routing_table, this ) << "created with id '"
+                << my_id_ << "'." << std::endl;
     }
 
     /**
@@ -115,21 +119,26 @@ public:
         ( id const& peer_id
         , peer_type const& new_peer )
     {
-        auto const target_k_bucket = find_closest_k_bucket( peer_id );
+        LOG_DEBUG( routing_table, this ) << "pushing peer '"
+                << new_peer << "' as '"
+                << peer_id << "'." << std::endl;
+
+        auto & bucket = k_buckets_[ find_k_bucket_index( peer_id ) ];
 
         // If there is room in the bucket.
-        if ( target_k_bucket->size() == k_bucket_size_ )
+        if ( bucket.size() == k_bucket_size_ )
             return false;
 
-        auto const end = target_k_bucket->end();
+        auto const end = bucket.end();
 
         // Check if the peer is not already known.
-        auto is_peer_known = [&peer_id] ( value_type const& entry )
+        auto is_peer_known = [ &peer_id ] ( value_type const& entry )
         { return entry.first == peer_id; };
-        if ( std::find_if( target_k_bucket->begin(), end, is_peer_known ) != end )
+
+        if ( std::find_if( bucket.begin(), end, is_peer_known ) != end )
             return false;
 
-        target_k_bucket->insert( end, value_type{ peer_id, new_peer } );
+        bucket.insert( end, value_type{ peer_id, new_peer } );
         ++ peer_count_;
 
         return true;
@@ -144,20 +153,24 @@ public:
     remove
         ( id const& peer_id )
     {
+        LOG_DEBUG( routing_table, this ) << "removing peer '"
+                << peer_id << "'." << std::endl;
+
         // Find the closer bucket.
-        auto bucket = find_closest_k_bucket( peer_id );
+        auto & bucket = k_buckets_[ find_k_bucket_index( peer_id ) ];
 
         // Check if the peer is inside.
         auto is_peer_known = [&peer_id] ( value_type const& entry )
         { return entry.first == peer_id; };
-        auto i = std::find_if( bucket->begin(), bucket->end(), is_peer_known );
+
+        auto i = std::find_if( bucket.begin(), bucket.end(), is_peer_known );
 
         // If the peer wasn't inside.
-        if ( i == bucket->end() )
+        if ( i == bucket.end() )
             return false;
 
         // Remove it.
-        bucket->erase( i );
+        bucket.erase( i );
         -- peer_count_;
 
         return true;
@@ -172,10 +185,16 @@ public:
     find
         ( id const& id_to_find )
     {
-        auto i = find_closest_k_bucket( id_to_find );
+        LOG_DEBUG( routing_table, this ) << "finding peer near '"
+                << id_to_find << "'." << std::endl;
+
+        auto index = std::max( get_lowest_k_bucket_index()
+                             , find_k_bucket_index( id_to_find ) );
+
+        auto i = std::next( k_buckets_.begin(), index );
 
         // Find the first non empty k_bucket.
-        while( i->empty() && i != k_buckets_.begin() )
+        while ( i->empty() && i != k_buckets_.begin() )
             -- i;
 
         return iterator( &k_buckets_, i, i->begin() );
@@ -194,7 +213,6 @@ public:
 
         return iterator( &k_buckets_, first_k_bucket, first_k_bucket->end() );
     }
-
 
     /**
      *  Print the routing table content.
@@ -236,9 +254,10 @@ private:
     /**
      *
      */
-    typename k_buckets::iterator
-    find_closest_k_bucket
+    std::size_t
+    find_k_bucket_index
         ( id const& id_to_find )
+        const
     {
         // Find closest bucket from the peer id.
         // i.e. the index of the first different bit
@@ -249,7 +268,31 @@ private:
               && id_to_find[ bit_index ] == my_id_[ bit_index ] )
             ++ bit_index;
 
-        return std::next( k_buckets_.begin(), bit_index );
+        LOG_DEBUG( routing_table, this ) << "found bucket at index '"
+                << bit_index << "'." << std::endl;
+
+        return bit_index;
+    }
+
+    /**
+     *
+     */
+    std::size_t
+    get_lowest_k_bucket_index
+        ( void )
+        const
+    {
+        std::size_t i = 0ULL, e = k_buckets_.size() - 1;
+
+        for ( std::size_t peer_count = 0ULL
+            ; i != e && peer_count <= k_bucket_size_
+            ; ++ i )
+            peer_count += k_buckets_[ i ].size();
+
+        LOG_DEBUG( routing_table, this ) << "bottom bucket is at index '"
+                << i << "'." << std::endl;
+
+        return i;
     }
 
 private:
