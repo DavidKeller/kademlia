@@ -30,7 +30,7 @@ project(kademlia)
 
 # Configure compilers.
 if (WIN32)
-    if (NOT MSVC12 OR NOT MSVC13)
+    if (NOT MSVC12 AND NOT MSVC13)
         message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
     endif()
     add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WIN7)
