@@ -214,11 +214,14 @@ run
 
     boost::asio::io_service io_service;
 
+    std::cout << "Creating peers" << std::endl;
     auto engines = create_engines( io_service, c );
-
     io_service.poll();
 
+    std::cout << "Performing saves" << std::endl;
     schedule_saves( engines, io_service, c.total_messages_count );
+
+    std::cout << "Perfoming loads" << std::endl;
     schedule_loads( engines, io_service, c.total_messages_count );
 }
 

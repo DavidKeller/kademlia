@@ -72,12 +72,13 @@ public:
     /**
      *
      */
-    template<typename BlockType>
+    template< typename BlockType >
     struct abstract_reference
     {
         /**
          *
          */
+        explicit
         operator bool
             ( void )
             const
@@ -101,10 +102,10 @@ public:
         /**
          *
          */
-        template<typename OtherBlockType>
+        template< typename OtherBlockType >
         bool
         operator==
-            ( abstract_reference<OtherBlockType> const& o )
+            ( abstract_reference< OtherBlockType > const& o )
         { return static_cast< bool >( o ) == static_cast< bool >( *this ); }
 
         ///

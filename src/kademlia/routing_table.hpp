@@ -123,10 +123,11 @@ public:
                 << new_peer << "' as '"
                 << peer_id << "'." << std::endl;
 
-        auto & bucket = k_buckets_[ find_k_bucket_index( peer_id ) ];
+        auto k_bucket_index = find_k_bucket_index( peer_id );
+        auto & bucket = k_buckets_[ k_bucket_index ];
 
         // If there is room in the bucket.
-        if ( bucket.size() == k_bucket_size_ )
+        if ( bucket.size() == get_k_bucket_size( k_bucket_index ) )
             return false;
 
         auto const end = bucket.end();
@@ -235,7 +236,7 @@ public:
         {
             out << "\t{" << std::endl
                 << "\t\t\"index\": " << i << "," << std::endl
-                << "\t\t\"bit_value\": " << table.my_id_[i] << "," << std::endl
+                << "\t\t\"bit_value\": " << bool(table.my_id_[i]) << "," << std::endl
                 << "\t\t\"peer_count\": " << table.k_buckets_[i].size() << std::endl
                 << "\t}" << std::endl;
         }
@@ -294,6 +295,15 @@ private:
 
         return i;
     }
+
+    /**
+     *
+     */
+    std::size_t
+    get_k_bucket_size
+        ( std::size_t index )
+        const
+    { return k_bucket_size_  + ( k_buckets_.size() - index ) / 4; }
 
 private:
     /// This contains buckets up to id bit count.

@@ -54,6 +54,7 @@
 #include "kademlia/value_store.hpp"
 #include "kademlia/find_value_context.hpp"
 #include "kademlia/store_value_context.hpp"
+#include "kademlia/notify_peer_context.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -313,6 +314,22 @@ private:
     /**
      *
      */
+    std::shared_ptr< notify_peer_context >
+    create_notify_peer_context
+        ( id const& key )
+    {
+        LOG_DEBUG( engine, this ) << "create find peer context for '"
+                << key << "' peer." << std::endl;
+
+        using context = notify_peer_context;
+
+        auto i = routing_table_.find( key ), e = routing_table_.end();
+        return std::make_shared< context >( key, i, e );
+    }
+
+    /**
+     *
+     */
     template< typename HandlerType >
     std::shared_ptr< store_value_context< typename std::remove_reference< HandlerType >::type
                                         , data_type > >
@@ -391,7 +408,13 @@ private:
     add_peer_to_routing_table
         ( id const& peer_id
         , endpoint_type const& peer_endpoint )
-    { routing_table_.push( peer_id, peer_endpoint ); }
+    {
+        LOG_DEBUG( engine, this ) << "adding '"
+                << peer_id << "@" << peer_endpoint
+                << "'." << std::endl;
+
+        routing_table_.push( peer_id, peer_endpoint );
+    }
 
     /**
      *
@@ -608,17 +631,122 @@ private:
         for ( auto const& peer : response.peers_ )
             add_peer_to_routing_table( peer.id_, peer.endpoint_ );
 
+        notify_neighbors();
+
         LOG_DEBUG( engine, this ) << "added '" << response.peers_.size()
                 << "' initial peer(s)." << std::endl;
     }
 
+    /**
+     *  Refresh each bucket.
+     */
+    void
+    notify_neighbors
+        ( void )
+    {
+        id refresh_id = my_id_;
+
+        for ( std::size_t i = id::BIT_SIZE; i > 0; -- i)
+        {
+            // Flip bit to select find peers in the current k_bucket.
+            id::reference bit = refresh_id[ i - 1 ];
+            bit = ! bit;
+
+            auto c = create_notify_peer_context( refresh_id );
+
+            notify_neighbors( c );
+        }
+    }
+
+    /**
+     *
+     */
+    void
+    notify_neighbors
+        ( std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( engine, this ) << "sending find peer to notify '"
+                << context->get_key() << "' owner bucket." << std::endl;
+
+        find_peer_request_body const request{ context->get_key() };
+
+        auto const closest_peers = context->select_new_closest_candidates
+                ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
+
+        for ( auto const& c : closest_peers )
+            send_notify_peer_request( request, c, context );
+    }
+
+    /**
+     *
+     */
+    void
+    send_notify_peer_request
+        ( find_peer_request_body const& request
+        , peer const& current_peer
+        , std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( engine, this ) << "sending find peer to notify to '"
+                << current_peer << "'." << std::endl;
+
+        auto on_message_received = [ this, context, current_peer ]
+            ( endpoint_type const& s
+            , header const& h
+            , buffer::const_iterator i
+            , buffer::const_iterator e )
+        {
+            context->flag_candidate_as_valid( current_peer.id_ );
+            handle_notify_peer_response( s, h, i, e, context );
+        };
+
+        auto on_error = [ this, context, current_peer ]
+            ( std::error_code const& )
+        { context->flag_candidate_as_invalid( current_peer.id_ ); };
+
+        send_request( id{ random_engine_ }
+                    , request
+                    , current_peer.endpoint_
+                    , PEER_LOOKUP_TIMEOUT
+                    , on_message_received
+                    , on_error );
+    }
+
+    /**
+     *
+     */
+    void
+    handle_notify_peer_response
+        ( endpoint_type const& s
+        , header const& h
+        , buffer::const_iterator i
+        , buffer::const_iterator e
+        , std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( engine, this ) << "handle notify peer response from '"
+                << s << "'." << std::endl;
+
+        assert( h.type_ == header::FIND_PEER_RESPONSE );
+        find_peer_response_body response;
+        if ( auto failure = deserialize( i, e, response ) )
+        {
+            LOG_DEBUG( engine, this )
+                    << "failed to deserialize find peer response ("
+                    << failure.message() << ")" << std::endl;
+            return;
+        }
+
+        // If new candidate have been discovered, ask them.
+        if ( context->are_these_candidates_closest( response.peers_ ) )
+            notify_neighbors( context );
+    }
     /**
      *
      */
     template< typename HandlerType >
     void
     store_value
-        ( std::shared_ptr< store_value_context< HandlerType, data_type > > context )
+        ( std::shared_ptr< store_value_context< HandlerType, data_type > > context
+        , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
         LOG_DEBUG( engine, this ) << "sending find peer to store '"
                 << context->get_key() << "' value." << std::endl;
@@ -626,7 +754,7 @@ private:
         find_peer_request_body const request{ context->get_key() };
 
         auto const closest_candidates = context->select_new_closest_candidates
-                ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
+                ( concurrent_requests_count );
 
         assert( "at least one candidate exists" && ! closest_candidates.empty() );
 
@@ -644,7 +772,7 @@ private:
         , peer const& current_candidate
         , std::shared_ptr< store_value_context< HandlerType, data_type > > context )
     {
-        LOG_DEBUG( engine, this ) << "sending find peer request to '"
+        LOG_DEBUG( engine, this ) << "sending find peer request to store to '"
                 << current_candidate << "'." << std::endl;
 
         // On message received, process it.
