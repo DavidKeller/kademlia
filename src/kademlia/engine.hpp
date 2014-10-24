@@ -38,6 +38,7 @@
 #include <memory>
 #include <utility>
 #include <type_traits>
+#include <functional>
 #include <boost/asio/io_service.hpp>
 
 #include <kademlia/endpoint.hpp>
@@ -47,7 +48,7 @@
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/message_serializer.hpp"
 #include "kademlia/response_router.hpp"
-#include "kademlia/message_socket.hpp"
+#include "kademlia/network.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/routing_table.hpp"
 #include "kademlia/value_store.hpp"
@@ -88,7 +89,7 @@ public:
     using data_type = DataType;
 
     ///
-    using message_socket_type = message_socket< UnderlyingSocketType >;
+    using network_type = network< UnderlyingSocketType >;
 
 public:
     /**
@@ -98,23 +99,22 @@ public:
         ( boost::asio::io_service & io_service
         , endpoint const& ipv4
         , endpoint const& ipv6 )
-            : random_engine_{ std::random_device{}() }
+            : random_engine_( std::random_device{}() )
             , my_id_( random_engine_ )
             , io_service_( io_service )
             , response_router_( io_service )
             , message_serializer_( my_id_ )
-            , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
-            , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
-            , routing_table_{ my_id_ }
-            , value_store_{}
-            , is_connected_{}
-            , pending_tasks_{}
-    {
-        start_message_reception();
-        LOG_DEBUG( engine, this ) << "created at '"
-                << socket_ipv4_.local_endpoint() << "' and '"
-                << socket_ipv6_.local_endpoint() << "'." << std::endl;
-    }
+            , network_( io_service, ipv4, ipv6
+                      , std::bind( &engine::handle_new_message
+                                 , this
+                                 , std::placeholders::_1
+                                 , std::placeholders::_2
+                                 , std::placeholders::_3 ) )
+            , routing_table_( my_id_ )
+            , value_store_()
+            , is_connected_()
+            , pending_tasks_()
+    { }
 
     /**
      *
@@ -124,24 +124,25 @@ public:
         , endpoint const& initial_peer
         , endpoint const& ipv4
         , endpoint const& ipv6 )
-            : random_engine_{ std::random_device{}() }
+            : random_engine_( std::random_device{}() )
             , my_id_( random_engine_ )
             , io_service_( io_service )
             , response_router_( io_service )
             , message_serializer_( my_id_ )
-            , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
-            , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
-            , routing_table_{ my_id_ }
-            , value_store_{}
-            , is_connected_{}
-            , pending_tasks_{}
+            , network_( io_service, ipv4, ipv6
+                      , std::bind( &engine::handle_new_message
+                                 , this
+                                 , std::placeholders::_1
+                                 , std::placeholders::_2
+                                 , std::placeholders::_3 ) )
+            , routing_table_( my_id_ )
+            , value_store_()
+            , is_connected_()
+            , pending_tasks_()
     {
-        start_message_reception();
         discover_neighbors( initial_peer );
 
-        LOG_DEBUG( engine, this ) << "created at '"
-                << socket_ipv4_.local_endpoint() << "' and '"
-                << socket_ipv6_.local_endpoint() << "' boostraping using peer '"
+        LOG_DEBUG( engine, this ) << "boostraping using peer '"
                 << initial_peer << "'." << std::endl;
     }
 
@@ -242,54 +243,6 @@ private:
     /**
      *
      */
-    void
-    start_message_reception
-        ( void )
-    {
-        schedule_receive_on_socket( socket_ipv4_ );
-        schedule_receive_on_socket( socket_ipv6_ );
-    }
-
-    /**
-     *
-     */
-    void
-    schedule_receive_on_socket
-        ( message_socket_type & current_subnet )
-    {
-        auto on_new_message = [ this, &current_subnet ]
-            ( std::error_code const& failure
-            , endpoint_type const& sender
-            , buffer::const_iterator i
-            , buffer::const_iterator e )
-        {
-            // Reception failure are fatal.
-            if ( failure )
-                throw std::system_error{ failure };
-
-            handle_new_message( sender, i, e );
-            schedule_receive_on_socket( current_subnet );
-        };
-
-        current_subnet.async_receive( on_new_message );
-    }
-
-    /**
-     *
-     */
-    message_socket_type &
-    get_socket_for
-        ( endpoint_type const& e )
-    {
-        if ( e.address_.is_v4() )
-            return socket_ipv4_;
-
-        return socket_ipv6_;
-    }
-
-    /**
-     *
-     */
     template< typename HandlerType >
     std::shared_ptr< find_value_context< typename std::remove_reference< HandlerType >::type
                                        , data_type > >
@@ -352,7 +305,7 @@ private:
      *
      */
     void
-    handle_new_message
+    process_new_message
         ( endpoint_type const& sender
         , header const& h
         , buffer::const_iterator i
@@ -534,9 +487,7 @@ private:
     {
         // Initial peer should know our neighbors, hence ask
         // him which peers are close to our own id.
-        auto endoints_to_query
-                = message_socket_type::resolve_endpoint( io_service_
-                                                       , initial_peer );
+        auto endoints_to_query = network_.resolve_endpoint( initial_peer );
 
         search_ourselves( std::move( endoints_to_query ) );
     }
@@ -1050,7 +1001,7 @@ private:
 
         add_peer_to_routing_table( h.source_id_, sender );
 
-        handle_new_message( sender, h, i, e );
+        process_new_message( sender, h, i, e );
 
         // A message has been received, hence the connection
         // is up. Check if it was down before.
@@ -1092,7 +1043,7 @@ private:
         };
 
         // Serialize the request and send it.
-        get_socket_for( e ).async_send( message, e, on_request_sent );
+        network_.send( message, e, on_request_sent );
     }
 
     /**
@@ -1122,8 +1073,7 @@ private:
             ( std::error_code const& /* failure */ )
         { };
 
-        // Serialize the message and send it.
-        get_socket_for( e ).async_send( message, e, on_response_sent );
+        network_.send( message, e, on_response_sent );
     }
 
     /**
@@ -1161,9 +1111,7 @@ private:
     ///
     message_serializer message_serializer_;
     ///
-    message_socket_type socket_ipv4_;
-    ///
-    message_socket_type socket_ipv6_;
+    network_type network_;
     ///
     routing_table_type routing_table_;
     ///
