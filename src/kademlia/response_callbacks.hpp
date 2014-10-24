@@ -23,46 +23,74 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/response_dispatcher.hpp"
+#ifndef KADEMLIA_RESPONSE_CALLBACKS_HPP
+#define KADEMLIA_RESPONSE_CALLBACKS_HPP
 
-#include <cassert>
+#ifdef _MSC_VER
+#   pragma once
+#endif
 
-#include <kademlia/error.hpp>
+#include <map>
+#include <functional>
+
+#include "kademlia/id.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/message.hpp"
 
 namespace kademlia {
 namespace detail {
 
-void
-response_dispatcher::push_association
-    ( id const& message_id
-    , callback const& on_message_received )
+///
+class response_callbacks final
 {
-    auto i = associations_.emplace( message_id, on_message_received );
-    assert( i.second && "an id can't be registered twice" );
-}
+public:
+    ///
+    using endpoint_type = ip_endpoint;
 
-bool
-response_dispatcher::remove_association
-    ( id const& message_id )
-{ return associations_.erase( message_id ) > 0; }
+    ///
+    using callback = std::function< void
+            ( endpoint_type const& sender
+            , header const& h
+            , buffer::const_iterator i
+            , buffer::const_iterator e ) >;
 
-std::error_code
-response_dispatcher::dispatch_message
-    ( endpoint_type const& sender
-    , header const& h
-    , buffer::const_iterator i
-    , buffer::const_iterator e )
-{
-    auto association = associations_.find( h.random_token_ );
-    if ( association == associations_.end() )
-        return make_error_code( UNASSOCIATED_MESSAGE_ID );
+public:
+    /**
+     *
+     */
+    void
+    push_callback
+        ( id const& message_id
+        , callback const& on_message_received );
 
-    association->second( sender, h, i, e );
-    associations_.erase( association );
+    /**
+     *
+     */
+    bool
+    remove_callback
+        ( id const& message_id );
 
-    return std::error_code{};
-}
+    /**
+     *
+     */
+    std::error_code
+    dispatch_response
+        ( endpoint_type const& sender
+        , header const& h
+        , buffer::const_iterator i
+        , buffer::const_iterator e );
+
+private:
+    ///
+    using callbacks = std::map< id, callback >;
+
+private:
+    ///
+    callbacks callbacks_;
+};
 
 } // namespace detail
 } // namespace kademlia
+
+#endif
 

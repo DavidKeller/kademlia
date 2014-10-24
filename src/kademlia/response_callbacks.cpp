@@ -23,74 +23,46 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_RESPONSE_DISPATCHER_HPP
-#define KADEMLIA_RESPONSE_DISPATCHER_HPP
+#include "kademlia/response_callbacks.hpp"
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
+#include <cassert>
 
-#include <map>
-#include <functional>
-
-#include "kademlia/id.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/message.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-///
-class response_dispatcher final
+void
+response_callbacks::push_callback
+    ( id const& message_id
+    , callback const& on_message_received )
 {
-public:
-    ///
-    using endpoint_type = ip_endpoint;
+    auto i = callbacks_.emplace( message_id, on_message_received );
+    assert( i.second && "an id can't be registered twice" );
+}
 
-    ///
-    using callback = std::function< void
-            ( endpoint_type const& sender
-            , header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e ) >;
+bool
+response_callbacks::remove_callback
+    ( id const& message_id )
+{ return callbacks_.erase( message_id ) > 0; }
 
-public:
-    /**
-     *
-     */
-    void
-    push_association
-        ( id const& message_id
-        , callback const& on_message_received );
+std::error_code
+response_callbacks::dispatch_response
+    ( endpoint_type const& sender
+    , header const& h
+    , buffer::const_iterator i
+    , buffer::const_iterator e )
+{
+    auto callback = callbacks_.find( h.random_token_ );
+    if ( callback == callbacks_.end() )
+        return make_error_code( UNASSOCIATED_MESSAGE_ID );
 
-    /**
-     *
-     */
-    bool
-    remove_association
-        ( id const& message_id );
+    callback->second( sender, h, i, e );
+    callbacks_.erase( callback );
 
-    /**
-     *
-     */
-    std::error_code
-    dispatch_message
-        ( endpoint_type const& sender
-        , header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e );
-
-private:
-    ///
-    using associations = std::map< id, callback >;
-
-private:
-    ///
-    associations associations_;
-};
+    return std::error_code{};
+}
 
 } // namespace detail
 } // namespace kademlia
-
-#endif
 

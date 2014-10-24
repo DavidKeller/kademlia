@@ -1086,9 +1086,9 @@ private:
             if ( failure )
                 on_error( failure );
             else
-                response_router_. register_temporary_association( response_id, timeout
-                                                                , on_response_received
-                                                                , on_error );
+                response_router_.register_temporary_callback( response_id, timeout
+                                                            , on_response_received
+                                                            , on_error );
         };
 
         // Serialize the request and send it.

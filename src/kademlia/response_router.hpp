@@ -27,7 +27,7 @@
 #define KADEMLIA_RESPONSE_ROUTER_HPP
 
 #include "kademlia/ip_endpoint.hpp"
-#include "kademlia/response_dispatcher.hpp"
+#include "kademlia/response_callbacks.hpp"
 #include "kademlia/timer.hpp"
 
 #ifdef _MSC_VER
@@ -53,7 +53,7 @@ public:
     explicit
     response_router
         ( boost::asio::io_service & io_service )
-            : response_dispatcher_()
+            : response_callbacks_()
             , timer_( io_service )
     { }
 
@@ -83,8 +83,8 @@ public:
         , buffer::const_iterator e )
     {
         // Try to forward the message to its associated callback.
-        auto failure = response_dispatcher_.dispatch_message( sender
-                                                            , h, i, e );
+        auto failure = response_callbacks_.dispatch_response( sender
+                                                             , h, i, e );
         if ( failure == UNASSOCIATED_MESSAGE_ID )
             // Unknown request or unassociated responses
             // are discarded.
@@ -97,33 +97,33 @@ public:
      */
     template< typename OnResponseReceived, typename OnError >
     void
-    register_temporary_association
+    register_temporary_callback
         ( id const& response_id
-        , timer::duration const& association_ttl
+        , timer::duration const& callback_ttl
         , OnResponseReceived const& on_response_received
         , OnError const& on_error )
     {
         auto on_timeout = [ this, on_error, response_id ]
             ( void )
         {
-            // If an association has been removed, that means
+            // If an callback has been removed, that means
             // the message has never been received
             // hence report the timeout to the client.
-            if ( response_dispatcher_.remove_association( response_id ) )
+            if ( response_callbacks_.remove_callback( response_id ) )
                 on_error( make_error_code( std::errc::timed_out ) );
         };
 
         // Associate the response id with the
         // on_response_received callback.
-        response_dispatcher_.push_association( response_id
-                                             , on_response_received );
+        response_callbacks_.push_callback( response_id
+                                            , on_response_received );
 
-        timer_.expires_from_now( association_ttl, on_timeout );
+        timer_.expires_from_now( callback_ttl, on_timeout );
     }
 
 private:
     ///
-    response_dispatcher response_dispatcher_;
+    response_callbacks response_callbacks_;
     ///
     timer timer_;
 };

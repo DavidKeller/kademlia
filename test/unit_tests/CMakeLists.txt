@@ -27,10 +27,10 @@
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 
 add_library(test_helpers_common STATIC
-    helpers/common.cpp 
+    helpers/common.cpp
     helpers/common.hpp)
 
-set_target_properties(test_helpers_common PROPERTIES 
+set_target_properties(test_helpers_common PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 macro(build_and_run_test source_file)
@@ -38,10 +38,10 @@ macro(build_and_run_test source_file)
     get_filename_component(test_name ${source_file} NAME_WE)
     add_executable(${test_name} ${source_file} ${ARG_UNPARSED_ARGUMENTS})
     target_link_libraries(${test_name}
-        test_helpers_common 
+        test_helpers_common
         ${ARG_LIBRARIES}
-        ${Boost_LIBRARIES} 
-        ${BOTAN_LIBRARIES} 
+        ${Boost_LIBRARIES}
+        ${BOTAN_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT})
     add_dependencies(check ${test_name})
     add_test(${test_name} ${test_name})
@@ -52,7 +52,7 @@ build_and_run_test(test_message.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_value_context.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_store_value_context.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_find_value_context.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_response_dispatcher.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_response_callbacks.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_timer.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_r.cpp LIBRARIES kademlia_static)

@@ -45,8 +45,9 @@ set(kademlia_sources
     message_serializer.hpp
     message_serializer.cpp
     message_socket.hpp
-    response_dispatcher.hpp
-    response_dispatcher.cpp
+    response_router.hpp
+    response_callbacks.hpp
+    response_callbacks.cpp
     routing_table.hpp
     value_context.hpp
     find_value_context.hpp
@@ -60,8 +61,8 @@ set(kademlia_sources
 add_library(kademlia SHARED
     ${kademlia_sources})
 
-set_target_properties(kademlia 
-    PROPERTIES 
+set_target_properties(kademlia
+    PROPERTIES
         MACOSX_RPATH ON
         COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
 
