@@ -44,10 +44,9 @@
 #include <kademlia/error.hpp>
 
 #include "kademlia/log.hpp"
-#include "kademlia/timer.hpp"
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/message_serializer.hpp"
-#include "kademlia/response_dispatcher.hpp"
+#include "kademlia/response_router.hpp"
 #include "kademlia/message_socket.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/routing_table.hpp"
@@ -102,8 +101,7 @@ public:
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
             , io_service_( io_service )
-            , response_dispatcher_{}
-            , timer_{ io_service_ }
+            , response_router_( io_service )
             , message_serializer_( my_id_ )
             , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
             , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
@@ -129,8 +127,7 @@ public:
             : random_engine_{ std::random_device{}() }
             , my_id_( random_engine_ )
             , io_service_( io_service )
-            , response_dispatcher_{}
-            , timer_{ io_service_ }
+            , response_router_( io_service )
             , message_serializer_( my_id_ )
             , socket_ipv4_{ message_socket_type::ipv4( io_service_, ipv4 ) }
             , socket_ipv6_{ message_socket_type::ipv6( io_service_, ipv6 ) }
@@ -376,29 +373,9 @@ private:
                 handle_find_value_request( sender, h, i, e );
                 break;
             default:
-                handle_new_response( sender, h, i, e );
+                response_router_.handle_new_response( sender, h, i, e );
                 break;
         }
-    }
-
-    /**
-     *
-     */
-    void
-    handle_new_response
-        ( endpoint_type const& sender
-        , header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e )
-    {
-        // Try to forward the message to its associated callback.
-        auto failure = response_dispatcher_.dispatch_message( sender
-                                                            , h, i, e );
-        if ( failure == UNASSOCIATED_MESSAGE_ID )
-            // Unknown request or unassociated responses
-            // are discarded.
-            LOG_DEBUG( engine, this ) << "dropping unknown request."
-                    << std::endl;
     }
 
     /**
@@ -1109,9 +1086,9 @@ private:
             if ( failure )
                 on_error( failure );
             else
-                register_temporary_association( response_id, timeout
-                                              , on_response_received
-                                              , on_error );
+                response_router_. register_temporary_association( response_id, timeout
+                                                                , on_response_received
+                                                                , on_error );
         };
 
         // Serialize the request and send it.
@@ -1152,35 +1129,6 @@ private:
     /**
      *
      */
-    template< typename OnResponseReceived, typename OnError >
-    void
-    register_temporary_association
-        ( id const& response_id
-        , timer::duration const& association_ttl
-        , OnResponseReceived const& on_response_received
-        , OnError const& on_error )
-    {
-        auto on_timeout = [ this, on_error, response_id ]
-            ( void )
-        {
-            // If an association has been removed, that means
-            // the message has never been received
-            // hence report the timeout to the client.
-            if ( response_dispatcher_.remove_association( response_id ) )
-                on_error( make_error_code( std::errc::timed_out ) );
-        };
-
-        // Associate the response id with the
-        // on_response_received callback.
-        response_dispatcher_.push_association( response_id
-                                             , on_response_received );
-
-        timer_.expires_from_now( association_ttl, on_timeout );
-    }
-
-    /**
-     *
-     */
     void
     execute_pending_tasks
         ( void )
@@ -1209,9 +1157,7 @@ private:
     ///
     boost::asio::io_service & io_service_;
     ///
-    response_dispatcher response_dispatcher_;
-    ///
-    timer timer_;
+    response_router response_router_;
     ///
     message_serializer message_serializer_;
     ///
