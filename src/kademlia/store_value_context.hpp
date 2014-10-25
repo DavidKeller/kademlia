@@ -30,9 +30,12 @@
 #   pragma once
 #endif
 
+#include <memory>
+#include <type_traits>
 #include <system_error>
 
 #include "kademlia/value_context.hpp"
+#include "kademlia/log.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -107,6 +110,32 @@ store_value_context< SaveHandlerType, DataType >::get_data
     ( void )
     const
 { return data_; }
+
+/**
+ *
+ */
+template< typename DataType, typename InitialPeerIterator, typename HandlerType >
+std::shared_ptr< store_value_context< typename std::remove_reference< HandlerType >::type
+                                    , DataType > >
+create_store_value_context
+    ( id const& key
+    , DataType const& data
+    , InitialPeerIterator i
+    , InitialPeerIterator e
+    , HandlerType && save_handler )
+{
+    LOG_DEBUG( store_value_context, nullptr ) << "create store value context for '"
+            << key << "' value(" << to_string( data )
+            << ")." << std::endl;
+
+    using handler_type = typename std::remove_reference< HandlerType >::type;
+    using context = store_value_context< handler_type, DataType >;
+
+    assert( "at least one peer is reported" && i != e );
+    return std::make_shared< context >( key, data, i, e
+                                      , std::forward< HandlerType >( save_handler ) );
+}
+
 
 } // namespace detail
 } // namespace kademlia

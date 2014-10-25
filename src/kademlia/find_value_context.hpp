@@ -31,8 +31,11 @@
 #endif
 
 #include <system_error>
+#include <memory>
+#include <type_traits>
 
 #include "kademlia/value_context.hpp"
+#include "kademlia/log.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -124,6 +127,28 @@ find_value_context< LoadHandlerType, DataType >::is_caller_notified
     ( void )
     const
 { return is_finished_; }
+
+/**
+ *
+ */
+template< typename DataType, typename InitialPeerIterator, typename HandlerType >
+std::shared_ptr< find_value_context< typename std::remove_reference< HandlerType >::type
+                                   , DataType > >
+create_find_value_context
+    ( id const& key
+    , InitialPeerIterator i
+    , InitialPeerIterator e
+    , HandlerType && load_handler )
+{
+    LOG_DEBUG( find_value_context, nullptr ) << "create find value context for '"
+            << key << "' value." << std::endl;
+
+    using handler_type = typename std::remove_reference< HandlerType >::type;
+    using context = find_value_context< handler_type, DataType >;
+
+    return std::make_shared< context >( key, i, e
+                                      , std::forward< HandlerType >( load_handler ) );
+}
 
 } // namespace detail
 } // namespace kademlia

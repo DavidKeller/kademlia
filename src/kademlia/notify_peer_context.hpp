@@ -49,6 +49,8 @@ public:
     notify_peer_context
         ( detail::id const & key
         , Iterator i, Iterator e );
+
+private:
 };
 
 template< typename Iterator >
@@ -58,6 +60,25 @@ notify_peer_context::notify_peer_context
     , Iterator i, Iterator e )
         : value_context( key, i, e )
 { }
+
+/**
+ *
+ */
+template< typename InitialPeerIterator >
+std::shared_ptr< notify_peer_context >
+create_notify_peer_context
+    ( id const& key
+    , InitialPeerIterator i
+    , InitialPeerIterator e )
+{
+    LOG_DEBUG( notify_peer_context, nullptr ) << "create find peer context for '"
+            << key << "' peer." << std::endl;
+
+    using context = notify_peer_context;
+
+    return std::make_shared< context >( key, i, e );
+}
+
 
 } // namespace detail
 } // namespace kademlia

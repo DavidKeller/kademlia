@@ -189,8 +189,10 @@ public:
             LOG_DEBUG( engine, this ) << "executing async save of key '"
                     << to_string( key ) << "'." << std::endl;
 
+            auto i = routing_table_.find( id( key ) ), e = routing_table_.end();
             auto c = create_store_value_context( id( key )
                                                , data
+                                               , i, e
                                                , std::forward< HandlerType >( handler ) );
             store_value( c );
         }
@@ -223,8 +225,10 @@ public:
             LOG_DEBUG( engine, this ) << "executing async load of key '"
                     << to_string( key ) << "'." << std::endl;
 
-            auto c = create_find_value_context( id( key )
-                                              , std::forward< HandlerType >( handler ) );
+            auto i = routing_table_.find( id( key ) ), e = routing_table_.end();
+            auto c = create_find_value_context< data_type >( id( key )
+                                                           , i, e
+                                                           , std::forward< HandlerType >( handler ) );
             find_value( c );
         }
     }
@@ -240,67 +244,6 @@ private:
     using pending_task_type = std::function< void ( void ) >;
 
 private:
-    /**
-     *
-     */
-    template< typename HandlerType >
-    std::shared_ptr< find_value_context< typename std::remove_reference< HandlerType >::type
-                                       , data_type > >
-    create_find_value_context
-        ( id const& key
-        , HandlerType && load_handler )
-    {
-        LOG_DEBUG( engine, this ) << "create find value context for '"
-                << key << "' value." << std::endl;
-
-        using handler_type = typename std::remove_reference< HandlerType >::type;
-        using context = find_value_context< handler_type, data_type >;
-
-        auto i = routing_table_.find( key ), e = routing_table_.end();
-        return std::make_shared< context >( key, i, e
-                                          , std::forward< HandlerType >( load_handler ) );
-    }
-
-    /**
-     *
-     */
-    std::shared_ptr< notify_peer_context >
-    create_notify_peer_context
-        ( id const& key )
-    {
-        LOG_DEBUG( engine, this ) << "create find peer context for '"
-                << key << "' peer." << std::endl;
-
-        using context = notify_peer_context;
-
-        auto i = routing_table_.find( key ), e = routing_table_.end();
-        return std::make_shared< context >( key, i, e );
-    }
-
-    /**
-     *
-     */
-    template< typename HandlerType >
-    std::shared_ptr< store_value_context< typename std::remove_reference< HandlerType >::type
-                                        , data_type > >
-    create_store_value_context
-        ( id const& key
-        , data_type const& data
-        , HandlerType && save_handler )
-    {
-        LOG_DEBUG( engine, this ) << "create store value context for '"
-                << key << "' value(" << to_string( data )
-                << ")." << std::endl;
-
-        using handler_type = typename std::remove_reference< HandlerType >::type;
-        using context = store_value_context< handler_type, data_type >;
-
-        auto i = routing_table_.find( key ), e = routing_table_.end();
-        assert( "at least one peer is reported" && i != e );
-        return std::make_shared< context >( key, data, i, e
-                                          , std::forward< HandlerType >( save_handler ) );
-    }
-
     /**
      *
      */
@@ -521,8 +464,7 @@ private:
             ( std::error_code const& )
         { search_ourselves( endpoints_to_query ); };
 
-        send_request( id{ random_engine_ }
-                    , find_peer_request_body{ my_id_ }
+        send_request( find_peer_request_body{ my_id_ }
                     , endpoint_to_query
                     , INITIAL_CONTACT_RECEIVE_TIMEOUT
                     , on_message_received
@@ -574,13 +516,14 @@ private:
     {
         id refresh_id = my_id_;
 
-        for ( std::size_t i = id::BIT_SIZE; i > 0; -- i)
+        for ( std::size_t j = id::BIT_SIZE; j > 0; -- j)
         {
             // Flip bit to select find peers in the current k_bucket.
-            id::reference bit = refresh_id[ i - 1 ];
+            id::reference bit = refresh_id[ j - 1 ];
             bit = ! bit;
 
-            auto c = create_notify_peer_context( refresh_id );
+            auto i = routing_table_.find( refresh_id ), e = routing_table_.end();
+            auto c = create_notify_peer_context( refresh_id, i, e );
 
             notify_neighbors( c );
         }
@@ -631,8 +574,7 @@ private:
             ( std::error_code const& )
         { context->flag_candidate_as_invalid( current_peer.id_ ); };
 
-        send_request( id{ random_engine_ }
-                    , request
+        send_request( request
                     , current_peer.endpoint_
                     , PEER_LOOKUP_TIMEOUT
                     , on_message_received
@@ -657,7 +599,7 @@ private:
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, this )
+            LOG_DEBUG( notify_peer_context, this )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
             return;
@@ -667,6 +609,7 @@ private:
         if ( context->are_these_candidates_closest( response.peers_ ) )
             notify_neighbors( context );
     }
+
     /**
      *
      */
@@ -730,8 +673,7 @@ private:
                 send_store_requests( context );
         };
 
-        send_request( id{ random_engine_ }
-                    , request
+        send_request( request
                     , current_candidate.endpoint_
                     , PEER_LOOKUP_TIMEOUT
                     , on_message_received
@@ -797,8 +739,7 @@ private:
             find_value( context );
         };
 
-        send_request( id{ random_engine_ }
-                    , request
+        send_request( request
                     , current_candidate.endpoint_
                     , PEER_LOOKUP_TIMEOUT
                     , on_message_received
@@ -972,9 +913,7 @@ private:
 
         store_value_request_body const request{ context->get_key()
                                               , context->get_data() };
-        send_request( id{ random_engine_ }
-                    , request
-                    , current_candidate.endpoint_ );
+        send_request( request, current_candidate.endpoint_ );
     }
 
     /**
@@ -1018,13 +957,13 @@ private:
     template< typename Request, typename OnResponseReceived, typename OnError >
     void
     send_request
-        ( id const& response_id
-        , Request const& request
+        ( Request const& request
         , endpoint_type const& e
         , timer::duration const& timeout
         , OnResponseReceived const& on_response_received
         , OnError const& on_error )
     {
+        id const response_id( random_engine_ );
         // Generate the request buffer.
         auto message = message_serializer_.serialize( request, response_id );
 
@@ -1052,10 +991,12 @@ private:
     template< typename Request >
     void
     send_request
-        ( id const& response_id
-        , Request const& request
+        ( Request const& request
         , endpoint_type const& e )
-    { send_response( response_id, request, e ); }
+    {
+        id const response_id( random_engine_ );
+        send_response( response_id, request, e );
+    }
 
     /**
      *
