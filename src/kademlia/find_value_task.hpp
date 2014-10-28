@@ -45,7 +45,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-template< typename LoadHandlerType, typename CoreType, typename DataType >
+template< typename LoadHandlerType, typename TrackerType, typename DataType >
 class find_value_task final
     : public value_task
 {
@@ -54,7 +54,7 @@ public:
     using load_handler_type = LoadHandlerType;
 
     ///
-    using core_type = CoreType;
+    using tracker_type = TrackerType;
 
     ///
     using data_type = DataType;
@@ -67,15 +67,15 @@ public:
     static void
     start
         ( detail::id const & key
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table
         , load_handler_type handler )
     {
         std::shared_ptr< find_value_task > c;
         c.reset( new find_value_task( key
-                                       , core
-                                       , routing_table
-                                       , std::move( handler ) ) );
+                                    , tracker
+                                    , routing_table
+                                    , std::move( handler ) ) );
 
         find_value( c );
     }
@@ -87,13 +87,13 @@ private:
     template< typename RoutingTableType >
     find_value_task
         ( id const & searched_key
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table
         , load_handler_type load_handler )
             : value_task( searched_key
                            , routing_table.find( searched_key )
                            , routing_table.end() )
-            , core_( core )
+            , tracker_( tracker )
             , load_handler_( std::move( load_handler ) )
             , is_finished_()
     {
@@ -190,7 +190,7 @@ private:
             find_value( task );
         };
 
-        task->core_.send_request( request
+        task->tracker_.send_request( request
                                    , current_candidate.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -283,7 +283,7 @@ private:
 
 private:
     ///
-    core_type & core_;
+    tracker_type & tracker_;
     ///
     load_handler_type load_handler_;
     ///
@@ -294,21 +294,21 @@ private:
  *
  */
 template< typename DataType
-        , typename CoreType
+        , typename TrackerType
         , typename RoutingTableType
         , typename HandlerType >
 void
 start_find_value_task
     ( id const& key
-    , CoreType & core
+    , TrackerType & tracker
     , RoutingTableType & routing_table
     , HandlerType && handler )
 {
     using handler_type = typename std::remove_reference< HandlerType >::type;
-    using task = find_value_task< handler_type, CoreType, DataType >;
+    using task = find_value_task< handler_type, TrackerType, DataType >;
 
-    task::start( key, core, routing_table
-                  , std::forward< HandlerType >( handler ) );
+    task::start( key, tracker, routing_table
+               , std::forward< HandlerType >( handler ) );
 }
 
 } // namespace detail

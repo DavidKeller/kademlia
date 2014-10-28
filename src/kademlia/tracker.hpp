@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_CORE_HPP
-#define KADEMLIA_CORE_HPP
+#ifndef KADEMLIA_TRACKER_HPP
+#define KADEMLIA_TRACKER_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -46,7 +46,7 @@ namespace detail {
  *
  */
 template< typename RandomEngineType, typename NetworkType >
-class core final
+class tracker final
 {
 public:
     ///
@@ -62,7 +62,7 @@ public:
     /**
      *
      */
-    core
+    tracker
         ( boost::asio::io_service & io_service
         , id const& my_id
         , network_type & network
@@ -76,16 +76,16 @@ public:
     /**
      *
      */
-    core
-        ( core const& )
+    tracker
+        ( tracker const& )
         = delete;
 
     /**
      *
      */
-    core &
+    tracker &
     operator=
-        ( core const& )
+        ( tracker const& )
         = delete;
 
     /**

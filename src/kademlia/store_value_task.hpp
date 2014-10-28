@@ -43,7 +43,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-template< typename SaveHandlerType, typename CoreType, typename DataType >
+template< typename SaveHandlerType, typename TrackerType, typename DataType >
 class store_value_task final
     : public value_task
 {
@@ -52,7 +52,7 @@ public:
     using save_handler_type = SaveHandlerType;
 
     ///
-    using core_type = CoreType;
+    using tracker_type = TrackerType;
 
     ///
     using data_type = DataType;
@@ -66,16 +66,16 @@ public:
     start
         ( detail::id const & key
         , data_type const& data
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table
         , save_handler_type handler )
     {
         std::shared_ptr< store_value_task > c;
         c.reset( new store_value_task( key
-                                        , data
-                                        , core
-                                        , routing_table
-                                        , std::move( handler ) ) );
+                                     , data
+                                     , tracker
+                                     , routing_table
+                                     , std::move( handler ) ) );
 
         store_value( c );
     }
@@ -88,13 +88,13 @@ private:
     store_value_task
         ( detail::id const & key
         , data_type const& data
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table
         , HandlerType && save_handler )
             : value_task( key
-                           , routing_table.find( key )
-                           , routing_table.end() )
-            , core_( core )
+                        , routing_table.find( key )
+                        , routing_table.end() )
+            , tracker_( tracker )
             , data_( data )
             , save_handler_( std::forward< HandlerType >( save_handler ) )
     {
@@ -184,7 +184,7 @@ private:
                 send_store_requests( task );
         };
 
-        task->core_.send_request( request
+        task->tracker_.send_request( request
                                    , current_candidate.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -270,12 +270,12 @@ private:
 
         store_value_request_body const request{ task->get_key()
                                               , task->get_data() };
-        task->core_.send_request( request, current_candidate.endpoint_ );
+        task->tracker_.send_request( request, current_candidate.endpoint_ );
     }
 
 private:
     ///
-    core_type & core_;
+    tracker_type & tracker_;
     ///
     data_type data_;
     ///
@@ -286,21 +286,21 @@ private:
  *
  */
 template< typename DataType
-        , typename CoreType
+        , typename TrackerType
         , typename RoutingTableType
         , typename HandlerType >
 void
 start_store_value_task
     ( id const& key
     , DataType const& data
-    , CoreType & core
+    , TrackerType & tracker
     , RoutingTableType & routing_table
     , HandlerType && save_handler )
 {
     using handler_type = typename std::remove_reference< HandlerType >::type;
-    using task = store_value_task< handler_type, CoreType, DataType >;
+    using task = store_value_task< handler_type, TrackerType, DataType >;
 
-    task::start( key, data, core, routing_table
+    task::start( key, data, tracker, routing_table
                , std::forward< HandlerType >( save_handler ) );
 }
 

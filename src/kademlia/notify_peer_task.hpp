@@ -35,23 +35,23 @@
 
 #include "kademlia/value_task.hpp"
 #include "kademlia/message.hpp"
-#include "kademlia/core.hpp"
+#include "kademlia/tracker.hpp"
 #include "kademlia/constants.hpp"
 
 namespace kademlia {
 namespace detail {
 
 ///
-template< typename CoreType >
+template< typename TrackerType >
 class notify_peer_task final
     : public value_task
 {
 public:
     ///
-    using core_type = CoreType;
+    using tracker_type = TrackerType;
 
     ///
-    using endpoint_type = typename core_type::endpoint_type;
+    using endpoint_type = typename tracker_type::endpoint_type;
 
 public:
     /**
@@ -61,11 +61,11 @@ public:
     static void
     start
         ( detail::id const & key
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table )
     {
         std::shared_ptr< notify_peer_task > c;
-        c.reset( new notify_peer_task( key, core, routing_table ) );
+        c.reset( new notify_peer_task( key, tracker, routing_table ) );
 
         notify_neighbors( c );
     }
@@ -77,12 +77,12 @@ private:
     template< typename RoutingTableType >
     notify_peer_task
         ( detail::id const & key
-        , core_type & core
+        , tracker_type & tracker
         , RoutingTableType & routing_table )
             : value_task( key
                            , routing_table.find( key )
                            , routing_table.end() )
-            , core_( core )
+            , tracker_( tracker )
     {
         LOG_DEBUG( notify_peer_task, this )
                 << "create find peer task for '"
@@ -136,7 +136,7 @@ private:
             ( std::error_code const& )
         { task->flag_candidate_as_invalid( current_peer.id_ ); };
 
-        task->core_.send_request( request
+        task->tracker_.send_request( request
                                    , current_peer.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -175,22 +175,22 @@ private:
 
 private:
     ///
-    core_type & core_;
+    tracker_type & tracker_;
 };
 
 /**
  *
  */
-template< typename CoreType, typename RoutingTableType >
+template< typename TrackerType, typename RoutingTableType >
 void
 start_notify_peer_task
     ( id const& key
-    , CoreType & core
+    , TrackerType & tracker
     , RoutingTableType & routing_table )
 {
-    using task = notify_peer_task< CoreType >;
+    using task = notify_peer_task< TrackerType >;
 
-    task::start( key, core, routing_table );
+    task::start( key, tracker, routing_table );
 }
 
 } // namespace detail

@@ -24,40 +24,41 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set(kademlia_sources
-    ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
-    session.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
-    endpoint.cpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
-    engine.hpp
-    error.cpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
     boost_to_std_error.hpp
-    id.hpp
-    id.cpp
-    log.hpp
-    log.cpp
-    ip_endpoint.hpp
-    ip_endpoint.cpp
-    peer.hpp
-    peer.cpp
-    message.hpp
-    message.cpp
-    message_serializer.hpp
-    message_serializer.cpp
-    message_socket.hpp
-    response_router.hpp
-    response_callbacks.hpp
-    response_callbacks.cpp
-    routing_table.hpp
-    value_task.hpp
-    find_value_task.hpp
-    store_value_task.hpp
+    buffer.hpp
     concurrent_guard.hpp
     constants.hpp
-    timer.hpp
+    endpoint.cpp
+    engine.hpp
+    error.cpp
+    find_value_task.hpp
+    id.cpp
+    id.hpp
+    ip_endpoint.cpp
+    ip_endpoint.hpp
+    log.cpp
+    log.hpp
+    message.cpp
+    message.hpp
+    message_serializer.cpp
+    message_serializer.hpp
+    message_socket.hpp
+    peer.cpp
+    peer.hpp
+    response_callbacks.cpp
+    response_callbacks.hpp
+    response_router.hpp
+    routing_table.hpp
+    session.cpp
+    store_value_task.hpp
     timer.cpp
+    timer.hpp
+    tracker.hpp
     value_store.hpp
-    buffer.hpp)
+    value_task.hpp)
 
 add_library(kademlia SHARED
     ${kademlia_sources})

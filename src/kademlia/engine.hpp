@@ -55,7 +55,7 @@
 #include "kademlia/find_value_task.hpp"
 #include "kademlia/store_value_task.hpp"
 #include "kademlia/notify_peer_task.hpp"
-#include "kademlia/core.hpp"
+#include "kademlia/tracker.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -98,10 +98,10 @@ public:
                                  , std::placeholders::_1
                                  , std::placeholders::_2
                                  , std::placeholders::_3 ) )
-            , core_( io_service
-                   , my_id_
-                   , network_
-                   , random_engine_ )
+            , tracker_( io_service
+                      , my_id_
+                      , network_
+                      , random_engine_ )
             , routing_table_( my_id_ )
             , value_store_()
             , is_connected_()
@@ -124,10 +124,10 @@ public:
                                  , std::placeholders::_1
                                  , std::placeholders::_2
                                  , std::placeholders::_3 ) )
-            , core_( io_service
-                   , my_id_
-                   , network_
-                   , random_engine_ )
+            , tracker_( io_service
+                      , my_id_
+                      , network_
+                      , random_engine_ )
             , routing_table_( my_id_ )
             , value_store_()
             , is_connected_()
@@ -184,7 +184,7 @@ public:
 
             start_store_value_task( id( key )
                                   , data
-                                  , core_
+                                  , tracker_
                                   , routing_table_
                                   , std::forward< HandlerType >( handler ) );
         }
@@ -218,7 +218,7 @@ public:
                     << to_string( key ) << "'." << std::endl;
 
             start_find_value_task< data_type >( id( key )
-                                              , core_
+                                              , tracker_
                                               , routing_table_
                                               , std::forward< HandlerType >( handler ) );
         }
@@ -232,7 +232,7 @@ private:
     using network_type = network< UnderlyingSocketType >;
 
     ///
-    using core_type = core< std::default_random_engine, network_type >;
+    using tracker_type = tracker< std::default_random_engine, network_type >;
 
 private:
     /**
@@ -260,7 +260,7 @@ private:
                 handle_find_value_request( sender, h, i, e );
                 break;
             default:
-                core_.handle_new_response( sender, h, i, e );
+                tracker_.handle_new_response( sender, h, i, e );
                 break;
         }
     }
@@ -275,9 +275,9 @@ private:
     {
         LOG_DEBUG( engine, this ) << "handling ping request." << std::endl;
 
-        core_.send_response( h.random_token_
-                           , header::PING_RESPONSE
-                           , sender );
+        tracker_.send_response( h.random_token_
+                              , header::PING_RESPONSE
+                              , sender );
     }
 
     /**
@@ -357,7 +357,7 @@ private:
             response.peers_.push_back( { i->first, i->second } );
 
         // Now send the response.
-        core_.send_response( random_token, response, sender );
+        tracker_.send_response( random_token, response, sender );
     }
 
     /**
@@ -391,9 +391,9 @@ private:
         else
         {
             find_value_response_body const response{ found->second };
-            core_.send_response( h.random_token_
-                               , response
-                               , sender );
+            tracker_.send_response( h.random_token_
+                                  , response
+                                  , sender );
         }
     }
 
@@ -440,11 +440,11 @@ private:
             ( std::error_code const& )
         { search_ourselves( endpoints_to_query ); };
 
-        core_.send_request( find_peer_request_body{ my_id_ }
-                          , endpoint_to_query
-                          , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                          , on_message_received
-                          , on_error );
+        tracker_.send_request( find_peer_request_body{ my_id_ }
+                             , endpoint_to_query
+                             , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                             , on_message_received
+                             , on_error );
     }
 
     /**
@@ -498,7 +498,7 @@ private:
             id::reference bit = refresh_id[ j - 1 ];
             bit = ! bit;
 
-            start_notify_peer_task( refresh_id, core_, routing_table_ );
+            start_notify_peer_task( refresh_id, tracker_, routing_table_ );
         }
     }
 
@@ -564,7 +564,7 @@ private:
     ///
     network_type network_;
     ///
-    core_type core_;
+    tracker_type tracker_;
     ///
     routing_table_type routing_table_;
     ///
