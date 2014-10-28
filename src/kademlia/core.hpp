@@ -37,25 +37,10 @@
 #include "kademlia/message.hpp"
 #include "kademlia/routing_table.hpp"
 #include "kademlia/value_store.hpp"
+#include "kademlia/constants.hpp"
 
 namespace kademlia {
 namespace detail {
-
-namespace {
-
-// k
-CXX11_CONSTEXPR std::size_t const ROUTING_TABLE_BUCKET_SIZE{ 20 };
-// a
-CXX11_CONSTEXPR std::size_t const CONCURRENT_FIND_PEER_REQUESTS_COUNT{ 3 };
-// c
-CXX11_CONSTEXPR std::size_t const REDUNDANT_SAVE_COUNT{ 3 };
-
-//
-CXX11_CONSTEXPR std::chrono::milliseconds const INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
-//
-CXX11_CONSTEXPR std::chrono::milliseconds const PEER_LOOKUP_TIMEOUT{ 20 };
-
-} // anonymous namespace
 
 /**
  *

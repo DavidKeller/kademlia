@@ -36,6 +36,7 @@
 #include "kademlia/value_context.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/core.hpp"
+#include "kademlia/constants.hpp"
 
 namespace kademlia {
 namespace detail {
