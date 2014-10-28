@@ -30,55 +30,167 @@
 #   pragma once
 #endif
 
+#include <memory>
 #include <system_error>
 
 #include "kademlia/value_context.hpp"
+#include "kademlia/message.hpp"
+#include "kademlia/core.hpp"
 
 namespace kademlia {
 namespace detail {
 
 ///
+template< typename CoreType >
 class notify_peer_context final
     : public value_context
 {
 public:
+    ///
+    using core_type = CoreType;
+
+    ///
+    using endpoint_type = typename core_type::endpoint_type;
+
+public:
     /**
      *
      */
-    template< typename Iterator >
-    notify_peer_context
+    template< typename RoutingTableType >
+    static void
+    start
         ( detail::id const & key
-        , Iterator i, Iterator e );
+        , core_type & core
+        , RoutingTableType & routing_table )
+    {
+        std::shared_ptr< notify_peer_context > c;
+        c.reset( new notify_peer_context( key, core, routing_table ) );
+
+        notify_neighbors( c );
+    }
 
 private:
-};
+    /**
+     *
+     */
+    template< typename RoutingTableType >
+    notify_peer_context
+        ( detail::id const & key
+        , core_type & core
+        , RoutingTableType & routing_table )
+            : value_context( key
+                           , routing_table.find( key )
+                           , routing_table.end() )
+            , core_( core )
+    {
+        LOG_DEBUG( notify_peer_context, this )
+                << "create find peer context for '"
+                << key << "' peer." << std::endl;
+    }
 
-template< typename Iterator >
-inline
-notify_peer_context::notify_peer_context
-    ( detail::id const & key
-    , Iterator i, Iterator e )
-        : value_context( key, i, e )
-{ }
+    /**
+     *
+     */
+    static void
+    notify_neighbors
+        ( std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( notify_peer_context, context.get() )
+                << "sending find peer to notify '"
+                << context->get_key() << "' owner bucket." << std::endl;
+
+        find_peer_request_body const request{ context->get_key() };
+
+        auto const closest_peers = context->select_new_closest_candidates
+                ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
+
+        for ( auto const& c : closest_peers )
+            send_notify_peer_request( request, c, context );
+    }
+
+    /**
+     *
+     */
+    static void
+    send_notify_peer_request
+        ( find_peer_request_body const& request
+        , peer const& current_peer
+        , std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( notify_peer_context, context.get() )
+                << "sending find peer to notify to '"
+                << current_peer << "'." << std::endl;
+
+        auto on_message_received = [ context, current_peer ]
+            ( endpoint_type const& s
+            , header const& h
+            , buffer::const_iterator i
+            , buffer::const_iterator e )
+        {
+            context->flag_candidate_as_valid( current_peer.id_ );
+            handle_notify_peer_response( s, h, i, e, context );
+        };
+
+        auto on_error = [ context, current_peer ]
+            ( std::error_code const& )
+        { context->flag_candidate_as_invalid( current_peer.id_ ); };
+
+        context->core_.send_request( request
+                                   , current_peer.endpoint_
+                                   , PEER_LOOKUP_TIMEOUT
+                                   , on_message_received
+                                   , on_error );
+    }
+
+    /**
+     *
+     */
+    static void
+    handle_notify_peer_response
+        ( endpoint_type const& s
+        , header const& h
+        , buffer::const_iterator i
+        , buffer::const_iterator e
+        , std::shared_ptr< notify_peer_context > context )
+    {
+        LOG_DEBUG( notify_peer_context, context.get() )
+                << "handle notify peer response from '" << s
+                << "'." << std::endl;
+
+        assert( h.type_ == header::FIND_PEER_RESPONSE );
+        find_peer_response_body response;
+        if ( auto failure = deserialize( i, e, response ) )
+        {
+            LOG_DEBUG( notify_peer_context, &context )
+                    << "failed to deserialize find peer response ("
+                    << failure.message() << ")" << std::endl;
+            return;
+        }
+
+        // If new candidate have been discovered, ask them.
+        if ( context->are_these_candidates_closest( response.peers_ ) )
+            notify_neighbors( context );
+    }
+
+private:
+    ///
+    core_type & core_;
+};
 
 /**
  *
  */
-template< typename InitialPeerIterator >
-std::shared_ptr< notify_peer_context >
-create_notify_peer_context
+template< typename CoreType, typename RoutingTableType >
+void
+start_notify_peer_task
     ( id const& key
-    , InitialPeerIterator i
-    , InitialPeerIterator e )
+    , CoreType & core
+    , RoutingTableType & routing_table )
 {
-    LOG_DEBUG( notify_peer_context, nullptr ) << "create find peer context for '"
-            << key << "' peer." << std::endl;
+    using context = notify_peer_context< CoreType >;
 
-    using context = notify_peer_context;
-
-    return std::make_shared< context >( key, i, e );
+    context::start( key, core, routing_table );
 }
-
 
 } // namespace detail
 } // namespace kademlia

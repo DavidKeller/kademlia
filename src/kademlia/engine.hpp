@@ -54,26 +54,11 @@
 #include "kademlia/value_store.hpp"
 #include "kademlia/find_value_context.hpp"
 #include "kademlia/store_value_context.hpp"
+#include "kademlia/core.hpp"
 #include "kademlia/notify_peer_context.hpp"
 
 namespace kademlia {
 namespace detail {
-
-namespace {
-
-// k
-CXX11_CONSTEXPR std::size_t ROUTING_TABLE_BUCKET_SIZE{ 20 };
-// a
-CXX11_CONSTEXPR std::size_t CONCURRENT_FIND_PEER_REQUESTS_COUNT{ 3 };
-// c
-CXX11_CONSTEXPR std::size_t REDUNDANT_SAVE_COUNT{ 3 };
-
-//
-CXX11_CONSTEXPR std::chrono::milliseconds INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
-//
-CXX11_CONSTEXPR std::chrono::milliseconds PEER_LOOKUP_TIMEOUT{ 20 };
-
-} // anonymous namespace
 
 /**
  *
@@ -89,7 +74,13 @@ public:
     using data_type = DataType;
 
     ///
-    using network_type = network< UnderlyingSocketType >;
+    using endpoint_type = ip_endpoint;
+
+    ///
+    using routing_table_type = routing_table< endpoint_type >;
+
+    ///
+    using value_store_type = value_store< id, data_type >;
 
 public:
     /**
@@ -99,17 +90,18 @@ public:
         ( boost::asio::io_service & io_service
         , endpoint const& ipv4
         , endpoint const& ipv6 )
-            : random_engine_( std::random_device{}() )
+            : random_engine_()
             , my_id_( random_engine_ )
-            , io_service_( io_service )
-            , response_router_( io_service )
-            , message_serializer_( my_id_ )
             , network_( io_service, ipv4, ipv6
                       , std::bind( &engine::handle_new_message
                                  , this
                                  , std::placeholders::_1
                                  , std::placeholders::_2
                                  , std::placeholders::_3 ) )
+            , core_( io_service
+                   , my_id_
+                   , network_
+                   , random_engine_ )
             , routing_table_( my_id_ )
             , value_store_()
             , is_connected_()
@@ -124,17 +116,18 @@ public:
         , endpoint const& initial_peer
         , endpoint const& ipv4
         , endpoint const& ipv6 )
-            : random_engine_( std::random_device{}() )
+            : random_engine_()
             , my_id_( random_engine_ )
-            , io_service_( io_service )
-            , response_router_( io_service )
-            , message_serializer_( my_id_ )
             , network_( io_service, ipv4, ipv6
                       , std::bind( &engine::handle_new_message
                                  , this
                                  , std::placeholders::_1
                                  , std::placeholders::_2
                                  , std::placeholders::_3 ) )
+            , core_( io_service
+                   , my_id_
+                   , network_
+                   , random_engine_ )
             , routing_table_( my_id_ )
             , value_store_()
             , is_connected_()
@@ -189,7 +182,8 @@ public:
             LOG_DEBUG( engine, this ) << "executing async save of key '"
                     << to_string( key ) << "'." << std::endl;
 
-            auto i = routing_table_.find( id( key ) ), e = routing_table_.end();
+            auto i = routing_table_.find( id( key ) )
+               , e = routing_table_.end();
             auto c = create_store_value_context( id( key )
                                                , data
                                                , i, e
@@ -225,7 +219,8 @@ public:
             LOG_DEBUG( engine, this ) << "executing async load of key '"
                     << to_string( key ) << "'." << std::endl;
 
-            auto i = routing_table_.find( id( key ) ), e = routing_table_.end();
+            auto i = routing_table_.find( id( key ) )
+               , e = routing_table_.end();
             auto c = create_find_value_context< data_type >( id( key )
                                                            , i, e
                                                            , std::forward< HandlerType >( handler ) );
@@ -235,13 +230,13 @@ public:
 
 private:
     ///
-    using endpoint_type = ip_endpoint;
-
-    ///
-    using routing_table_type = routing_table< endpoint_type >;
-
-    ///
     using pending_task_type = std::function< void ( void ) >;
+
+    ///
+    using network_type = network< UnderlyingSocketType >;
+
+    ///
+    using core_type = core< std::default_random_engine, network_type >;
 
 private:
     /**
@@ -249,7 +244,7 @@ private:
      */
     void
     process_new_message
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -269,7 +264,7 @@ private:
                 handle_find_value_request( sender, h, i, e );
                 break;
             default:
-                response_router_.handle_new_response( sender, h, i, e );
+                core_.handle_new_response( sender, h, i, e );
                 break;
         }
     }
@@ -278,30 +273,15 @@ private:
      *
      */
     void
-    add_peer_to_routing_table
-        ( id const& peer_id
-        , endpoint_type const& peer_endpoint )
-    {
-        LOG_DEBUG( engine, this ) << "adding '"
-                << peer_id << "@" << peer_endpoint
-                << "'." << std::endl;
-
-        routing_table_.push( peer_id, peer_endpoint );
-    }
-
-    /**
-     *
-     */
-    void
     handle_ping_request
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , header const& h )
     {
         LOG_DEBUG( engine, this ) << "handling ping request." << std::endl;
 
-        send_response( h.random_token_
-                     , header::PING_RESPONSE
-                     , sender );
+        core_.send_response( h.random_token_
+                           , header::PING_RESPONSE
+                           , sender );
     }
 
     /**
@@ -309,7 +289,7 @@ private:
      */
     void
     handle_store_request
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -336,7 +316,7 @@ private:
      */
     void
     handle_find_peer_request
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -365,7 +345,7 @@ private:
      */
     void
     send_find_peer_response
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , id const& random_token
         , id const& peer_to_find_id )
     {
@@ -381,7 +361,7 @@ private:
             response.peers_.push_back( { i->first, i->second } );
 
         // Now send the response.
-        send_response( random_token, response, sender );
+        core_.send_response( random_token, response, sender );
     }
 
     /**
@@ -389,7 +369,7 @@ private:
      */
     void
     handle_find_value_request
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -415,9 +395,9 @@ private:
         else
         {
             find_value_response_body const response{ found->second };
-            send_response( h.random_token_
-                         , response
-                         , sender );
+            core_.send_response( h.random_token_
+                               , response
+                               , sender );
         }
     }
 
@@ -453,7 +433,7 @@ private:
 
         // On message received, process it.
         auto on_message_received = [ this ]
-            ( endpoint_type const& s
+            ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
@@ -464,11 +444,11 @@ private:
             ( std::error_code const& )
         { search_ourselves( endpoints_to_query ); };
 
-        send_request( find_peer_request_body{ my_id_ }
-                    , endpoint_to_query
-                    , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                    , on_message_received
-                    , on_error );
+        core_.send_request( find_peer_request_body{ my_id_ }
+                          , endpoint_to_query
+                          , INITIAL_CONTACT_RECEIVE_TIMEOUT
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -476,7 +456,7 @@ private:
      */
     void
     handle_initial_contact_response
-        ( endpoint_type const& s
+        ( ip_endpoint const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
@@ -499,7 +479,7 @@ private:
 
         // Add discovered peers.
         for ( auto const& peer : response.peers_ )
-            add_peer_to_routing_table( peer.id_, peer.endpoint_ );
+            routing_table_.push( peer.id_, peer.endpoint_ );
 
         notify_neighbors();
 
@@ -522,92 +502,8 @@ private:
             id::reference bit = refresh_id[ j - 1 ];
             bit = ! bit;
 
-            auto i = routing_table_.find( refresh_id ), e = routing_table_.end();
-            auto c = create_notify_peer_context( refresh_id, i, e );
-
-            notify_neighbors( c );
+            start_notify_peer_task( refresh_id, core_, routing_table_ );
         }
-    }
-
-    /**
-     *
-     */
-    void
-    notify_neighbors
-        ( std::shared_ptr< notify_peer_context > context )
-    {
-        LOG_DEBUG( engine, this ) << "sending find peer to notify '"
-                << context->get_key() << "' owner bucket." << std::endl;
-
-        find_peer_request_body const request{ context->get_key() };
-
-        auto const closest_peers = context->select_new_closest_candidates
-                ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
-
-        for ( auto const& c : closest_peers )
-            send_notify_peer_request( request, c, context );
-    }
-
-    /**
-     *
-     */
-    void
-    send_notify_peer_request
-        ( find_peer_request_body const& request
-        , peer const& current_peer
-        , std::shared_ptr< notify_peer_context > context )
-    {
-        LOG_DEBUG( engine, this ) << "sending find peer to notify to '"
-                << current_peer << "'." << std::endl;
-
-        auto on_message_received = [ this, context, current_peer ]
-            ( endpoint_type const& s
-            , header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e )
-        {
-            context->flag_candidate_as_valid( current_peer.id_ );
-            handle_notify_peer_response( s, h, i, e, context );
-        };
-
-        auto on_error = [ this, context, current_peer ]
-            ( std::error_code const& )
-        { context->flag_candidate_as_invalid( current_peer.id_ ); };
-
-        send_request( request
-                    , current_peer.endpoint_
-                    , PEER_LOOKUP_TIMEOUT
-                    , on_message_received
-                    , on_error );
-    }
-
-    /**
-     *
-     */
-    void
-    handle_notify_peer_response
-        ( endpoint_type const& s
-        , header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e
-        , std::shared_ptr< notify_peer_context > context )
-    {
-        LOG_DEBUG( engine, this ) << "handle notify peer response from '"
-                << s << "'." << std::endl;
-
-        assert( h.type_ == header::FIND_PEER_RESPONSE );
-        find_peer_response_body response;
-        if ( auto failure = deserialize( i, e, response ) )
-        {
-            LOG_DEBUG( notify_peer_context, this )
-                    << "failed to deserialize find peer response ("
-                    << failure.message() << ")" << std::endl;
-            return;
-        }
-
-        // If new candidate have been discovered, ask them.
-        if ( context->are_these_candidates_closest( response.peers_ ) )
-            notify_neighbors( context );
     }
 
     /**
@@ -648,7 +544,7 @@ private:
 
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
-            ( endpoint_type const& s
+            ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
@@ -673,11 +569,11 @@ private:
                 send_store_requests( context );
         };
 
-        send_request( request
-                    , current_candidate.endpoint_
-                    , PEER_LOOKUP_TIMEOUT
-                    , on_message_received
-                    , on_error );
+        core_.send_request( request
+                          , current_candidate.endpoint_
+                          , PEER_LOOKUP_TIMEOUT
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -715,7 +611,7 @@ private:
 
         // On message received, process it.
         auto on_message_received = [ this, context, current_candidate ]
-            ( endpoint_type const& s
+            ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
@@ -739,11 +635,11 @@ private:
             find_value( context );
         };
 
-        send_request( request
-                    , current_candidate.endpoint_
-                    , PEER_LOOKUP_TIMEOUT
-                    , on_message_received
-                    , on_error );
+        core_.send_request( request
+                          , current_candidate.endpoint_
+                          , PEER_LOOKUP_TIMEOUT
+                          , on_message_received
+                          , on_error );
     }
 
     /**
@@ -753,7 +649,7 @@ private:
     template< typename HandlerType >
     void
     handle_find_value_response
-        ( endpoint_type const& s
+        ( ip_endpoint const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
@@ -839,7 +735,7 @@ private:
     template< typename HandlerType >
     void
     handle_find_peer_to_store_response
-        ( endpoint_type const& s
+        ( ip_endpoint const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
@@ -913,7 +809,7 @@ private:
 
         store_value_request_body const request{ context->get_key()
                                               , context->get_data() };
-        send_request( request, current_candidate.endpoint_ );
+        core_.send_request( request, current_candidate.endpoint_ );
     }
 
     /**
@@ -921,7 +817,7 @@ private:
      */
     void
     handle_new_message
-        ( endpoint_type const& sender
+        ( ip_endpoint const& sender
         , buffer::const_iterator i
         , buffer::const_iterator e  )
     {
@@ -938,7 +834,7 @@ private:
             return;
         }
 
-        add_peer_to_routing_table( h.source_id_, sender );
+        routing_table_.push( h.source_id_, sender );
 
         process_new_message( sender, h, i, e );
 
@@ -949,72 +845,6 @@ private:
             is_connected_ = true;
             execute_pending_tasks();
         }
-    }
-
-    /**
-     *
-     */
-    template< typename Request, typename OnResponseReceived, typename OnError >
-    void
-    send_request
-        ( Request const& request
-        , endpoint_type const& e
-        , timer::duration const& timeout
-        , OnResponseReceived const& on_response_received
-        , OnError const& on_error )
-    {
-        id const response_id( random_engine_ );
-        // Generate the request buffer.
-        auto message = message_serializer_.serialize( request, response_id );
-
-        // This lamba will keep the request message alive.
-        auto on_request_sent = [ this, response_id
-                               , on_response_received, on_error
-                               , timeout ]
-            ( std::error_code const& failure )
-        {
-            if ( failure )
-                on_error( failure );
-            else
-                response_router_.register_temporary_callback( response_id, timeout
-                                                            , on_response_received
-                                                            , on_error );
-        };
-
-        // Serialize the request and send it.
-        network_.send( message, e, on_request_sent );
-    }
-
-    /**
-     *
-     */
-    template< typename Request >
-    void
-    send_request
-        ( Request const& request
-        , endpoint_type const& e )
-    {
-        id const response_id( random_engine_ );
-        send_response( response_id, request, e );
-    }
-
-    /**
-     *
-     */
-    template< typename Response >
-    void
-    send_response
-        ( id const& response_id
-        , Response const& response
-        , endpoint_type const& e )
-    {
-        auto message = message_serializer_.serialize( response, response_id );
-
-        auto on_response_sent = []
-            ( std::error_code const& /* failure */ )
-        { };
-
-        network_.send( message, e, on_response_sent );
     }
 
     /**
@@ -1031,11 +861,7 @@ private:
         // while the initial peer was contacted.
         while ( ! pending_tasks_.empty() )
         {
-#if 0
-            io_service_.post( std::move( pending_tasks_.front() ) );
-#else
             pending_tasks_.front()();
-#endif
             pending_tasks_.pop();
         }
     }
@@ -1046,17 +872,13 @@ private:
     ///
     id my_id_;
     ///
-    boost::asio::io_service & io_service_;
-    ///
-    response_router response_router_;
-    ///
-    message_serializer message_serializer_;
-    ///
     network_type network_;
+    ///
+    core_type core_;
     ///
     routing_table_type routing_table_;
     ///
-    value_store< id, data_type > value_store_;
+    value_store_type value_store_;
     ///
     bool is_connected_;
     ///
