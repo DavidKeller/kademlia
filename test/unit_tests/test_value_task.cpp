@@ -31,19 +31,19 @@
 
 #include "kademlia/id.hpp"
 #include "kademlia/message_socket.hpp"
-#include "kademlia/value_context.hpp"
+#include "kademlia/value_task.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
 namespace {
 
-struct test_context : kd::value_context {
+struct test_task : kd::value_task {
     template< typename Iterator >
-    test_context
+    test_task
         ( kd::id const& key
         , Iterator i, Iterator e )
-        : value_context{ key, i, e }
+        : value_task{ key, i, e }
     { }
 };
 
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
 {
     std::vector< routing_table_peer > candidates;
     kd::id const key{};
-    test_context c{ key, candidates.begin(), candidates.end() };
+    test_task c{ key, candidates.begin(), candidates.end() };
 
     BOOST_REQUIRE( c.have_all_requests_completed() );
     BOOST_REQUIRE_EQUAL( 0, c.select_new_closest_candidates( 1 ).size() );
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_with_candidates )
     kd::ip_endpoint const default_address{};
     candidates.emplace_back( kd::id{ "1" }, default_address );
     kd::id const key{};
-    test_context c{ key, candidates.begin(), candidates.end() };
+    test_task c{ key, candidates.begin(), candidates.end() };
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE( can_select_candidates )
     candidates.emplace_back( kd::id{ "9" }, default_address );
     candidates.emplace_back( kd::id{ "1" }, default_address );
     kd::id const key{};
-    test_context c{ key, candidates.begin(), candidates.end() };
+    test_task c{ key, candidates.begin(), candidates.end() };
 
     BOOST_REQUIRE( c.have_all_requests_completed() );
     auto closest_candidates = c.select_new_closest_candidates( 2 );
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( can_add_candidates )
     candidates.emplace_back( kd::id{ "7" }, default_address );
 
     kd::id const our_id{};
-    test_context c{ our_id, candidates.begin(), candidates.end() };
+    test_task c{ our_id, candidates.begin(), candidates.end() };
 
     std::vector< kd::peer > new_candidates;
     new_candidates.emplace_back( create_peer( kd::id{ "7" } ) );

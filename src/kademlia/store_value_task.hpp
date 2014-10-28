@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_STORE_VALUE_CONTEXT_HPP
-#define KADEMLIA_STORE_VALUE_CONTEXT_HPP
+#ifndef KADEMLIA_STORE_VALUE_TASK_HPP
+#define KADEMLIA_STORE_VALUE_TASK_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -34,7 +34,7 @@
 #include <type_traits>
 #include <system_error>
 
-#include "kademlia/value_context.hpp"
+#include "kademlia/value_task.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/constants.hpp"
@@ -44,8 +44,8 @@ namespace detail {
 
 ///
 template< typename SaveHandlerType, typename CoreType, typename DataType >
-class store_value_context final
-    : public value_context
+class store_value_task final
+    : public value_task
 {
 public:
     ///
@@ -70,8 +70,8 @@ public:
         , RoutingTableType & routing_table
         , save_handler_type handler )
     {
-        std::shared_ptr< store_value_context > c;
-        c.reset( new store_value_context( key
+        std::shared_ptr< store_value_task > c;
+        c.reset( new store_value_task( key
                                         , data
                                         , core
                                         , routing_table
@@ -85,21 +85,21 @@ private:
      *
      */
     template< typename RoutingTableType, typename HandlerType >
-    store_value_context
+    store_value_task
         ( detail::id const & key
         , data_type const& data
         , core_type & core
         , RoutingTableType & routing_table
         , HandlerType && save_handler )
-            : value_context( key
+            : value_task( key
                            , routing_table.find( key )
                            , routing_table.end() )
             , core_( core )
             , data_( data )
             , save_handler_( std::forward< HandlerType >( save_handler ) )
     {
-        LOG_DEBUG( store_value_context, this )
-                << "create store value context for '"
+        LOG_DEBUG( store_value_task, this )
+                << "create store value task for '"
                 << key << "' value(" << to_string( data )
                 << ")." << std::endl;
     }
@@ -126,22 +126,22 @@ private:
      */
     static void
     store_value
-        ( std::shared_ptr< store_value_context > context
+        ( std::shared_ptr< store_value_task > task
         , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
-        LOG_DEBUG( engine, context.get() )
+        LOG_DEBUG( engine, task.get() )
                 << "sending find peer to store '"
-                << context->get_key() << "' value." << std::endl;
+                << task->get_key() << "' value." << std::endl;
 
-        find_peer_request_body const request{ context->get_key() };
+        find_peer_request_body const request{ task->get_key() };
 
-        auto const closest_candidates = context->select_new_closest_candidates
+        auto const closest_candidates = task->select_new_closest_candidates
                 ( concurrent_requests_count );
 
         assert( "at least one candidate exists" && ! closest_candidates.empty() );
 
         for ( auto const& c : closest_candidates )
-            send_find_peer_to_store_request( request, c, context );
+            send_find_peer_to_store_request( request, c, task );
     }
 
     /**
@@ -151,40 +151,40 @@ private:
     send_find_peer_to_store_request
         ( find_peer_request_body const& request
         , peer const& current_candidate
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() )
+        LOG_DEBUG( engine, task.get() )
                 << "sending find peer request to store to '"
                 << current_candidate << "'." << std::endl;
 
         // On message received, process it.
-        auto on_message_received = [ context, current_candidate ]
+        auto on_message_received = [ task, current_candidate ]
             ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
         {
-            context->flag_candidate_as_valid( current_candidate.id_ );
+            task->flag_candidate_as_valid( current_candidate.id_ );
 
-            handle_find_peer_to_store_response( s, h, i, e, context );
+            handle_find_peer_to_store_response( s, h, i, e, task );
         };
 
         // On error, retry with another endpoint.
-        auto on_error = [ context, current_candidate ]
+        auto on_error = [ task, current_candidate ]
             ( std::error_code const& )
         {
             // XXX: Can also flag candidate as invalid is
             // present in routing table.
-            context->flag_candidate_as_invalid( current_candidate.id_ );
+            task->flag_candidate_as_invalid( current_candidate.id_ );
 
             // If no more requests are in flight
             // we know the closest peers hence ask
             // them to store the value.
-            if ( context->have_all_requests_completed() )
-                send_store_requests( context );
+            if ( task->have_all_requests_completed() )
+                send_store_requests( task );
         };
 
-        context->core_.send_request( request
+        task->core_.send_request( request
                                    , current_candidate.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -200,9 +200,9 @@ private:
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() )
+        LOG_DEBUG( engine, task.get() )
                 << "handle find peer to store response from '"
                 << s << "'." << std::endl;
 
@@ -210,30 +210,30 @@ private:
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, context.get() )
+            LOG_DEBUG( engine, task.get() )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
             return;
         }
 
         // If new candidate have been discovered, ask them.
-        if ( context->are_these_candidates_closest( response.peers_ ) )
-            store_value( context );
+        if ( task->are_these_candidates_closest( response.peers_ ) )
+            store_value( task );
         else
         {
-            LOG_DEBUG( engine, context.get() ) << "'" << s
+            LOG_DEBUG( engine, task.get() ) << "'" << s
                     << "' did'nt provided closer peer to '"
-                    << context->get_key() << "' value." << std::endl;
+                    << task->get_key() << "' value." << std::endl;
 
             // Else if all candidates have responded,
             // we know the closest peers hence ask them
             // to store the value.
-            if ( context->have_all_requests_completed() )
-                send_store_requests( context );
+            if ( task->have_all_requests_completed() )
+                send_store_requests( task );
             else
-                LOG_DEBUG( engine, context.get() )
+                LOG_DEBUG( engine, task.get() )
                         << "waiting for other peer(s) response to find '"
-                        << context->get_key() << "' value." << std::endl;
+                        << task->get_key() << "' value." << std::endl;
         }
     }
 
@@ -242,17 +242,17 @@ private:
      */
     static void
     send_store_requests
-        ( std::shared_ptr< store_value_context > context )
+        ( std::shared_ptr< store_value_task > task )
     {
         auto const & candidates
-                = context->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT );
+                = task->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT );
 
         assert( "at least one candidate exists" && ! candidates.empty() );
 
         for ( auto c : candidates )
-            send_store_request( c, context );
+            send_store_request( c, task );
 
-        context->notify_caller( std::error_code{} );
+        task->notify_caller( std::error_code{} );
     }
 
     /**
@@ -261,16 +261,16 @@ private:
     static void
     send_store_request
         ( peer const& current_candidate
-        , std::shared_ptr< store_value_context > context )
+        , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() )
+        LOG_DEBUG( engine, task.get() )
                 << "send store request of '"
-                << context->get_key() << "' to '"
+                << task->get_key() << "' to '"
                 << current_candidate << "'." << std::endl;
 
-        store_value_request_body const request{ context->get_key()
-                                              , context->get_data() };
-        context->core_.send_request( request, current_candidate.endpoint_ );
+        store_value_request_body const request{ task->get_key()
+                                              , task->get_data() };
+        task->core_.send_request( request, current_candidate.endpoint_ );
     }
 
 private:
@@ -298,10 +298,10 @@ start_store_value_task
     , HandlerType && save_handler )
 {
     using handler_type = typename std::remove_reference< HandlerType >::type;
-    using context = store_value_context< handler_type, CoreType, DataType >;
+    using task = store_value_task< handler_type, CoreType, DataType >;
 
-    context::start( key, data, core, routing_table
-                  , std::forward< HandlerType >( save_handler ) );
+    task::start( key, data, core, routing_table
+               , std::forward< HandlerType >( save_handler ) );
 }
 
 } // namespace detail

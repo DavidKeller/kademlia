@@ -49,9 +49,9 @@ set(kademlia_sources
     response_callbacks.hpp
     response_callbacks.cpp
     routing_table.hpp
-    value_context.hpp
-    find_value_context.hpp
-    store_value_context.hpp
+    value_task.hpp
+    find_value_task.hpp
+    store_value_task.hpp
     concurrent_guard.hpp
     constants.hpp
     timer.hpp

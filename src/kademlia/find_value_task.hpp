@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_FIND_VALUE_CONTEXT_HPP
-#define KADEMLIA_FIND_VALUE_CONTEXT_HPP
+#ifndef KADEMLIA_FIND_VALUE_TASK_HPP
+#define KADEMLIA_FIND_VALUE_TASK_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -36,7 +36,7 @@
 
 #include <kademlia/error.hpp>
 
-#include "kademlia/value_context.hpp"
+#include "kademlia/value_task.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/constants.hpp"
 #include "kademlia/message.hpp"
@@ -46,8 +46,8 @@ namespace detail {
 
 ///
 template< typename LoadHandlerType, typename CoreType, typename DataType >
-class find_value_context final
-    : public value_context
+class find_value_task final
+    : public value_task
 {
 public:
     ///
@@ -71,8 +71,8 @@ public:
         , RoutingTableType & routing_table
         , load_handler_type handler )
     {
-        std::shared_ptr< find_value_context > c;
-        c.reset( new find_value_context( key
+        std::shared_ptr< find_value_task > c;
+        c.reset( new find_value_task( key
                                        , core
                                        , routing_table
                                        , std::move( handler ) ) );
@@ -85,20 +85,20 @@ private:
      *
      */
     template< typename RoutingTableType >
-    find_value_context
+    find_value_task
         ( id const & searched_key
         , core_type & core
         , RoutingTableType & routing_table
         , load_handler_type load_handler )
-            : value_context( searched_key
+            : value_task( searched_key
                            , routing_table.find( searched_key )
                            , routing_table.end() )
             , core_( core )
             , load_handler_( std::move( load_handler ) )
             , is_finished_()
     {
-        LOG_DEBUG( find_value_context, this )
-                << "create find value context for '"
+        LOG_DEBUG( find_value_task, this )
+                << "create find value task for '"
                 << searched_key << "' value." << std::endl;
     }
 
@@ -138,17 +138,17 @@ private:
      */
     static void
     find_value
-        ( std::shared_ptr< find_value_context > context )
+        ( std::shared_ptr< find_value_task > task )
     {
-        find_value_request_body const request{ context->get_key() };
+        find_value_request_body const request{ task->get_key() };
 
-        auto const closest_candidates = context->select_new_closest_candidates
+        auto const closest_candidates = task->select_new_closest_candidates
                 ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
 
         assert( "at least one candidate exists" && ! closest_candidates.empty() );
 
         for ( auto const& c : closest_candidates )
-            send_find_value_request( request, c, context );
+            send_find_value_request( request, c, task );
     }
 
     /**
@@ -158,39 +158,39 @@ private:
     send_find_value_request
         ( find_value_request_body const& request
         , peer const& current_candidate
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( find_value_context, context.get() ) << "sending find '" << context->get_key()
+        LOG_DEBUG( find_value_task, task.get() ) << "sending find '" << task->get_key()
                 << "' value request to '"
                 << current_candidate << "'." << std::endl;
 
         // On message received, process it.
-        auto on_message_received = [ context, current_candidate ]
+        auto on_message_received = [ task, current_candidate ]
             ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
         {
-            if ( context->is_caller_notified() )
+            if ( task->is_caller_notified() )
                 return;
 
-            context->flag_candidate_as_valid( current_candidate.id_ );
-            handle_find_value_response( s, h, i, e, context );
+            task->flag_candidate_as_valid( current_candidate.id_ );
+            handle_find_value_response( s, h, i, e, task );
         };
 
         // On error, retry with another endpoint.
-        auto on_error = [ context, current_candidate ]
+        auto on_error = [ task, current_candidate ]
             ( std::error_code const& )
         {
-            if ( context->is_caller_notified() )
+            if ( task->is_caller_notified() )
                 return;
 
             // XXX: Current current_candidate must be flagged as stale.
-            context->flag_candidate_as_invalid( current_candidate.id_ );
-            find_value( context );
+            task->flag_candidate_as_invalid( current_candidate.id_ );
+            find_value( task );
         };
 
-        context->core_.send_request( request
+        task->core_.send_request( request
                                    , current_candidate.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -207,18 +207,18 @@ private:
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() ) << "handling response to find '"
-                << context->get_key() << "' value." << std::endl;
+        LOG_DEBUG( engine, task.get() ) << "handling response to find '"
+                << task->get_key() << "' value." << std::endl;
 
         if ( h.type_ == header::FIND_PEER_RESPONSE )
             // The current peer didn't know the value
             // but provided closest peers.
-            send_find_value_requests_on_closer_peers( i, e, context );
+            send_find_value_requests_on_closer_peers( i, e, task );
         else if ( h.type_ == header::FIND_VALUE_RESPONSE )
             // The current peer knows the value.
-            process_found_value( i, e, context );
+            process_found_value( i, e, task );
     }
 
     /**
@@ -232,27 +232,27 @@ private:
     send_find_value_requests_on_closer_peers
         ( buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() ) << "checking if found closest peers to '"
-                << context->get_key() << "' value from closer peers."
+        LOG_DEBUG( engine, task.get() ) << "checking if found closest peers to '"
+                << task->get_key() << "' value from closer peers."
                 << std::endl;
 
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, context.get() ) << "failed to deserialize find peer response '"
-                    << context->get_key() << "' because ("
+            LOG_DEBUG( engine, task.get() ) << "failed to deserialize find peer response '"
+                    << task->get_key() << "' because ("
                     << failure.message() << ")." << std::endl;
 
             return;
         }
 
-        if ( context->are_these_candidates_closest( response.peers_ ) )
-            find_value( context );
+        if ( task->are_these_candidates_closest( response.peers_ ) )
+            find_value( task );
 
-        if ( context->have_all_requests_completed() )
-            context->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
+        if ( task->have_all_requests_completed() )
+            task->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
     }
 
     /**
@@ -264,21 +264,21 @@ private:
     process_found_value
         ( buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< find_value_context > context )
+        , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, context.get() ) << "found '" << context->get_key()
+        LOG_DEBUG( engine, task.get() ) << "found '" << task->get_key()
                 << "' value." << std::endl;
 
         find_value_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, context.get() )
+            LOG_DEBUG( engine, task.get() )
                     << "failed to deserialize find value response ("
                     << failure.message() << ")" << std::endl;
             return;
         }
 
-        context->notify_caller( response.data_ );
+        task->notify_caller( response.data_ );
     }
 
 private:
@@ -305,9 +305,9 @@ start_find_value_task
     , HandlerType && handler )
 {
     using handler_type = typename std::remove_reference< HandlerType >::type;
-    using context = find_value_context< handler_type, CoreType, DataType >;
+    using task = find_value_task< handler_type, CoreType, DataType >;
 
-    context::start( key, core, routing_table
+    task::start( key, core, routing_table
                   , std::forward< HandlerType >( handler ) );
 }
 

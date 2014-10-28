@@ -31,7 +31,7 @@
 #include "kademlia/id.hpp"
 #include "kademlia/ip_endpoint.hpp"
 
-#include "kademlia/find_value_context.hpp"
+#include "kademlia/store_value_task.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
@@ -39,14 +39,14 @@ namespace kd = k::detail;
 #if 0
 namespace {
 
-using data_type = std::vector< std::uint8_t >;
+using save_handler_type = std::function< void ( std::error_code const& ) >;
 
-using load_handler_type = std::function< void ( std::error_code const&, data_type const& ) >;
+using data_type = std::vector< std::uint8_t >;
 
 using routing_table_peer = std::pair< kd::id
                                     , kd::ip_endpoint >;
 
-using context = kd::find_value_context< load_handler_type, data_type >;
+using task = kd::store_value_task< save_handler_type, data_type >;
 
 } // anonymous namespace
 #endif
@@ -60,11 +60,12 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
 #if 0
     std::vector< routing_table_peer > candidates;
     kd::id const key{};
-    load_handler_type handler;
+    data_type const data{ 1, 2, 3, 4 };
+    save_handler_type handler;
 
-    context c{ key, candidates.begin(), candidates.end(), handler };
+    task c{ key, data, candidates.begin(), candidates.end(), handler };
 
-    BOOST_REQUIRE( ! c.is_caller_notified() );
+    BOOST_REQUIRE( data == c.get_data() );
 #endif
 }
 
@@ -77,45 +78,19 @@ BOOST_AUTO_TEST_CASE( can_notify_error_to_caller )
 #if 0
     std::vector< routing_table_peer > candidates;
     kd::id const key{};
+    data_type const data{ 1, 2, 3, 4 };
 
     std::error_code last_failure;
-    auto handler = [ &last_failure ] ( std::error_code const& failure, data_type const& data )
-    {
-        last_failure = failure;
-        BOOST_REQUIRE( data.empty() );
-    };
+    auto handler = [ &last_failure ] ( std::error_code const& failure )
+    { last_failure = failure; };
 
-    context c{ key, candidates.begin(), candidates.end(), handler };
+    task c{ key, data, candidates.begin(), candidates.end(), handler };
 
-    BOOST_REQUIRE( ! c.is_caller_notified() );
     BOOST_REQUIRE( std::error_code{} == last_failure );
     c.notify_caller( std::make_error_code( std::errc::invalid_argument ) );
-    BOOST_REQUIRE( c.is_caller_notified() );
     BOOST_REQUIRE( std::errc::invalid_argument == last_failure );
 #endif
 }
-
-BOOST_AUTO_TEST_CASE( can_notify_value_to_caller )
-{
-#if 0
-    std::vector< routing_table_peer > candidates;
-    kd::id const key{};
-    data_type const data{ 1, 2, 3, 4 };
-
-    data_type last_data;
-    auto handler = [ &last_data ] ( std::error_code const& failure, data_type const& data )
-    { last_data = data; };
-
-    context c{ key, candidates.begin(), candidates.end(), handler };
-
-    BOOST_REQUIRE( ! c.is_caller_notified() );
-    BOOST_REQUIRE( last_data.empty() );
-    c.notify_caller( data );
-    BOOST_REQUIRE( c.is_caller_notified() );
-    BOOST_REQUIRE( data == last_data );
-#endif
-}
-
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -52,10 +52,10 @@
 #include "kademlia/message.hpp"
 #include "kademlia/routing_table.hpp"
 #include "kademlia/value_store.hpp"
-#include "kademlia/find_value_context.hpp"
-#include "kademlia/store_value_context.hpp"
+#include "kademlia/find_value_task.hpp"
+#include "kademlia/store_value_task.hpp"
+#include "kademlia/notify_peer_task.hpp"
 #include "kademlia/core.hpp"
-#include "kademlia/notify_peer_context.hpp"
 
 namespace kademlia {
 namespace detail {

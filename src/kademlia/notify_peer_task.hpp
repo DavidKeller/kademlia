@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_NOTIFY_PEER_CONTEXT_HPP
-#define KADEMLIA_NOTIFY_PEER_CONTEXT_HPP
+#ifndef KADEMLIA_NOTIFY_PEER_TASK_HPP
+#define KADEMLIA_NOTIFY_PEER_TASK_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -33,7 +33,7 @@
 #include <memory>
 #include <system_error>
 
-#include "kademlia/value_context.hpp"
+#include "kademlia/value_task.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/core.hpp"
 #include "kademlia/constants.hpp"
@@ -43,8 +43,8 @@ namespace detail {
 
 ///
 template< typename CoreType >
-class notify_peer_context final
-    : public value_context
+class notify_peer_task final
+    : public value_task
 {
 public:
     ///
@@ -64,8 +64,8 @@ public:
         , core_type & core
         , RoutingTableType & routing_table )
     {
-        std::shared_ptr< notify_peer_context > c;
-        c.reset( new notify_peer_context( key, core, routing_table ) );
+        std::shared_ptr< notify_peer_task > c;
+        c.reset( new notify_peer_task( key, core, routing_table ) );
 
         notify_neighbors( c );
     }
@@ -75,17 +75,17 @@ private:
      *
      */
     template< typename RoutingTableType >
-    notify_peer_context
+    notify_peer_task
         ( detail::id const & key
         , core_type & core
         , RoutingTableType & routing_table )
-            : value_context( key
+            : value_task( key
                            , routing_table.find( key )
                            , routing_table.end() )
             , core_( core )
     {
-        LOG_DEBUG( notify_peer_context, this )
-                << "create find peer context for '"
+        LOG_DEBUG( notify_peer_task, this )
+                << "create find peer task for '"
                 << key << "' peer." << std::endl;
     }
 
@@ -94,19 +94,19 @@ private:
      */
     static void
     notify_neighbors
-        ( std::shared_ptr< notify_peer_context > context )
+        ( std::shared_ptr< notify_peer_task > task )
     {
-        LOG_DEBUG( notify_peer_context, context.get() )
+        LOG_DEBUG( notify_peer_task, task.get() )
                 << "sending find peer to notify '"
-                << context->get_key() << "' owner bucket." << std::endl;
+                << task->get_key() << "' owner bucket." << std::endl;
 
-        find_peer_request_body const request{ context->get_key() };
+        find_peer_request_body const request{ task->get_key() };
 
-        auto const closest_peers = context->select_new_closest_candidates
+        auto const closest_peers = task->select_new_closest_candidates
                 ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
 
         for ( auto const& c : closest_peers )
-            send_notify_peer_request( request, c, context );
+            send_notify_peer_request( request, c, task );
     }
 
     /**
@@ -116,27 +116,27 @@ private:
     send_notify_peer_request
         ( find_peer_request_body const& request
         , peer const& current_peer
-        , std::shared_ptr< notify_peer_context > context )
+        , std::shared_ptr< notify_peer_task > task )
     {
-        LOG_DEBUG( notify_peer_context, context.get() )
+        LOG_DEBUG( notify_peer_task, task.get() )
                 << "sending find peer to notify to '"
                 << current_peer << "'." << std::endl;
 
-        auto on_message_received = [ context, current_peer ]
+        auto on_message_received = [ task, current_peer ]
             ( endpoint_type const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
         {
-            context->flag_candidate_as_valid( current_peer.id_ );
-            handle_notify_peer_response( s, h, i, e, context );
+            task->flag_candidate_as_valid( current_peer.id_ );
+            handle_notify_peer_response( s, h, i, e, task );
         };
 
-        auto on_error = [ context, current_peer ]
+        auto on_error = [ task, current_peer ]
             ( std::error_code const& )
-        { context->flag_candidate_as_invalid( current_peer.id_ ); };
+        { task->flag_candidate_as_invalid( current_peer.id_ ); };
 
-        context->core_.send_request( request
+        task->core_.send_request( request
                                    , current_peer.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
@@ -152,9 +152,9 @@ private:
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e
-        , std::shared_ptr< notify_peer_context > context )
+        , std::shared_ptr< notify_peer_task > task )
     {
-        LOG_DEBUG( notify_peer_context, context.get() )
+        LOG_DEBUG( notify_peer_task, task.get() )
                 << "handle notify peer response from '" << s
                 << "'." << std::endl;
 
@@ -162,15 +162,15 @@ private:
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( notify_peer_context, &context )
+            LOG_DEBUG( notify_peer_task, &task )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
             return;
         }
 
         // If new candidate have been discovered, ask them.
-        if ( context->are_these_candidates_closest( response.peers_ ) )
-            notify_neighbors( context );
+        if ( task->are_these_candidates_closest( response.peers_ ) )
+            notify_neighbors( task );
     }
 
 private:
@@ -188,9 +188,9 @@ start_notify_peer_task
     , CoreType & core
     , RoutingTableType & routing_table )
 {
-    using context = notify_peer_context< CoreType >;
+    using task = notify_peer_task< CoreType >;
 
-    context::start( key, core, routing_table );
+    task::start( key, core, routing_table );
 }
 
 } // namespace detail
