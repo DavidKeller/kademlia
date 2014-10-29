@@ -30,6 +30,7 @@ set(kademlia_sources
     boost_to_std_error.hpp
     buffer.hpp
     concurrent_guard.hpp
+    constants.cpp
     constants.hpp
     endpoint.cpp
     engine.hpp

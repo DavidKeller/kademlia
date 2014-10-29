@@ -23,32 +23,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_CONSTANTS_HPP
-#define KADEMLIA_CONSTANTS_HPP
-
-#ifdef _MSC_VER
-#   pragma once
-#endif
-
-#include <chrono>
+#include "kademlia/constants.hpp"
 
 namespace kademlia {
 namespace detail {
 
-// k
-extern std::size_t const ROUTING_TABLE_BUCKET_SIZE;
-// a
-extern std::size_t const CONCURRENT_FIND_PEER_REQUESTS_COUNT;
-// c
-extern std::size_t const REDUNDANT_SAVE_COUNT;
+std::size_t const ROUTING_TABLE_BUCKET_SIZE{ 20 };
+std::size_t const CONCURRENT_FIND_PEER_REQUESTS_COUNT{ 3 };
+std::size_t const REDUNDANT_SAVE_COUNT{ 3 };
 
-//
-extern std::chrono::milliseconds const INITIAL_CONTACT_RECEIVE_TIMEOUT;
-//
-extern std::chrono::milliseconds const PEER_LOOKUP_TIMEOUT;
+std::chrono::milliseconds const INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
+std::chrono::milliseconds const PEER_LOOKUP_TIMEOUT{ 20 };
 
 } // namespace detail
 } // namespace kademlia
-
-#endif
 
