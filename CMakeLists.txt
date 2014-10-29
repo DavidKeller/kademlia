@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project(kademlia)
 
 # Configure compilers.
-if (WIN32)
+if(WIN32)
     if (NOT MSVC12 AND NOT MSVC13)
         message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
     endif()
@@ -37,13 +37,13 @@ if (WIN32)
 else()
     include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
-    if (IS_CXX11_SUPPORTED)
+    if(IS_CXX11_SUPPORTED)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
     else()
         message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
     endif()
     check_cxx_compiler_flag(-stdlib=libc++ IS_CLANG_STL_PRESENT)
-    if (IS_CLANG_STL_PRESENT)
+    if(IS_CLANG_STL_PRESENT)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     endif()
 
@@ -55,7 +55,7 @@ endif()
 # Threads
 find_package(Threads REQUIRED)
 # Boost
-if (WIN32)
+if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
 #elseif(APPLE)
 #    set(Boost_USE_STATIC_LIBS ON)
@@ -79,13 +79,12 @@ add_definitions(-DBOOST_ALL_NO_LIB
     -DBOOST_ASIO_HAS_STD_SHARED_PTR
     -DBOOST_ASIO_HAS_STD_ATOMIC
     -DBOOST_ASIO_HAS_STD_CHRONO)
-if (${Boost_USE_STATIC_LIBS})
-else()
+if(NOT Boost_USE_STATIC_LIBS)
     add_definitions(-DBOOST_ALL_DYN_LINK)
 endif()
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_definitions(-DKADEMLIA_ENABLE_DEBUG)
-endif ()
+endif()
 
 # Setup includes directories.
 include_directories(BEFORE include src test)
