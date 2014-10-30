@@ -142,7 +142,7 @@ private:
         , buffer::const_iterator e )
     {
         LOG_DEBUG( discover_neighbors_task, this )
-                << "handling init contact response."
+                << "handling initial contact response."
                 << std::endl;
 
         if ( h.type_ != header::FIND_PEER_RESPONSE )
@@ -162,11 +162,11 @@ private:
         for ( auto const& peer : response.peers_ )
             routing_table_.push( peer.id_, peer.endpoint_ );
 
-        notify_neighbors();
-
         LOG_DEBUG( discover_neighbors_task, this )
                 << "added '" << response.peers_.size()
                 << "' initial peer(s)." << std::endl;
+
+        notify_neighbors();
     }
 
     /**

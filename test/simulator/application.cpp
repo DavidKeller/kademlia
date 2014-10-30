@@ -90,6 +90,8 @@ create_engines
                                                 , ipv4_listen
                                                 , ipv6_listen );
         engines.push_back( e );
+
+        io_service.poll();
     }
 
     return std::move( engines );
@@ -216,7 +218,6 @@ run
 
     std::cout << "Creating peers" << std::endl;
     auto engines = create_engines( io_service, c );
-    io_service.poll();
 
     std::cout << "Performing saves" << std::endl;
     schedule_saves( engines, io_service, c.total_messages_count );
