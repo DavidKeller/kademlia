@@ -54,7 +54,7 @@
 #include "kademlia/value_store.hpp"
 #include "kademlia/find_value_task.hpp"
 #include "kademlia/store_value_task.hpp"
-#include "kademlia/notify_peer_task.hpp"
+#include "kademlia/discover_neighbors_task.hpp"
 #include "kademlia/tracker.hpp"
 
 namespace kademlia {
@@ -232,7 +232,10 @@ private:
     using network_type = network< UnderlyingSocketType >;
 
     ///
-    using tracker_type = tracker< std::default_random_engine, network_type >;
+    using random_engine_type = std::default_random_engine;
+
+    ///
+    using tracker_type = tracker< random_engine_type, network_type >;
 
 private:
     /**
@@ -408,98 +411,8 @@ private:
         // him which peers are close to our own id.
         auto endoints_to_query = network_.resolve_endpoint( initial_peer );
 
-        search_ourselves( std::move( endoints_to_query ) );
-    }
-
-    /**
-     *
-     */
-    template< typename ResolvedEndpointType >
-    void
-    search_ourselves
-        ( ResolvedEndpointType endpoints_to_query )
-    {
-        if ( endpoints_to_query.empty() )
-            throw std::system_error
-                    { make_error_code( INITIAL_PEER_FAILED_TO_RESPOND ) };
-
-        // Retrieve the next endpoint to query.
-        auto const endpoint_to_query = endpoints_to_query.back();
-        endpoints_to_query.pop_back();
-
-        // On message received, process it.
-        auto on_message_received = [ this ]
-            ( ip_endpoint const& s
-            , header const& h
-            , buffer::const_iterator i
-            , buffer::const_iterator e )
-        { handle_initial_contact_response( s, h, i, e ); };
-
-        // On error, retry with another endpoint.
-        auto on_error = [ this, endpoints_to_query ]
-            ( std::error_code const& )
-        { search_ourselves( endpoints_to_query ); };
-
-        tracker_.send_request( find_peer_request_body{ my_id_ }
-                             , endpoint_to_query
-                             , INITIAL_CONTACT_RECEIVE_TIMEOUT
-                             , on_message_received
-                             , on_error );
-    }
-
-    /**
-     *
-     */
-    void
-    handle_initial_contact_response
-        ( ip_endpoint const& s
-        , header const& h
-        , buffer::const_iterator i
-        , buffer::const_iterator e )
-    {
-        LOG_DEBUG( engine, this ) << "handling init contact response."
-                << std::endl;
-
-        if ( h.type_ != header::FIND_PEER_RESPONSE )
-            return ;
-
-        find_peer_response_body response;
-        if ( auto failure = deserialize( i, e, response ) )
-        {
-            LOG_DEBUG( engine, this )
-                    << "failed to deserialize find peer response ("
-                    << failure.message() << ")" << std::endl;
-
-            return;
-        }
-
-        // Add discovered peers.
-        for ( auto const& peer : response.peers_ )
-            routing_table_.push( peer.id_, peer.endpoint_ );
-
-        notify_neighbors();
-
-        LOG_DEBUG( engine, this ) << "added '" << response.peers_.size()
-                << "' initial peer(s)." << std::endl;
-    }
-
-    /**
-     *  Refresh each bucket.
-     */
-    void
-    notify_neighbors
-        ( void )
-    {
-        id refresh_id = my_id_;
-
-        for ( std::size_t j = id::BIT_SIZE; j > 0; -- j)
-        {
-            // Flip bit to select find peers in the current k_bucket.
-            id::reference bit = refresh_id[ j - 1 ];
-            bit = ! bit;
-
-            start_notify_peer_task( refresh_id, tracker_, routing_table_ );
-        }
+        start_discover_neighbors_task( my_id_, tracker_, routing_table_
+                                     , std::move( endoints_to_query ) );
     }
 
     /**
@@ -558,7 +471,7 @@ private:
 
 private:
     ///
-    std::default_random_engine random_engine_;
+    random_engine_type random_engine_;
     ///
     id my_id_;
     ///

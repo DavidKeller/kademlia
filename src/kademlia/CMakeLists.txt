@@ -55,6 +55,7 @@ set(kademlia_sources
     routing_table.hpp
     session.cpp
     store_value_task.hpp
+    discover_neighbors_task.hpp
     timer.cpp
     timer.hpp
     tracker.hpp
