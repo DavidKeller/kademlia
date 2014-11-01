@@ -33,7 +33,7 @@
 #include <memory>
 #include <system_error>
 
-#include "kademlia/value_task.hpp"
+#include "kademlia/lookup_task.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/tracker.hpp"
 #include "kademlia/constants.hpp"
@@ -44,7 +44,7 @@ namespace detail {
 ///
 template< typename TrackerType >
 class notify_peer_task final
-    : public value_task
+    : public lookup_task
 {
 public:
     ///
@@ -79,9 +79,9 @@ private:
         ( detail::id const & key
         , tracker_type & tracker
         , RoutingTableType & routing_table )
-            : value_task( key
-                           , routing_table.find( key )
-                           , routing_table.end() )
+            : lookup_task( key
+                         , routing_table.find( key )
+                         , routing_table.end() )
             , tracker_( tracker )
     {
         LOG_DEBUG( notify_peer_task, this )

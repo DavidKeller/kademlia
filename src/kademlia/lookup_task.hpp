@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_VALUE_TASK_HPP
-#define KADEMLIA_VALUE_TASK_HPP
+#ifndef KADEMLIA_LOOKUP_TASK_HPP
+#define KADEMLIA_LOOKUP_TASK_HPP
 
 #ifdef _MSC_VER
 #   pragma once
@@ -40,7 +40,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-class value_task
+class lookup_task
 {
 public:
     /**
@@ -99,14 +99,14 @@ protected:
     /**
      *
      */
-    ~value_task
+    ~lookup_task
         ( void );
 
     /**
      *
      */
     template< typename Iterator >
-    value_task
+    lookup_task
         ( id const & key
         , Iterator i, Iterator e );
 
@@ -151,13 +151,13 @@ private:
 };
 
 inline
-value_task::~value_task
+lookup_task::~lookup_task
     ( void )
     = default;
 
 template< typename Iterator >
 inline
-value_task::value_task
+lookup_task::lookup_task
     ( id const & key
     , Iterator i, Iterator e )
         : key_{ key }
@@ -169,7 +169,7 @@ value_task::value_task
 }
 
 inline void
-value_task::flag_candidate_as_valid
+lookup_task::flag_candidate_as_valid
     ( id const& candidate_id )
 {
     auto i = find_candidate( candidate_id );
@@ -182,7 +182,7 @@ value_task::flag_candidate_as_valid
 }
 
 inline void
-value_task::flag_candidate_as_invalid
+lookup_task::flag_candidate_as_invalid
     ( id const& candidate_id )
 {
     auto i = find_candidate( candidate_id );
@@ -195,7 +195,7 @@ value_task::flag_candidate_as_invalid
 }
 
 inline std::vector< peer >
-value_task::select_new_closest_candidates
+lookup_task::select_new_closest_candidates
     ( std::size_t max_count )
 {
     std::vector< peer > candidates;
@@ -218,7 +218,7 @@ value_task::select_new_closest_candidates
 }
 
 inline std::vector< peer >
-value_task::select_closest_valid_candidates
+lookup_task::select_closest_valid_candidates
     ( std::size_t max_count )
 {
     std::vector< peer > candidates;
@@ -238,7 +238,7 @@ value_task::select_closest_valid_candidates
 
 template< typename Peers >
 inline bool
-value_task::are_these_candidates_closest
+lookup_task::are_these_candidates_closest
     ( Peers const& peers )
 {
     // Keep track of the closest candidate before
@@ -256,19 +256,19 @@ value_task::are_these_candidates_closest
 }
 
 inline bool
-value_task::have_all_requests_completed
+lookup_task::have_all_requests_completed
     ( void )
     const
 { return in_flight_requests_count_ == 0; }
 
 inline id const&
-value_task::get_key
+lookup_task::get_key
     ( void )
     const
 { return key_; }
 
 inline void
-value_task::add_candidate
+lookup_task::add_candidate
     ( peer const& p )
 {
     auto const d = distance( p.id_, key_ );
@@ -276,8 +276,8 @@ value_task::add_candidate
     candidates_.emplace( d, c );
 }
 
-inline value_task::candidates_type::iterator
-value_task::find_candidate
+inline lookup_task::candidates_type::iterator
+lookup_task::find_candidate
     ( id const& candidate_id )
 {
     auto const d = distance( candidate_id, key_ );

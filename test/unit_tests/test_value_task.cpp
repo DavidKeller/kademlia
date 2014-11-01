@@ -31,19 +31,19 @@
 
 #include "kademlia/id.hpp"
 #include "kademlia/message_socket.hpp"
-#include "kademlia/value_task.hpp"
+#include "kademlia/lookup_task.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
 namespace {
 
-struct test_task : kd::value_task {
+struct test_task : kd::lookup_task {
     template< typename Iterator >
     test_task
         ( kd::id const& key
         , Iterator i, Iterator e )
-        : value_task{ key, i, e }
+        : lookup_task{ key, i, e }
     { }
 };
 

@@ -60,7 +60,7 @@ set(kademlia_sources
     timer.hpp
     tracker.hpp
     value_store.hpp
-    value_task.hpp)
+    lookup_task.hpp)
 
 add_library(kademlia SHARED
     ${kademlia_sources})

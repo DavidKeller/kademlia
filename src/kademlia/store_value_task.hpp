@@ -34,7 +34,7 @@
 #include <type_traits>
 #include <system_error>
 
-#include "kademlia/value_task.hpp"
+#include "kademlia/lookup_task.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/message.hpp"
 #include "kademlia/constants.hpp"
@@ -45,7 +45,7 @@ namespace detail {
 ///
 template< typename SaveHandlerType, typename TrackerType, typename DataType >
 class store_value_task final
-    : public value_task
+    : public lookup_task
 {
 public:
     ///
@@ -91,9 +91,9 @@ private:
         , tracker_type & tracker
         , RoutingTableType & routing_table
         , HandlerType && save_handler )
-            : value_task( key
-                        , routing_table.find( key )
-                        , routing_table.end() )
+            : lookup_task( key
+                         , routing_table.find( key )
+                         , routing_table.end() )
             , tracker_( tracker )
             , data_( data )
             , save_handler_( std::forward< HandlerType >( save_handler ) )

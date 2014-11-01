@@ -36,7 +36,7 @@
 
 #include <kademlia/error.hpp>
 
-#include "kademlia/value_task.hpp"
+#include "kademlia/lookup_task.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/constants.hpp"
 #include "kademlia/message.hpp"
@@ -47,7 +47,7 @@ namespace detail {
 ///
 template< typename LoadHandlerType, typename TrackerType, typename DataType >
 class find_value_task final
-    : public value_task
+    : public lookup_task
 {
 public:
     ///
@@ -90,9 +90,9 @@ private:
         , tracker_type & tracker
         , RoutingTableType & routing_table
         , load_handler_type load_handler )
-            : value_task( searched_key
-                           , routing_table.find( searched_key )
-                           , routing_table.end() )
+            : lookup_task( searched_key
+                         , routing_table.find( searched_key )
+                         , routing_table.end() )
             , tracker_( tracker )
             , load_handler_( std::move( load_handler ) )
             , is_finished_()
