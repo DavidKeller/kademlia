@@ -124,12 +124,12 @@ private:
     /**
      *
      */
-    static void
+    static bool
     store_value
         ( std::shared_ptr< store_value_task > task
         , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
-        LOG_DEBUG( engine, task.get() )
+        LOG_DEBUG( store_value_task, task.get() )
                 << "sending find peer to store '"
                 << task->get_key() << "' value." << std::endl;
 
@@ -138,10 +138,10 @@ private:
         auto const closest_candidates = task->select_new_closest_candidates
                 ( concurrent_requests_count );
 
-        assert( "at least one candidate exists" && ! closest_candidates.empty() );
-
         for ( auto const& c : closest_candidates )
             send_find_peer_to_store_request( request, c, task );
+
+        return ! closest_candidates.empty();
     }
 
     /**
@@ -153,7 +153,7 @@ private:
         , peer const& current_candidate
         , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() )
+        LOG_DEBUG( store_value_task, task.get() )
                 << "sending find peer request to store to '"
                 << current_candidate << "'." << std::endl;
 
@@ -202,7 +202,7 @@ private:
         , buffer::const_iterator e
         , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() )
+        LOG_DEBUG( store_value_task, task.get() )
                 << "handle find peer to store response from '"
                 << s << "'." << std::endl;
 
@@ -210,7 +210,7 @@ private:
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, task.get() )
+            LOG_DEBUG( store_value_task, task.get() )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
             return;
@@ -221,17 +221,18 @@ private:
             store_value( task );
         else
         {
-            LOG_DEBUG( engine, task.get() ) << "'" << s
+            LOG_DEBUG( store_value_task, task.get() ) << "'" << s
                     << "' did'nt provided closer peer to '"
                     << task->get_key() << "' value." << std::endl;
 
             // Else if all candidates have responded,
             // we know the closest peers hence ask them
             // to store the value.
-            if ( task->have_all_requests_completed() )
+            if ( task->have_all_requests_completed()
+                    && ! store_value( task, ROUTING_TABLE_BUCKET_SIZE ) )
                 send_store_requests( task );
             else
-                LOG_DEBUG( engine, task.get() )
+                LOG_DEBUG( store_value_task, task.get() )
                         << "waiting for other peer(s) response to find '"
                         << task->get_key() << "' value." << std::endl;
         }
@@ -263,7 +264,7 @@ private:
         ( peer const& current_candidate
         , std::shared_ptr< store_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() )
+        LOG_DEBUG( store_value_task, task.get() )
                 << "send store request of '"
                 << task->get_key() << "' to '"
                 << current_candidate << "'." << std::endl;

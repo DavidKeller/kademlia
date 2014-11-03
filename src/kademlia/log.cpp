@@ -51,7 +51,7 @@ get_debug_log
     , void const * thiz )
 {
     return std::cout << "[debug] (" << module << " @ "
-                     << std::hex << ( std::uintptr_t( thiz ) & 0xffff )
+                     << std::hex << ( std::uintptr_t( thiz ) & 0xffffff )
                      << std::dec << ") ";
 }
 

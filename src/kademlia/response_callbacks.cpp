@@ -38,6 +38,7 @@ response_callbacks::push_callback
     , callback const& on_message_received )
 {
     auto i = callbacks_.emplace( message_id, on_message_received );
+    (void)i;
     assert( i.second && "an id can't be registered twice" );
 }
 

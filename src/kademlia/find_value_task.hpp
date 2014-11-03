@@ -136,19 +136,20 @@ private:
     /**
      *
      */
-    static void
+    static bool
     find_value
-        ( std::shared_ptr< find_value_task > task )
+        ( std::shared_ptr< find_value_task > task
+        , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
         find_value_request_body const request{ task->get_key() };
 
         auto const closest_candidates = task->select_new_closest_candidates
-                ( CONCURRENT_FIND_PEER_REQUESTS_COUNT );
-
-        assert( "at least one candidate exists" && ! closest_candidates.empty() );
+                ( concurrent_requests_count );
 
         for ( auto const& c : closest_candidates )
             send_find_value_request( request, c, task );
+
+        return ! closest_candidates.empty();
     }
 
     /**
@@ -209,7 +210,7 @@ private:
         , buffer::const_iterator e
         , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() ) << "handling response to find '"
+        LOG_DEBUG( find_value_task, task.get() ) << "handling response to find '"
                 << task->get_key() << "' value." << std::endl;
 
         if ( h.type_ == header::FIND_PEER_RESPONSE )
@@ -234,14 +235,15 @@ private:
         , buffer::const_iterator e
         , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() ) << "checking if found closest peers to '"
+        LOG_DEBUG( find_value_task, task.get() ) << "checking if found closest peers to '"
                 << task->get_key() << "' value from closer peers."
                 << std::endl;
 
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, task.get() ) << "failed to deserialize find peer response '"
+            LOG_DEBUG( find_value_task, task.get() )
+                    << "failed to deserialize find peer response '"
                     << task->get_key() << "' because ("
                     << failure.message() << ")." << std::endl;
 
@@ -251,7 +253,8 @@ private:
         if ( task->are_these_candidates_closest( response.peers_ ) )
             find_value( task );
 
-        if ( task->have_all_requests_completed() )
+        if ( task->have_all_requests_completed()
+                && ! find_value( task, ROUTING_TABLE_BUCKET_SIZE ) )
             task->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
     }
 
@@ -266,13 +269,14 @@ private:
         , buffer::const_iterator e
         , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( engine, task.get() ) << "found '" << task->get_key()
+        LOG_DEBUG( find_value_task, task.get() )
+                << "found '" << task->get_key()
                 << "' value." << std::endl;
 
         find_value_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( engine, task.get() )
+            LOG_DEBUG( find_value_task, task.get() )
                     << "failed to deserialize find value response ("
                     << failure.message() << ")" << std::endl;
             return;

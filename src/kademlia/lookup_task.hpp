@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "kademlia/peer.hpp"
+#include "kademlia/log.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -271,6 +272,9 @@ inline void
 lookup_task::add_candidate
     ( peer const& p )
 {
+    LOG_DEBUG( lookup_task, this )
+            << "adding '" << p << "'." << std::endl;
+
     auto const d = distance( p.id_, key_ );
     candidate const c{ p, candidate::STATE_UNKNOWN };
     candidates_.emplace( d, c );
