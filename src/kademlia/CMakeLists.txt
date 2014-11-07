@@ -26,7 +26,10 @@
 set(kademlia_sources
     ${CMAKE_SOURCE_DIR}/include/kademlia/endpoint.hpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/error.hpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/session_base.hpp
+    ${CMAKE_SOURCE_DIR}/include/kademlia/first_session.hpp
     ${CMAKE_SOURCE_DIR}/include/kademlia/session.hpp
+    session_impl.hpp
     boost_to_std_error.hpp
     buffer.hpp
     concurrent_guard.hpp
@@ -54,6 +57,7 @@ set(kademlia_sources
     response_router.hpp
     routing_table.hpp
     session.cpp
+    first_session.cpp
     store_value_task.hpp
     discover_neighbors_task.hpp
     timer.cpp

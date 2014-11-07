@@ -23,64 +23,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/session.hpp>
+#ifndef KADEMLIA_SESSION_BASE_HPP
+#define KADEMLIA_SESSION_BASE_HPP
 
-#include "kademlia/session_impl.hpp"
+#ifdef _MSC_VER
+#   pragma once
+#endif
+
+#include <cstdint>
+#include <vector>
+#include <system_error>
+#include <functional>
 
 namespace kademlia {
 
 /**
- *
+ *  @brief This object contains session types.
  */
-struct session::impl final
-        : detail::session_impl< key_type, data_type >
+struct session_base
 {
-    /**
-     *
-     */
-    impl
-        ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4
-        , endpoint const& listen_on_ipv6 )
-            : session_impl{ initial_peer
-                          , listen_on_ipv4
-                          , listen_on_ipv6 }
-    { }
+    /// The key type used to find data.
+    using key_type = std::vector< std::uint8_t >;
+
+    /// The stored data type.
+    using data_type = std::vector< std::uint8_t >;
+
+    /// The callback type called to signal an async save status.
+    using save_handler_type = std::function
+            < void
+                ( std::error_code const& error )
+            >;
+    /// The callback type called to signal an async load status.
+    using load_handler_type = std::function
+            < void
+                ( std::error_code const& error
+                , data_type const& data )
+            >;
+
+    /// This kademlia implementation default port.
+    enum { DEFAULT_PORT = 27980U };
 };
 
-session::session
-    ( endpoint const& initial_peer
-    , endpoint const& listen_on_ipv4
-    , endpoint const& listen_on_ipv6 )
-        : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
-{ }
-
-session::~session
-    ( void )
-{ }
-
-void
-session::async_save
-    ( key_type const& key
-    , data_type const& data
-    , save_handler_type handler )
-{ impl_->async_save( key, data, std::move( handler ) ); }
-
-void
-session::async_load
-    ( key_type const& key
-    , load_handler_type handler )
-{ impl_->async_load( key, std::move( handler ) ); }
-
-std::error_code
-session::run
-    ( void )
-{ return impl_->run(); }
-
-void
-session::abort
-        ( void )
-{ impl_->abort(); }
-
 } // namespace kademlia
+
+#endif
 

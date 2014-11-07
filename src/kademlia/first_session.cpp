@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/session.hpp>
+#include <kademlia/first_session.hpp>
 
 #include "kademlia/session_impl.hpp"
 
@@ -32,53 +32,37 @@ namespace kademlia {
 /**
  *
  */
-struct session::impl final
+struct first_session::impl final
         : detail::session_impl< key_type, data_type >
 {
     /**
      *
      */
     impl
-        ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4
+        ( endpoint const& listen_on_ipv4
         , endpoint const& listen_on_ipv6 )
-            : session_impl{ initial_peer
-                          , listen_on_ipv4
+            : session_impl{ listen_on_ipv4
                           , listen_on_ipv6 }
     { }
 };
 
-session::session
-    ( endpoint const& initial_peer
-    , endpoint const& listen_on_ipv4
+first_session::first_session
+    ( endpoint const& listen_on_ipv4
     , endpoint const& listen_on_ipv6 )
-        : impl_{ new impl{ initial_peer, listen_on_ipv4, listen_on_ipv6 } }
+        : impl_{ new impl{ listen_on_ipv4, listen_on_ipv6 } }
 { }
 
-session::~session
+first_session::~first_session
     ( void )
 { }
 
-void
-session::async_save
-    ( key_type const& key
-    , data_type const& data
-    , save_handler_type handler )
-{ impl_->async_save( key, data, std::move( handler ) ); }
-
-void
-session::async_load
-    ( key_type const& key
-    , load_handler_type handler )
-{ impl_->async_load( key, std::move( handler ) ); }
-
 std::error_code
-session::run
+first_session::run
     ( void )
 { return impl_->run(); }
 
 void
-session::abort
+first_session::abort
         ( void )
 { impl_->abort(); }
 

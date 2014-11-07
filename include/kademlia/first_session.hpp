@@ -23,13 +23,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_SESSION_HPP
-#define KADEMLIA_SESSION_HPP
+#ifndef KADEMLIA_FIRST_SESSION_HPP
+#define KADEMLIA_FIRST_SESSION_HPP
 
 #ifdef _MSC_VER
 #   pragma once
 #endif
 
+#include <memory>
 #include <system_error>
 
 #include <kademlia/detail/symbol_visibility.hpp>
@@ -40,103 +41,54 @@
 namespace kademlia {
 
 /**
- *  @brief This object is used to save and load data from the network.
+ *  @brief This object is used to bootstrap a network.
  */
-class session final
+class first_session final
         : public session_base
 {
 public:
-    /// The key type used to find data.
-    using key_type = std::vector< std::uint8_t >;
-
-    /// The stored data type.
-    using data_type = std::vector< std::uint8_t >;
-
-    /// The callback type called to signal an async save status.
-    using save_handler_type = std::function
-            < void
-                ( std::error_code const& error )
-            >;
-    /// The callback type called to signal an async load status.
-    using load_handler_type = std::function
-            < void
-                ( std::error_code const& error
-                , data_type const& data )
-            >;
-
-    /// This kademlia implementation default port.
-    enum { DEFAULT_PORT = 27980U };
-
-public:
     /**
-     *  @brief Construct an active session.
-     *  @details This session perform a neighbors discovery on creation.
-     *           If the network is down or the neighbor can't be contacted,
-     *           an exception will be throw from the session::run()
-     *           method.
+     *  @brief Construct a passive first_session.
+     *  @details This first_session acts like an active first_session except it
+     *           does'nt try to discover neighbors. It can be used
+     *           by the first node of a network as no peer is known
+     *           uppon its creation.
      *
-     *  @param initial_peer In order to discover network peers, the session
-     *         contacts this peer and retrieve it's neighbors.
+     *           It does'nt make sense to use this constructor once the
+     *           network has at least one peer.
+     *
      *  @param listen_on_ipv4 IPv4 listening endpoint.
      *  @param listen_on_ipv6 IPv6 listening endpoint.
      */
     KADEMLIA_SYMBOL_VISIBILITY
-    session
-        ( endpoint const& initial_peer
-        , endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
+    first_session
+        ( endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
     /**
-     *  @brief Destruct the session.
+     *  @brief Destruct the first_session.
      */
     KADEMLIA_SYMBOL_VISIBILITY
-    ~session
+    ~first_session
         ( void );
 
     /**
      *  @brief Disabled copy constructor.
      */
-    session
-        ( session const& )
+    first_session
+        ( first_session const& )
         = delete;
 
     /**
      *  @brief Disabled assignment operator.
      */
-    session&
+    first_session&
     operator=
-        ( session const& )
+        ( first_session const& )
         = delete;
 
     /**
-     *  @brief Async save a data into the network.
-     *
-     *  @param key The data to save key.
-     *  @param data The data to save.
-     *  @param handler Callback called to report call status.
-     */
-    KADEMLIA_SYMBOL_VISIBILITY
-    void
-    async_save
-        ( key_type const& key
-        , data_type const& data
-        , save_handler_type handler );
-
-    /**
-     *  @brief Async load a data from the network.
-     *
-     *  @param key The data to save key.
-     *  @param handler Callback called to report call status.
-     */
-    KADEMLIA_SYMBOL_VISIBILITY
-    void
-    async_load
-        ( key_type const& key
-        , load_handler_type handler );
-
-    /**
-     *  @brief This <b>blocking call</b> execute the session main loop.
-     *  @details Callbacks are executed inside this call.
+     *  @brief This <b>blocking call</b> execute the first_session main loop.
      *
      *  @return The exit reason of the call.
      */
@@ -146,7 +98,7 @@ public:
         ( void );
 
     /**
-     *  @brief Abort the session main loop.
+     *  @brief Abort the first_session main loop.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     void
