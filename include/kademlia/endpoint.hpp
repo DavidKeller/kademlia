@@ -41,22 +41,24 @@
 namespace kademlia {
 
 /**
- *
+ *  @brief This object represents peers and listening addresses.
  */
 class endpoint final
 {
 public:
-    ///
+    /// The IP/hostname address.
     using address_type = std::string;
-    ///
+    /// The port identifier.
     using service_type = std::string;
-    ///
+    /// The port number.
     using service_numeric_type = std::uint16_t;
 
     /**
+     *  @brief Construct an endpoint from an address and a port identifier.
      *
+     *  @param address The ip/hostname (e.g. www.example.com, 127.0.0.1).
+     *  @param service The port identifier (e.g. http, 80)
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     endpoint
         ( address_type const& address
         , service_type const& service )
@@ -64,9 +66,11 @@ public:
     { }
 
     /**
+     *  @brief Construct an endpoint from an address and a port number.
      *
+     *  @param address The ip/hostname (e.g. www.example.com, 127.0.0.1).
+     *  @param service The port number (e.g.  80)
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     endpoint
         ( address_type const& address
         , service_numeric_type const& service )
@@ -75,9 +79,10 @@ public:
     { }
 
     /**
+     *  @brief Get the endpoint address.
      *
+     *  @return The IP/hostname.
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     address_type const&
     address
         ( void )
@@ -85,18 +90,20 @@ public:
     { return address_; }
 
     /**
+     *  @brief Set the endpoint address.
      *
+     *  @param address The IP/hostname.
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     void
     address
         ( address_type const& address )
     { address_ = address; }
 
     /**
+     *  @brief Get the endpoint port.
      *
+     *  @return The port number/identifier.
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     service_type const&
     service
         ( void )
@@ -104,33 +111,14 @@ public:
     { return service_; }
 
     /**
+     *  @brief Set the endpoint port.
      *
+     *  @param service The port number/identifier.
      */
-    KADEMLIA_SYMBOL_VISIBILITY
     void
     service
         ( service_type const& service )
     { service_ = service; }
-
-    /**
-     *
-     */
-    KADEMLIA_SYMBOL_VISIBILITY
-    bool
-    operator==
-        ( endpoint const& o )
-        const
-    { return address_ == o.address_ && service_ == o.service_; }
-
-    /**
-     *
-     */
-    KADEMLIA_SYMBOL_VISIBILITY
-    bool
-    operator!=
-        ( endpoint const& o )
-        const
-    { return ! this->operator==( o ); }
 
 private:
     ///
@@ -144,6 +132,32 @@ std::ostream&
 operator<<
     ( std::ostream & out
     , endpoint const& e );
+
+/**
+ *  @brief Compare two endpoints for equality.
+ *
+ *  @param a The first endpoint to compare.
+ *  @param b The second endpoint to compare.
+ *  @return true if a & b are equals, false otherwise.
+ */
+inline bool
+operator==
+    ( endpoint const& a
+    , endpoint const& b )
+{ return a.address() == b.address() && a.service() == b.service(); }
+
+/**
+ *  @brief Compare two endpoints for inequality.
+ *
+ *  @param a The first endpoint to compare.
+ *  @param b The second endpoint to compare.
+ *  @return false if a & b are equals, true otherwise.
+ */
+inline bool
+operator!=
+    ( endpoint const& a
+    , endpoint const& b )
+{ return ! ( a == b ); }
 
 } // namespace kademlia
 

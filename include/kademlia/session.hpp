@@ -44,35 +44,44 @@
 namespace kademlia {
 
 /**
- *
+ *  @brief This object is used to save and load data from the network.
  */
 class session final
 {
 public:
-    ///
+    /// The key type used to find data.
     using key_type = std::vector< std::uint8_t >;
 
-    ///
+    /// The stored data type.
     using data_type = std::vector< std::uint8_t >;
 
-    ///
+    /// The callback type called to signal an async save status.
     using save_handler_type = std::function
             < void
                 ( std::error_code const& error )
             >;
-    ///
+    /// The callback type called to signal an async load status.
     using load_handler_type = std::function
             < void
                 ( std::error_code const& error
                 , data_type const& data )
             >;
 
-    ///
-    enum { DEFAULT_PORT = 27980 };
+    /// This kademlia implementation default port.
+    enum { DEFAULT_PORT = 27980U };
 
 public:
     /**
+     *  @brief Construct a passive session.
+     *  @details This session acts like an active session expect it
+     *           does'nt try to discover neighbors. It can be used
+     *           by the first node of a network as no peer is known
+     *           uppon its creation.
      *
+     *  @param initial_peer In order to discover network peers, the session
+     *         contacts this peer and retrieve it's neighbors.
+     *  @param listen_on_ipv4 IPv4 listening endpoint.
+     *  @param listen_on_ipv6 IPv6 listening endpoint.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     session
@@ -81,21 +90,21 @@ public:
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
     /**
-     *
+     *  @brief Destruct the session.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     ~session
         ( void );
 
     /**
-     * Disabled copy constructor.
+     *  @brief Disabled copy constructor.
      */
     session
         ( session const& )
         = delete;
 
     /**
-     * Disabled assignement operator.
+     *  @brief Disabled assignment operator.
      */
     session&
     operator=
@@ -103,7 +112,11 @@ public:
         = delete;
 
     /**
+     *  @brief Async save a data into the network.
      *
+     *  @param key The data to save key.
+     *  @param data The data to save.
+     *  @param handler Callback called to report call status.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     void
@@ -113,7 +126,10 @@ public:
         , save_handler_type handler );
 
     /**
+     *  @brief Async load a data from the network.
      *
+     *  @param key The data to save key.
+     *  @param handler Callback called to report call status.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     void
@@ -122,7 +138,10 @@ public:
         , load_handler_type handler );
 
     /**
+     *  @brief This <b>blocking call</b> execute the session main loop.
+     *  @details Callbacks are executed inside this call.
      *
+     *  @return The exit reason of the call.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     std::error_code
@@ -130,7 +149,7 @@ public:
         ( void );
 
     /**
-     *
+     *  @brief Abort the session main loop.
      */
     KADEMLIA_SYMBOL_VISIBILITY
     void
@@ -138,11 +157,11 @@ public:
         ( void );
 
 private:
-    //
+    /// Hidden implementation.
     struct impl;
 
 private:
-    //
+    /// The hidden implementation instance.
     std::unique_ptr< impl > impl_;
 };
 

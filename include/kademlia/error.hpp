@@ -34,49 +34,69 @@
 
 namespace kademlia {
 
-/**
- *
- */
+/// This enum list all library specific errors.
 enum error_type
 {
+    /// An unknown error.
     UNKNOWN = 1,
+    /// The session::abort() has been called.
     RUN_ABORTED,
+    /// The session failed to contact a valid peer uppon creation.
     INITIAL_PEER_FAILED_TO_RESPOND,
+    /// An id has been corrupted.
     INVALID_ID,
+    /// An id has been truncated.
     TRUNCATED_ID,
+    /// A packet header from the network is corrupted.
     TRUNCATED_HEADER,
+    /// An endpoint information has been corrupted.
     TRUNCATED_ENDPOINT,
+    /// An endpoint address has been corrupted.
     TRUNCATED_ADDRESS,
+    /// A list has been corrupted.
     TRUNCATED_SIZE,
+    /// A message from an unknown version of the library has been received.
     UNKNOWN_PROTOCOL_VERSION,
-    CORRUPTED_HEADER,
+    /// A packet body has been corrupted.
     CORRUPTED_BODY,
+    /// An unexpected response has been received.
     UNASSOCIATED_MESSAGE_ID,
+    /// The provided IPv4 address is invalid.
     INVALID_IPV4_ADDRESS,
+    /// The provided IPv6 address is invalid.
     INVALID_IPV6_ADDRESS,
+    /// The function/method has been implemented yet.
     UNIMPLEMENTED,
-    NO_VALID_NEIGHBOR_REMAINING,
+    /// The value associated with the requested key has not been found.
     VALUE_NOT_FOUND,
+    /// The internal timer failed to tick.
     TIMER_MALFUNCTION,
+    /// Another call to session::run() is still blocked.
     ALREADY_RUNNING,
 };
 
 /**
+ *  @brief Get the library error category.
  *
+ *  @return A const reference to the error category instance.
  */
 std::error_category const&
 error_category
     ( void );
 
 /**
+ *  @brief Create a library error condition.
  *
+ *  @return The created error condition.
  */
 std::error_condition
 make_error_condition
     ( error_type condition );
 
 /**
+ *  @brief Create a library error code.
  *
+ *  @return The created error code.
  */
 std::error_code
 make_error_code

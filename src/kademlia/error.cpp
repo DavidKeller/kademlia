@@ -70,8 +70,6 @@ struct kademlia_error_category : std::error_category
                 return "truncated header";
             case TRUNCATED_SIZE:
                 return "truncated size";
-            case CORRUPTED_HEADER:
-                return "corrupted header";
             case CORRUPTED_BODY:
                 return "corrupted body";
             case UNKNOWN_PROTOCOL_VERSION:
@@ -82,8 +80,6 @@ struct kademlia_error_category : std::error_category
                 return "invalid IPv4 address";
             case INVALID_IPV6_ADDRESS:
                 return "invalid IPv6 address";
-            case NO_VALID_NEIGHBOR_REMAINING:
-                return "no valid neighbor remaing";
             case VALUE_NOT_FOUND:
                 return "value not found";
             case TIMER_MALFUNCTION:
