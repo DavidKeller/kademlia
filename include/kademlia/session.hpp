@@ -30,6 +30,7 @@
 #   pragma once
 #endif
 
+#include <memory>
 #include <system_error>
 
 #include <kademlia/detail/symbol_visibility.hpp>
