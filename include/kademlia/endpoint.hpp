@@ -62,7 +62,8 @@ public:
     endpoint
         ( address_type const& address
         , service_type const& service )
-            : address_{ address }, service_{ service }
+            : address_( address )
+            , service_( service )
     { }
 
     /**
@@ -74,8 +75,8 @@ public:
     endpoint
         ( address_type const& address
         , service_numeric_type const& service )
-            : address_{ address }
-            , service_{ std::to_string( service ) }
+            : address_( address )
+            , service_( std::to_string( service ) )
     { }
 
     /**
