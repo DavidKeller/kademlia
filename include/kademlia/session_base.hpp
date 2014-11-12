@@ -40,8 +40,9 @@ namespace kademlia {
 /**
  *  @brief This object contains session types.
  */
-struct session_base
+class session_base
 {
+public:
     /// The key type used to find data.
     using key_type = std::vector< std::uint8_t >;
 
@@ -62,6 +63,16 @@ struct session_base
 
     /// This kademlia implementation default port.
     enum { DEFAULT_PORT = 27980U };
+
+protected:
+    /**
+     *  @brief Destructor used to prevent
+     *         usage dervied classes as this
+     *         base.
+     */
+    ~session_base
+        ( void )
+        = default;
 };
 
 } // namespace kademlia

@@ -47,28 +47,6 @@ class session final
         : public session_base
 {
 public:
-    /// The key type used to find data.
-    using key_type = std::vector< std::uint8_t >;
-
-    /// The stored data type.
-    using data_type = std::vector< std::uint8_t >;
-
-    /// The callback type called to signal an async save status.
-    using save_handler_type = std::function
-            < void
-                ( std::error_code const& error )
-            >;
-    /// The callback type called to signal an async load status.
-    using load_handler_type = std::function
-            < void
-                ( std::error_code const& error
-                , data_type const& data )
-            >;
-
-    /// This kademlia implementation default port.
-    enum { DEFAULT_PORT = 27980U };
-
-public:
     /**
      *  @brief Construct an active session.
      *  @details This session perform a neighbors discovery on creation.
