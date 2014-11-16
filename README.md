@@ -82,13 +82,13 @@ Destruction:
 
 ### Supported targets
 * FreeBSD
-  * [![FreeBSD9 build](http://buildbot.litchis.fr/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/builders/freebsd9-x64-builder)
+  * [![FreeBSD9 build](http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder)
 * Fedora
-  * [![Fedora19 build](http://buildbot.litchis.fr/png?builder=fedora19-x64-builder)](http://buildbot.litchis.fr/builders/fedora19-x64-builder)
+  * [![Fedora19 build](http://buildbot.litchis.fr/kademlia/png?builder=fedora19-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/fedora19-x64-builder)
 * Ubuntu
-  * [![Ubuntu build](http://buildbot.litchis.fr/png?builder=ubuntu13-x64-builder)](http://buildbot.litchis.fr/builders/ubuntu13-x64-builder)
+  * [![Ubuntu build](http://buildbot.litchis.fr/kademlia/png?builder=ubuntu13-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/ubuntu13-x64-builder)
 * Windows
-  * [![Windows 7 build](http://buildbot.litchis.fr/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/builders/win2008r2-x64-builder)
+  * [![Windows 7 build](http://buildbot.litchis.fr/kademlia/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/win2008r2-x64-builder)
 
 ### Project structure
 ```
