@@ -26,31 +26,32 @@
 #ifndef KADEMLIA_TEST_HELPERS_TRACKER_MOCK_HPP
 #define KADEMLIA_TEST_HELPERS_TRACKER_MOCK_HPP
 
-#include <vector>
 #include <queue>
 
 #include <kademlia/error.hpp>
 
 #include "kademlia/message.hpp"
+#include "kademlia/message_serializer.hpp"
 
 namespace kademlia {
 namespace tests {
 
-struct tracker_mock
+class tracker_mock
 {
-    struct sent_message
-    {
-        detail::header::type type;
-        detail::ip_endpoint endpoint;
-    };
+public:
+    /**
+     *
+     */
+    tracker_mock
+        ( void )
+            : message_serializer_( detail::id{} )
+            , responses_to_receive_()
+            , sent_messages_()
+    { }
 
-    struct message_to_receive
-    {
-        detail::ip_endpoint endpoint;
-        detail::header header;
-        detail::buffer body;
-    };
-
+    /**
+     *
+     */
     template< typename MessageType >
     void
     add_message_to_receive
@@ -65,6 +66,40 @@ struct tracker_mock
         responses_to_receive_.push( std::move( m ) );
     }
 
+    /**
+     *
+     */
+    template< typename MessageType >
+    bool
+    has_sent_message
+        ( detail::ip_endpoint const& endpoint
+        , detail::header const& header
+        , MessageType const& message )
+    {
+        if ( sent_messages_.empty() )
+            return false;
+
+        auto const c = sent_messages_.front();
+        sent_messages_.pop();
+
+        sent_message const e{ endpoint
+                            , message_serializer_.serialize( message
+                                                           , detail::id{} ) };
+
+        return c.endpoint == e.endpoint && c.message == e.message;
+    }
+
+    /**
+     *
+     */
+    bool
+    has_sent_message
+        ( void )
+    { return ! sent_messages_.empty(); }
+
+    /**
+     *
+     */
     template< typename RequestType
             , typename EndpointType
             , typename TimeoutType
@@ -78,47 +113,81 @@ struct tracker_mock
         , OnMessageReceiveCallback const& on_message_received
         , OnErrorCallback const& on_error )
     {
-        auto id = detail::message_traits< RequestType >::TYPE_ID;
-        sent_requests_.push_back( sent_message{ id, endpoint } );
+        save_sent_message( request, endpoint );
 
-        if (responses_to_receive_.empty())
-            on_error(make_error_code(UNIMPLEMENTED));
+        if ( responses_to_receive_.empty() )
+            on_error( make_error_code( UNIMPLEMENTED ) );
         else {
             auto & response = responses_to_receive_.front();
-            on_message_received(response.endpoint,
-                                response.header,
-                                response.body.begin(),
-                                response.body.end());
+            on_message_received( response.endpoint,
+                                 response.header,
+                                 response.body.begin(),
+                                 response.body.end() );
             responses_to_receive_.pop();
         }
     }
 
+    /**
+     *
+     */
     template< typename RequestType
             , typename EndpointType >
     void
     send_request
-        ( RequestType const& request
+        ( RequestType const& r
         , EndpointType const& e )
-    {
-        auto id = detail::message_traits< RequestType >::TYPE_ID;
-        sent_requests_.push_back( sent_message{ id, e } );
-    }
+    { save_sent_message( r, e ); }
 
+    /**
+     *
+     */
     template< typename ResponseType
             , typename EndpointType >
     void
     send_response
-        ( detail::id const& response_id
-        , ResponseType const& response
+        ( detail::id const&
+        , ResponseType const& r
         , EndpointType const& e )
+    { save_sent_message( r, e ); }
+
+private:
+    struct sent_message
     {
-        auto id = detail::message_traits< ResponseType >::TYPE_ID;
-        sent_responses_.push_back( sent_message{ id, e } );
+        detail::ip_endpoint endpoint;
+        detail::buffer message;
+    };
+
+    struct message_to_receive
+    {
+        detail::ip_endpoint endpoint;
+        detail::header header;
+        detail::buffer body;
+    };
+
+private:
+    /**
+     *
+     */
+    template< typename RequestType
+            , typename EndpointType >
+    void
+    save_sent_message
+        ( RequestType const& request
+        , EndpointType const& endpoint )
+    {
+        sent_message m{ endpoint
+                      , message_serializer_.serialize( request
+                                                     , detail::id{} ) };
+        sent_messages_.push( m );
     }
 
+private:
+    ///
+    detail::message_serializer message_serializer_;
+    ///
     std::queue< message_to_receive > responses_to_receive_;
-    std::vector< sent_message > sent_requests_;
-    std::vector< sent_message > sent_responses_;
+    ///
+    std::queue< sent_message > sent_messages_;
 };
 
 } // namespace tests

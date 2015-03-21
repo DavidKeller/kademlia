@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
 
     BOOST_REQUIRE( routing_table.find_called_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
-    BOOST_REQUIRE( tracker_.sent_requests_.empty() );
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
 }
 
 BOOST_AUTO_TEST_CASE( can_issue_find_value )
@@ -94,10 +94,12 @@ BOOST_AUTO_TEST_CASE( can_issue_find_value )
 
     BOOST_REQUIRE( routing_table.find_called_ );
     BOOST_REQUIRE( ! failure_ );
-    BOOST_REQUIRE_EQUAL( 1ULL, tracker_.sent_requests_.size() );
-    BOOST_REQUIRE_EQUAL( kd::header::FIND_VALUE_REQUEST
-                       , tracker_.sent_requests_[0].type );
-    BOOST_REQUIRE_EQUAL( e1, tracker_.sent_requests_[0].endpoint );
+    BOOST_REQUIRE( tracker_.has_sent_message( e1
+                                            , kd::header{ kd::header::V1
+                                                        , kd::header::FIND_VALUE_REQUEST
+                                                        , kd::id{}
+                                                        , kd::id{} }
+                                            , kd::find_value_request_body{ searched_id } ) );
 }
 
 
