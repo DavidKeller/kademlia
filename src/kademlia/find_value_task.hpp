@@ -71,13 +71,14 @@ public:
         , RoutingTableType & routing_table
         , load_handler_type handler )
     {
-        std::shared_ptr< find_value_task > c;
-        c.reset( new find_value_task( key
+        std::shared_ptr< find_value_task > t;
+        t.reset( new find_value_task( key
                                     , tracker
                                     , routing_table
                                     , std::move( handler ) ) );
 
-        find_value( c );
+        if ( ! find_value( t ) )
+            t->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
     }
 
 private:

@@ -89,8 +89,8 @@ BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
 BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
 {
     // Create listening socket.
-    std::uint16_t const port1 = get_temporary_listening_port();
-    std::uint16_t const port2 = get_temporary_listening_port( port1 );
+    std::uint16_t const port1 = k::tests::get_temporary_listening_port();
+    std::uint16_t const port2 = k::tests::get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
 BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
 {
     // Create listening socket.
-    std::uint16_t const port1 = get_temporary_listening_port();
-    std::uint16_t const port2 = get_temporary_listening_port( port1 );
+    std::uint16_t const port1 = k::tests::get_temporary_listening_port();
+    std::uint16_t const port2 = k::tests::get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
 
@@ -121,8 +121,8 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
 BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
 {
     // Create listening socket.
-    std::uint16_t const port1 = get_temporary_listening_port();
-    std::uint16_t const port2 = get_temporary_listening_port( port1 );
+    std::uint16_t const port1 = k::tests::get_temporary_listening_port();
+    std::uint16_t const port2 = k::tests::get_temporary_listening_port( port1 );
     k::endpoint ipv4_endpoint{ "::", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 

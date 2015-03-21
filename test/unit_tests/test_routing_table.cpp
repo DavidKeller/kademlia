@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_SUITE( test_print )
 
 BOOST_AUTO_TEST_CASE( print_empty_routing_table )
 {
-    boost::test_tools::output_test_stream out( get_capture_path( "pattern_empty_routing_table.out" ), true);
+    boost::test_tools::output_test_stream out( k::tests::get_capture_path( "pattern_empty_routing_table.out" ), true);
 
     out << routing_table{ kd::id{}, 20 };
 

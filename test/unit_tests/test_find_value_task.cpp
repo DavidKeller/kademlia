@@ -24,96 +24,80 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "helpers/common.hpp"
+#include "helpers/tracker_mock.hpp"
+#include "helpers/routing_table_mock.hpp"
 
 #include <vector>
 #include <utility>
 
 #include "kademlia/id.hpp"
+#include "kademlia/peer.hpp"
 #include "kademlia/ip_endpoint.hpp"
-
 #include "kademlia/find_value_task.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-#if 0
 namespace {
 
 using data_type = std::vector< std::uint8_t >;
 
-using load_handler_type = std::function< void ( std::error_code const&, data_type const& ) >;
-
-using routing_table_peer = std::pair< kd::id
-                                    , kd::ip_endpoint >;
-
-using task = kd::find_value_task< load_handler_type, data_type >;
+struct fixture
+{
+    k::tests::tracker_mock tracker_;
+    std::error_code failure_;
+    data_type data_;
+};
 
 } // anonymous namespace
-#endif
 
-/**
- */
-BOOST_AUTO_TEST_SUITE( test_construction )
+BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
-BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
+BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
 {
-#if 0
-    std::vector< routing_table_peer > candidates;
-    kd::id const key{};
-    load_handler_type handler;
+    k::tests::routing_table_mock routing_table{ kd::id{ "a" } };
 
-    task c{ key, candidates.begin(), candidates.end(), handler };
+    auto callback = [ this ]
+        ( std::error_code const& f, data_type const& d )
+    { failure_ = f; data_ = d; };
 
-    BOOST_REQUIRE( ! c.is_caller_notified() );
-#endif
+    BOOST_REQUIRE( ! routing_table.find_called_ );
+
+    kd::start_find_value_task< data_type >( routing_table.expected_key_
+                                          , tracker_
+                                          , routing_table
+                                          , callback );
+
+    BOOST_REQUIRE( routing_table.find_called_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+    BOOST_REQUIRE( tracker_.sent_requests_.empty() );
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( can_notify_error_to_caller )
+BOOST_AUTO_TEST_CASE( can_issue_find_value )
 {
-#if 0
-    std::vector< routing_table_peer > candidates;
-    kd::id const key{};
+    kd::id searched_id{ "a" };
+    k::tests::routing_table_mock routing_table{ searched_id };
+    auto e1 = kd::to_ip_endpoint( "192.168.1.1", 5555 );
+    k::tests::routing_table_mock::peer_type p1{ kd::id{ "b" }, e1 };
+    routing_table.peers_.push_back( p1 );
 
-    std::error_code last_failure;
-    auto handler = [ &last_failure ] ( std::error_code const& failure, data_type const& data )
-    {
-        last_failure = failure;
-        BOOST_REQUIRE( data.empty() );
-    };
+    auto callback = [ this ]
+        ( std::error_code const& f, data_type const& d )
+    { failure_ = f; data_ = d; };
 
-    task c{ key, candidates.begin(), candidates.end(), handler };
+    BOOST_REQUIRE( ! routing_table.find_called_ );
 
-    BOOST_REQUIRE( ! c.is_caller_notified() );
-    BOOST_REQUIRE( std::error_code{} == last_failure );
-    c.notify_caller( std::make_error_code( std::errc::invalid_argument ) );
-    BOOST_REQUIRE( c.is_caller_notified() );
-    BOOST_REQUIRE( std::errc::invalid_argument == last_failure );
-#endif
-}
+    kd::start_find_value_task< data_type >( routing_table.expected_key_
+                                          , tracker_
+                                          , routing_table
+                                          , callback );
 
-BOOST_AUTO_TEST_CASE( can_notify_value_to_caller )
-{
-#if 0
-    std::vector< routing_table_peer > candidates;
-    kd::id const key{};
-    data_type const data{ 1, 2, 3, 4 };
-
-    data_type last_data;
-    auto handler = [ &last_data ] ( std::error_code const& failure, data_type const& data )
-    { last_data = data; };
-
-    task c{ key, candidates.begin(), candidates.end(), handler };
-
-    BOOST_REQUIRE( ! c.is_caller_notified() );
-    BOOST_REQUIRE( last_data.empty() );
-    c.notify_caller( data );
-    BOOST_REQUIRE( c.is_caller_notified() );
-    BOOST_REQUIRE( data == last_data );
-#endif
+    BOOST_REQUIRE( routing_table.find_called_ );
+    BOOST_REQUIRE( ! failure_ );
+    BOOST_REQUIRE_EQUAL( 1ULL, tracker_.sent_requests_.size() );
+    BOOST_REQUIRE_EQUAL( kd::header::FIND_VALUE_REQUEST
+                       , tracker_.sent_requests_[0].type );
+    BOOST_REQUIRE_EQUAL( e1, tracker_.sent_requests_[0].endpoint );
 }
 
 

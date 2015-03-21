@@ -23,70 +23,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_IP_ENDPOINT_HPP
-#define KADEMLIA_IP_ENDPOINT_HPP
+#ifndef KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
+#define KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
 
-#ifdef _MSC_VER
-#   pragma once
-#endif
+#include <vector>
+#include <utility>
+#include <stdexcept>
 
-#include <iosfwd>
-
-#include <cstdint>
-#include <string>
-#include <boost/asio/ip/address.hpp>
+#include "kademlia/message.hpp"
+#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/peer.hpp"
 
 namespace kademlia {
-namespace detail {
+namespace tests {
 
-///
-struct ip_endpoint final
+struct routing_table_mock
 {
-    boost::asio::ip::address address_;
-    uint16_t port_;
+    using peer_type = std::pair< detail::id, detail::ip_endpoint >;
+    using peers_type = std::vector< peer_type >;
+
+    using iterator_type = peers_type::iterator;
+
+    template< typename KeyType >
+    iterator_type
+    find
+        ( KeyType const& key )
+    {
+        if ( key != expected_key_ )
+            throw std::runtime_error("Unexpected searched key.");
+
+        find_called_ = true;
+
+        return peers_.begin();
+    }
+
+    iterator_type
+    end
+        ( void )
+    { return peers_.end(); }
+
+    detail::id expected_key_;
+    peers_type peers_;
+    bool find_called_;
 };
 
-/**
- *
- */
-inline ip_endpoint
-to_ip_endpoint( std::string const& ip
-              , std::uint16_t port )
-{
-    return ip_endpoint
-        { boost::asio::ip::address::from_string( ip )
-        , port };
-}
-
-/**
- *
- */
-std::ostream &
-operator<<
-    ( std::ostream & out
-    , ip_endpoint const& i );
-
-/**
- *
- */
-inline bool
-operator==
-    ( const ip_endpoint & a
-    , const ip_endpoint & b )
-{ return a.address_ == b.address_ && a.port_ == b.port_; }
-
-/**
- *
- */
-inline bool
-operator!=
-    ( ip_endpoint const& a
-    , ip_endpoint const& b )
-{ return ! ( a == b ); }
-
-
-} // namespace detail
+} // namespace tests
 } // namespace kademlia
 
-#endif
+
+#endif // KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
 

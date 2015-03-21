@@ -33,6 +33,9 @@
 namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;
 
+namespace kademlia {
+namespace tests {
+
 namespace {
 
 filesystem::path const tests_directory_{ TESTS_DIR };
@@ -65,6 +68,9 @@ get_temporary_listening_port
 
     return port;
 }
+
+} // namespace tests
+} // namespace kademlia
 
 /**
  *  When we are using boost as a shared (i.e. BOOST_TEST_DYN_LINK
