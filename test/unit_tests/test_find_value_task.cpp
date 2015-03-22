@@ -95,10 +95,6 @@ BOOST_AUTO_TEST_CASE( can_issue_find_value )
     BOOST_REQUIRE( routing_table.find_called_ );
     BOOST_REQUIRE( ! failure_ );
     BOOST_REQUIRE( tracker_.has_sent_message( e1
-                                            , kd::header{ kd::header::V1
-                                                        , kd::header::FIND_VALUE_REQUEST
-                                                        , kd::id{}
-                                                        , kd::id{} }
                                             , kd::find_value_request_body{ searched_id } ) );
 }
 

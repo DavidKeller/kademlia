@@ -73,7 +73,6 @@ public:
     bool
     has_sent_message
         ( detail::ip_endpoint const& endpoint
-        , detail::header const& header
         , MessageType const& message )
     {
         if ( sent_messages_.empty() )
