@@ -28,6 +28,8 @@
 
 #include <queue>
 
+#include <boost/asio/io_service.hpp>
+
 #include <kademlia/error.hpp>
 
 #include "kademlia/message.hpp"
@@ -43,8 +45,10 @@ public:
      *
      */
     tracker_mock
-        ( void )
-            : message_serializer_( detail::id{} )
+        ( boost::asio::io_service & io_service )
+            : io_service_( io_service )
+            , id_()
+            , message_serializer_( id_ )
             , responses_to_receive_()
             , sent_messages_()
     { }
@@ -81,11 +85,10 @@ public:
         auto const c = sent_messages_.front();
         sent_messages_.pop();
 
-        sent_message const e{ endpoint
-                            , message_serializer_.serialize( message
-                                                           , detail::id{} ) };
+        auto const m  = message_serializer_.serialize( message
+                                                     , detail::id{} );
 
-        return c.endpoint == e.endpoint && c.message == e.message;
+        return c.endpoint == endpoint && c.message == m;
     }
 
     /**
@@ -115,14 +118,17 @@ public:
         save_sent_message( request, endpoint );
 
         if ( responses_to_receive_.empty() )
-            on_error( make_error_code( UNIMPLEMENTED ) );
+            io_service_.post( [ on_error ]( void )
+                    { on_error( make_error_code( UNIMPLEMENTED ) ); } );
         else {
-            auto & response = responses_to_receive_.front();
-            on_message_received( response.endpoint,
-                                 response.header,
-                                 response.body.begin(),
-                                 response.body.end() );
+            auto const response = responses_to_receive_.front();
             responses_to_receive_.pop();
+
+            io_service_.post( [ on_message_received, response ]
+                { on_message_received( response.endpoint
+                                     , response.header
+                                     , response.body.begin()
+                                     , response.body.end() ); } );
         }
     }
 
@@ -181,6 +187,10 @@ private:
     }
 
 private:
+    ///
+    boost::asio::io_service & io_service_;
+    ///
+    detail::id id_;
     ///
     detail::message_serializer message_serializer_;
     ///

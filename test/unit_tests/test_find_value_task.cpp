@@ -44,6 +44,17 @@ using data_type = std::vector< std::uint8_t >;
 
 struct fixture
 {
+    fixture
+        ( void )
+        : io_service_()
+        , io_service_work_( io_service_ )
+        , tracker_( io_service_ )
+        , failure_()
+        , data_()
+    { }
+
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work io_service_work_;
     k::tests::tracker_mock tracker_;
     std::error_code failure_;
     data_type data_;
@@ -68,6 +79,8 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
                                           , routing_table
                                           , callback );
 
+    io_service_.poll();
+
     BOOST_REQUIRE( routing_table.find_called_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
@@ -85,12 +98,11 @@ BOOST_AUTO_TEST_CASE( can_issue_find_value )
         ( std::error_code const& f, data_type const& d )
     { failure_ = f; data_ = d; };
 
-    BOOST_REQUIRE( ! routing_table.find_called_ );
-
     kd::start_find_value_task< data_type >( routing_table.expected_key_
                                           , tracker_
                                           , routing_table
                                           , callback );
+    io_service_.poll();
 
     BOOST_REQUIRE( routing_table.find_called_ );
     BOOST_REQUIRE( ! failure_ );
