@@ -82,15 +82,15 @@ Destruction:
 
 ### Supported targets
 * FreeBSD 9
-  * [![FreeBSD9 build](http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder)
+  * [![FreeBSD 9 build](http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder)
 * Fedora 21
-  * [![Fedora21 build](http://buildbot.litchis.fr/kademlia/png?builder=fedora21-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/fedora21-x64-builder)
+  * [![Fedora 21 build](http://buildbot.litchis.fr/kademlia/png?builder=fedora21-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/fedora21-x64-builder)
 * Ubuntu 14
-  * [![Ubuntu14 build](http://buildbot.litchis.fr/kademlia/png?builder=ubuntu14-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/ubuntu14-x64-builder)
+  * [![Ubuntu 14 build](http://buildbot.litchis.fr/kademlia/png?builder=ubuntu14-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/ubuntu14-x64-builder)
 * Centos 7
-  * [![Ubuntu14 build](http://buildbot.litchis.fr/kademlia/png?builder=centos7-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/centos7-x64-builder)
-* Debian 7
-  * [![Ubuntu14 build](http://buildbot.litchis.fr/kademlia/png?builder=debian7-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/debian7-x64-builder)
+  * [![Centos 7 build](http://buildbot.litchis.fr/kademlia/png?builder=centos7-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/centos7-x64-builder)
+* Debian 8
+  * [![Debian 8 build](http://buildbot.litchis.fr/kademlia/png?builder=debian8-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/debian8-x64-builder)
 * Windows 7
   * [![Windows 7 build](http://buildbot.litchis.fr/kademlia/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/win2008r2-x64-builder)
 
