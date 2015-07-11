@@ -51,13 +51,32 @@ struct fixture
         , tracker_( io_service_ )
         , failure_()
         , data_()
+        , routing_table_()
     { }
+
+    void
+    operator()
+        ( std::error_code const& f
+        , data_type const& d )
+    { failure_ = f; data_ = d; }
+
+    k::tests::routing_table_mock::peer_type
+    add_peer
+        ( std::string const& ip, kd::id const& id )
+    {
+        auto e = kd::to_ip_endpoint( ip, 5555 );
+        k::tests::routing_table_mock::peer_type p{ id, e };
+        routing_table_.peers_.push_back( p );
+
+        return p;
+    }
 
     boost::asio::io_service io_service_;
     boost::asio::io_service::work io_service_work_;
     k::tests::tracker_mock tracker_;
     std::error_code failure_;
     data_type data_;
+    k::tests::routing_table_mock routing_table_;
 };
 
 } // anonymous namespace
@@ -66,50 +85,114 @@ BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
 {
-    k::tests::routing_table_mock routing_table{ kd::id{ "a" } };
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
 
-    auto callback = [ this ]
-        ( std::error_code const& f, data_type const& d )
-    { failure_ = f; data_ = d; };
+    BOOST_REQUIRE_EQUAL( 0, routing_table_.find_call_count_ );
 
-    BOOST_REQUIRE( ! routing_table.find_called_ );
-
-    kd::start_find_value_task< data_type >( routing_table.expected_key_
+    kd::start_find_value_task< data_type >( searched_key
                                           , tracker_
-                                          , routing_table
-                                          , callback );
+                                          , routing_table_
+                                          , std::ref( *this ) );
 
     io_service_.poll();
 
-    BOOST_REQUIRE( routing_table.find_called_ );
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
 }
 
-BOOST_AUTO_TEST_CASE( can_issue_find_value )
+BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
 {
-    kd::id searched_id{ "a" };
-    k::tests::routing_table_mock routing_table{ searched_id };
-    auto e1 = kd::to_ip_endpoint( "192.168.1.1", 5555 );
-    k::tests::routing_table_mock::peer_type p1{ kd::id{ "b" }, e1 };
-    routing_table.peers_.push_back( p1 );
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
 
-    auto callback = [ this ]
-        ( std::error_code const& f, data_type const& d )
-    { failure_ = f; data_ = d; };
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "a" } );
 
-    kd::start_find_value_task< data_type >( routing_table.expected_key_
+    kd::start_find_value_task< data_type >( searched_key
                                           , tracker_
-                                          , routing_table
-                                          , callback );
+                                          , routing_table_
+                                          , std::ref( *this ) );
     io_service_.poll();
 
-    BOOST_REQUIRE( routing_table.find_called_ );
-    BOOST_REQUIRE( ! failure_ );
-    BOOST_REQUIRE( tracker_.has_sent_message( e1
-                                            , kd::find_value_request_body{ searched_id } ) );
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
+                                            , kd::find_value_request_body{ searched_key } ) );
 }
 
+BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
+{
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
+
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p2 = add_peer( "192.168.1.2", kd::id{ "c" } );
+
+    kd::start_find_value_task< data_type >( searched_key
+                                          , tracker_
+                                          , routing_table_
+                                          , std::ref( *this ) );
+    io_service_.poll();
+
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+}
+
+BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
+{
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
+
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p2 = add_peer( "192.168.1.2", kd::id{ "c" } );
+
+    tracker_.add_message_to_receive( p1.second
+                                   , p1.first
+                                   , kd::find_peer_response_body{} );
+    tracker_.add_message_to_receive( p2.second
+                                   , p2.first
+                                   , kd::find_peer_response_body{} );
+
+    kd::start_find_value_task< data_type >( searched_key
+                                          , tracker_
+                                          , routing_table_
+                                          , std::ref( *this ) );
+    io_service_.poll();
+
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+}
+
+BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
+{
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
+
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    kd::find_value_response_body const b1{ { 1, 2, 3, 4 } };
+    tracker_.add_message_to_receive( p1.second, p1.first, b1 );
+    kd::start_find_value_task< data_type >( searched_key
+                                          , tracker_
+                                          , routing_table_
+                                          , std::ref( *this ) );
+    io_service_.poll();
+
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+    BOOST_REQUIRE( ! failure_ );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( b1.data_.begin(), b1.data_.end()
+                                   , data_.begin(), data_.end() );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

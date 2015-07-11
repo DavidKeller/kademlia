@@ -44,7 +44,44 @@
 namespace kademlia {
 namespace detail {
 
-///
+/**
+ *  @brief This class represents a find value task.
+ *  @details
+ *  Its purpose is to perform network request
+ *  to find the peer response of storing a value.
+ *
+ *  @dot
+ *  digraph algorithm {
+ *      fontsize=12
+ *  
+ *      node [shape=diamond];
+ *      "is any closer peer ?";
+ *      "has peer responded ?";
+ *      "does peer has data ?";
+ *      "is any pending request ?";
+ *  
+ *      node [shape=box];
+ *      "query peer(s)";
+ *      "add peer(s) from response"
+ *  
+ *      node [shape=ellipse];
+ *      "data not found";
+ *      "data found";
+ *      "start";
+ *  
+ *      "start" -> "is any closer peer ?" [style=dotted]
+ *      "is any closer peer ?":e -> "is any pending request ?" [label=no]
+ *      "is any closer peer ?":s -> "query peer(s)" [label=yes]
+ *      "query peer(s)" -> "has peer responded ?"
+ *      "has peer responded ?":e -> "is any closer peer ?" [label=no]
+ *      "has peer responded ?":s -> "does peer has data ?" [label=yes]
+ *      "does peer has data ?":s -> "data found" [label=yes]
+ *      "does peer has data ?":e -> "add peer(s) from response" [label=no]
+ *      "add peer(s) from response":s -> "is any closer peer ?"
+ *      "is any pending request ?":e -> "data not found" [label=no]
+ *  }
+ *  @enddot
+ */
 template< typename LoadHandlerType, typename TrackerType, typename DataType >
 class find_value_task final
     : public lookup_task
@@ -77,8 +114,7 @@ public:
                                     , routing_table
                                     , std::move( handler ) ) );
 
-        if ( ! find_value( t ) )
-            t->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
+        try_candidates( t );
     }
 
 private:
@@ -110,6 +146,7 @@ private:
     notify_caller
         ( data_type const& data )
     {
+        assert( ! is_caller_notified() );
         load_handler_( std::error_code(), data );
         is_finished_ = true;
     }
@@ -121,6 +158,7 @@ private:
     notify_caller
         ( std::error_code const& failure )
     {
+        assert( ! is_caller_notified() );
         load_handler_( failure, data_type{} );
         is_finished_ = true;
     }
@@ -137,20 +175,20 @@ private:
     /**
      *
      */
-    static bool
-    find_value
+    static void
+    try_candidates
         ( std::shared_ptr< find_value_task > task
         , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
-        find_value_request_body const request{ task->get_key() };
-
         auto const closest_candidates = task->select_new_closest_candidates
                 ( concurrent_requests_count );
 
+        find_value_request_body const request{ task->get_key() };
         for ( auto const& c : closest_candidates )
             send_find_value_request( request, c, task );
 
-        return ! closest_candidates.empty();
+        if ( task->have_all_requests_completed() )
+            task->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
     }
 
     /**
@@ -189,7 +227,7 @@ private:
 
             // XXX: Current current_candidate must be flagged as stale.
             task->flag_candidate_as_invalid( current_candidate.id_ );
-            find_value( task );
+            try_candidates( task );
         };
 
         task->tracker_.send_request( request
@@ -211,7 +249,9 @@ private:
         , buffer::const_iterator e
         , std::shared_ptr< find_value_task > task )
     {
-        LOG_DEBUG( find_value_task, task.get() ) << "handling response to find '"
+        LOG_DEBUG( find_value_task, task.get() )
+                << "handling response type '"
+                << int( h.type_ ) << "' to find '"
                 << task->get_key() << "' value." << std::endl;
 
         if ( h.type_ == header::FIND_PEER_RESPONSE )
@@ -251,12 +291,8 @@ private:
             return;
         }
 
-        if ( task->are_these_candidates_closest( response.peers_ ) )
-            find_value( task );
-
-        if ( task->have_all_requests_completed()
-                && ! find_value( task, ROUTING_TABLE_BUCKET_SIZE ) )
-            task->notify_caller( make_error_code( VALUE_NOT_FOUND ) );
+        task->add_candidates( response.peers_ );
+        try_candidates( task );
     }
 
     /**

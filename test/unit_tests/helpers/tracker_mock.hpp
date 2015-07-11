@@ -60,11 +60,12 @@ public:
     void
     add_message_to_receive
         ( detail::ip_endpoint const& endpoint
-        , detail::header const& header
+        , detail::id const& source_id
         , MessageType const& message )
     {
         message_to_receive m{ endpoint
-                            , header };
+                            , detail::message_traits< MessageType >::TYPE_ID
+                            , source_id };
         detail::serialize( message, m.body );
 
         responses_to_receive_.push( std::move( m ) );
@@ -121,14 +122,21 @@ public:
             io_service_.post( [ on_error ]( void )
                     { on_error( make_error_code( UNIMPLEMENTED ) ); } );
         else {
-            auto const response = responses_to_receive_.front();
+            auto const r = responses_to_receive_.front();
             responses_to_receive_.pop();
+            detail::header h{ detail::header::V1
+                            , r.message_type
+                            , r.source_id };
 
-            io_service_.post( [ on_message_received, response ]
-                { on_message_received( response.endpoint
-                                     , response.header
-                                     , response.body.begin()
-                                     , response.body.end() ); } );
+            auto forwarder = [ on_message_received, h, r ]
+            {
+                on_message_received( r.endpoint
+                                   , h
+                                   , r.body.begin()
+                                   , r.body.end() );
+            };
+
+            io_service_.post( forwarder );
         }
     }
 
@@ -156,16 +164,17 @@ public:
     { save_sent_message( r, e ); }
 
 private:
-    struct sent_message
+    struct sent_message final
     {
         detail::ip_endpoint endpoint;
         detail::buffer message;
     };
 
-    struct message_to_receive
+    struct message_to_receive final
     {
         detail::ip_endpoint endpoint;
-        detail::header header;
+        detail::header::type message_type;
+        detail::id source_id;
         detail::buffer body;
     };
 

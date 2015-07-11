@@ -83,6 +83,14 @@ public:
     /**
      *
      */
+    template< typename Peers >
+    void
+    add_candidates 
+        ( Peers const& peers );
+
+    /**
+     *
+     */
     bool
     have_all_requests_completed
         ( void )
@@ -238,6 +246,15 @@ lookup_task::select_closest_valid_candidates
 }
 
 template< typename Peers >
+inline void
+lookup_task::add_candidates
+    ( Peers const& peers )
+{
+    for ( auto const& p : peers )
+        add_candidate( p );
+}
+
+template< typename Peers >
 inline bool
 lookup_task::are_these_candidates_closest
     ( Peers const& peers )
@@ -246,8 +263,7 @@ lookup_task::are_these_candidates_closest
     // new candidate insertion.
     auto closest_candidate = candidates_.begin();
 
-    for ( auto const& p : peers )
-        add_candidate( p );
+    add_candidates( peers );
 
     // If no closest candidate has been found.
     if ( closest_candidate == candidates_.begin() )

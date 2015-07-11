@@ -83,13 +83,11 @@ struct header final
     id random_token_;
 };
 
-
 /**
  *
  */
 template< typename MessageBodyType >
 struct message_traits;
-
 
 /**
  *

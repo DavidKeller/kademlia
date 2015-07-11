@@ -27,6 +27,7 @@
 #define KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
 
 #include <vector>
+#include <deque>
 #include <utility>
 #include <stdexcept>
 
@@ -41,18 +42,28 @@ struct routing_table_mock
 {
     using peer_type = std::pair< detail::id, detail::ip_endpoint >;
     using peers_type = std::vector< peer_type >;
+    using expected_ids_type = std::deque< detail::id >;
 
     using iterator_type = peers_type::iterator;
 
-    template< typename KeyType >
+    routing_table_mock
+        ( void )
+        : expected_ids_()
+        , peers_()
+        , find_call_count_()
+    { }
+
+    template< typename IdType >
     iterator_type
     find
-        ( KeyType const& key )
+        ( IdType const& id )
     {
-        if ( key != expected_key_ )
-            throw std::runtime_error("Unexpected searched key.");
+        if ( expected_ids_.empty() || id != expected_ids_.front() )
+            throw std::runtime_error("Unexpected searched id.");
 
-        find_called_ = true;
+        expected_ids_.pop_front();
+
+        ++ find_call_count_;
 
         return peers_.begin();
     }
@@ -62,9 +73,9 @@ struct routing_table_mock
         ( void )
     { return peers_.end(); }
 
-    detail::id expected_key_;
+    expected_ids_type expected_ids_;
     peers_type peers_;
-    bool find_called_;
+    uint64_t find_call_count_;
 };
 
 } // namespace tests
