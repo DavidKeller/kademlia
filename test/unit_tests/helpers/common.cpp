@@ -24,6 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
+#include "kademlia/log.hpp"
 
 #include <iostream>
 #include <boost/system/system_error.hpp>
@@ -90,7 +91,10 @@ get_temporary_listening_port
 bool
 init_unit_test
     ( void )
-{ return true; }
+{ 
+    kademlia::detail::enable_log_for( "*" );
+    return true;
+}
 
 #else
 
@@ -98,7 +102,10 @@ boost::unit_test::test_suite *
 init_unit_test_suite
     ( int
     , char* [] )
-{ return nullptr; }
+{
+    kademlia::detail::enable_log_for( "*" );
+    return nullptr;
+}
 
 #endif
 
