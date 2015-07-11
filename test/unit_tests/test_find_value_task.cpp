@@ -194,5 +194,41 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
                                             , kd::find_value_request_body{ searched_key } ) );
 }
 
+BOOST_AUTO_TEST_CASE( can_return_value_when_unknown_peer_has_the_value )
+{
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
+
+    // p1 is the only known peer atm.
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+
+    // p2 is unknown atm.
+    auto i2 = kd::id{ searched_key };
+    auto e2 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
+    kd::peer const p2{ i2, e2 };
+
+    // p1 knows p2.
+    kd::find_peer_response_body const fp1{ { p2 } };
+    tracker_.add_message_to_receive( p1.second, p1.first, fp1 );
+
+    // And p2 knows the value.
+    kd::find_value_response_body const fv2{ { 1, 2, 3, 4 } };
+    tracker_.add_message_to_receive( e2, i2, fv2 );
+    kd::start_find_value_task< data_type >( searched_key
+                                          , tracker_
+                                          , routing_table_
+                                          , std::ref( *this ) );
+    io_service_.poll();
+
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+    BOOST_REQUIRE( ! failure_ );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( fv2.data_.begin(), fv2.data_.end()
+                                   , data_.begin(), data_.end() );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
+                                            , kd::find_value_request_body{ searched_key } ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( e2
+                                            , kd::find_value_request_body{ searched_key } ) );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
