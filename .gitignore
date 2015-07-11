@@ -1,4 +1,4 @@
 # Ignore vim stuff
 *.swp
-build*
+build/*
 .DS_Store
