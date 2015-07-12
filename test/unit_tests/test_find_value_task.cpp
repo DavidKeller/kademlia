@@ -117,8 +117,8 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
 
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
-                                            , kd::find_value_request_body{ searched_key } ) );
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
 }
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
@@ -137,10 +137,9 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
 
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
-                                            , kd::find_value_request_body{ searched_key } ) );
-    BOOST_REQUIRE( tracker_.has_sent_message( p2.second
-                                            , kd::find_value_request_body{ searched_key } ) );
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.second, fv ) );
 }
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
@@ -166,10 +165,9 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
 
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
     BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
-                                            , kd::find_value_request_body{ searched_key } ) );
-    BOOST_REQUIRE( tracker_.has_sent_message( p2.second
-                                            , kd::find_value_request_body{ searched_key } ) );
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.second, fv ) );
 }
 
 BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
@@ -190,8 +188,8 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
     BOOST_REQUIRE( ! failure_ );
     BOOST_REQUIRE_EQUAL_COLLECTIONS( b1.data_.begin(), b1.data_.end()
                                    , data_.begin(), data_.end() );
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
-                                            , kd::find_value_request_body{ searched_key } ) );
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
 }
 
 BOOST_AUTO_TEST_CASE( can_return_value_when_unknown_peer_has_the_value )
@@ -224,10 +222,9 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_unknown_peer_has_the_value )
     BOOST_REQUIRE( ! failure_ );
     BOOST_REQUIRE_EQUAL_COLLECTIONS( fv2.data_.begin(), fv2.data_.end()
                                    , data_.begin(), data_.end() );
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second
-                                            , kd::find_value_request_body{ searched_key } ) );
-    BOOST_REQUIRE( tracker_.has_sent_message( e2
-                                            , kd::find_value_request_body{ searched_key } ) );
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( e2, fv ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
