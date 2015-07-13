@@ -67,13 +67,13 @@ public:
         ( id const & my_id
         , tracker_type & tracker
         , routing_table_type & routing_table
-        , endpoints_type && endpoints_to_query )
+        , endpoints_type const& endpoints_to_query )
     {
         std::shared_ptr< discover_neighbors_task > d;
         d.reset( new discover_neighbors_task( my_id
                                             , tracker
                                             , routing_table
-                                            , std::move( endpoints_to_query ) ) );
+                                            , endpoints_to_query ) );
 
         search_ourselves( d );
     }
@@ -86,11 +86,11 @@ private:
         ( id const & my_id
         , tracker_type & tracker
         , routing_table_type & routing_table
-        , endpoints_type && endpoints_to_query )
+        , endpoints_type const& endpoints_to_query )
             : my_id_( my_id )
             , tracker_( tracker )
             , routing_table_( routing_table )
-            , endpoints_to_query_( std::move( endpoints_to_query ) )
+            , endpoints_to_query_( endpoints_to_query )
     {
         LOG_DEBUG( discover_neighbors_task, this )
                 << "create discover neighbors task." << std::endl;
@@ -210,15 +210,13 @@ start_discover_neighbors_task
     ( id const& my_id
     , TrackerType & tracker
     , RoutingTableType & routing_table
-    , EndpointsType && endpoints_to_query )
+    , EndpointsType const& endpoints_to_query )
 {
-    using endpoints_type = typename std::remove_reference< EndpointsType >::type;
     using task = discover_neighbors_task< TrackerType
                                         , RoutingTableType
-                                        , endpoints_type >;
+                                        , EndpointsType >;
 
-    task::start( my_id, tracker, routing_table
-               , std::forward< EndpointsType >( endpoints_to_query ) );
+    task::start( my_id, tracker, routing_table, endpoints_to_query );
 }
 
 } // namespace detail

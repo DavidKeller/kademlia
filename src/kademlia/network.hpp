@@ -33,6 +33,7 @@
 #include <functional>
 #include <boost/asio/io_service.hpp>
 
+#include "kademlia/endpoint.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/message_socket.hpp"

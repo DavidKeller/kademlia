@@ -26,6 +26,7 @@
 #include "helpers/common.hpp"
 #include "helpers/tracker_mock.hpp"
 #include "helpers/routing_table_mock.hpp"
+#include "helpers/task_fixture.hpp"
 
 #include <vector>
 #include <utility>
@@ -43,16 +44,11 @@ namespace {
 
 using data_type = std::vector< std::uint8_t >;
 
-struct fixture
+struct fixture : k::tests::task_fixture
 {
     fixture
         ( void )
-        : io_service_()
-        , io_service_work_( io_service_ )
-        , tracker_( io_service_ )
-        , failure_()
-        , routing_table_()
-        , callback_call_count_()
+        : task_fixture()
     { }
 
     void
@@ -62,24 +58,6 @@ struct fixture
         ++ callback_call_count_;
         failure_ = f;
     }
-
-    k::tests::routing_table_mock::peer_type
-    add_peer
-        ( std::string const& ip, kd::id const& id )
-    {
-        auto e = kd::to_ip_endpoint( ip, 5555 );
-        k::tests::routing_table_mock::peer_type p{ id, e };
-        routing_table_.peers_.push_back( p );
-
-        return p;
-    }
-
-    boost::asio::io_service io_service_;
-    boost::asio::io_service::work io_service_work_;
-    k::tests::tracker_mock tracker_;
-    std::error_code failure_;
-    k::tests::routing_table_mock routing_table_;
-    std::size_t callback_call_count_;
 };
 
 } // anonymous namespace
@@ -119,7 +97,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
     kd::buffer const data{ 1, 2, 3, 4 };
     routing_table_.expected_ids_.emplace_back( chosen_key );
 
-    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
 
     kd::start_store_value_task< data_type >( chosen_key
                                            , data
@@ -133,7 +111,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
 
     // Task asked p1 for a closer peer.
     kd::find_peer_request_body const fv{ chosen_key };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, fv ) );
 
     // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
@@ -149,8 +127,8 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
     kd::buffer const data{ 1, 2, 3, 4 };
     routing_table_.expected_ids_.emplace_back( chosen_key );
 
-    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
-    auto p2 = add_peer( "192.168.1.2", kd::id{ "c" } );
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p2 = create_and_add_peer( "192.168.1.2", kd::id{ "c" } );
 
     kd::start_store_value_task< data_type >( chosen_key
                                            , data
@@ -164,8 +142,8 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
 
     // Task asked p1 & p2 for a closer peer.
     kd::find_peer_request_body const fv{ chosen_key };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
-    BOOST_REQUIRE( tracker_.has_sent_message( p2.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.endpoint_, fv ) );
 
     // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
@@ -181,9 +159,9 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_already_known_peer_is_the_target )
     kd::buffer const data{ 1, 2, 3, 4 };
     routing_table_.expected_ids_.emplace_back( chosen_key );
 
-    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
     kd::find_peer_response_body const b1{};
-    tracker_.add_message_to_receive( p1.second, p1.first, b1 );
+    tracker_.add_message_to_receive( p1.endpoint_, p1.id_, b1 );
     kd::start_store_value_task< data_type >( chosen_key
                                            , data
                                            , tracker_
@@ -196,12 +174,12 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_already_known_peer_is_the_target )
 
     // Task asked p1 for a closer peer.
     kd::find_peer_request_body const fv{ chosen_key };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, fv ) );
 
     // Task decided that p1 was the closest
     // hence it asked to store data on it.
     kd::store_value_request_body const sv{ chosen_key, data };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, sv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, sv ) );
 
     // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
@@ -218,7 +196,7 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_discovered_peer_is_the_target )
     routing_table_.expected_ids_.emplace_back( chosen_key );
 
     // p1 is the only known peer atm.
-    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
 
     // p2 is unknown atm.
     auto i2 = kd::id{ chosen_key };
@@ -227,7 +205,7 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_discovered_peer_is_the_target )
 
     // p1 knows p2.
     kd::find_peer_response_body const fp1{ { p2 } };
-    tracker_.add_message_to_receive( p1.second, p1.first, fp1 );
+    tracker_.add_message_to_receive( p1.endpoint_, p1.id_, fp1 );
 
     // And p2 doesn't know closer peer.
     kd::find_peer_response_body const fp2{};
@@ -245,7 +223,7 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_discovered_peer_is_the_target )
 
     // Task asked p1 for a closer peer.
     kd::find_peer_request_body const fv{ chosen_key };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, fv ) );
 
     // Task then asked p2 for a closer peer.
     BOOST_REQUIRE( tracker_.has_sent_message( e2, fv ) );
@@ -257,7 +235,7 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_discovered_peer_is_the_target )
 
     // Task is also required to store data 
     // on close peers for redundancy purpose.
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, sv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, sv ) );
 
     // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );

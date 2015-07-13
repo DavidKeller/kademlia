@@ -23,12 +23,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+include_directories(BEFORE .)
+
 # Run all tests, timeouting if it takes more than 30 seconds.
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 
 add_library(test_helpers_common STATIC
     helpers/common.cpp
-    helpers/common.hpp)
+    helpers/common.hpp
+    helpers/peer_factory.hpp
+    helpers/routing_table_mock.hpp
+    helpers/tracker_mock.hpp
+    helpers/task_fixture.hpp)
 
 set_target_properties(test_helpers_common PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -52,11 +58,12 @@ build_and_run_test(test_message.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_value_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_store_value_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_find_value_task.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_discover_neighbors_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_response_callbacks.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_timer.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_r.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_routing_table.cpp helpers/peer_factory.hpp LIBRARIES kademlia_static)
+build_and_run_test(test_routing_table.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
 

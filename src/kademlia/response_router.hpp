@@ -84,7 +84,7 @@ public:
     {
         // Try to forward the message to its associated callback.
         auto failure = response_callbacks_.dispatch_response( sender
-                                                             , h, i, e );
+                                                            , h, i, e );
         if ( failure == UNASSOCIATED_MESSAGE_ID )
             // Unknown request or unassociated responses
             // are discarded.
@@ -106,7 +106,7 @@ public:
         auto on_timeout = [ this, on_error, response_id ]
             ( void )
         {
-            // If an callback has been removed, that means
+            // If a callback has been removed, that means
             // the message has never been received
             // hence report the timeout to the client.
             if ( response_callbacks_.remove_callback( response_id ) )
@@ -116,7 +116,7 @@ public:
         // Associate the response id with the
         // on_response_received callback.
         response_callbacks_.push_callback( response_id
-                                            , on_response_received );
+                                         , on_response_received );
 
         timer_.expires_from_now( callback_ttl, on_timeout );
     }

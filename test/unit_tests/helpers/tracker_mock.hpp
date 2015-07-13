@@ -41,6 +41,10 @@ namespace tests {
 class tracker_mock
 {
 public:
+    ///
+    using endpoint_type = detail::ip_endpoint;
+
+public:
     /**
      *
      */
@@ -59,7 +63,7 @@ public:
     template< typename MessageType >
     void
     add_message_to_receive
-        ( detail::ip_endpoint const& endpoint
+        ( endpoint_type const& endpoint
         , detail::id const& source_id
         , MessageType const& message )
     {
@@ -77,7 +81,7 @@ public:
     template< typename MessageType >
     bool
     has_sent_message
-        ( detail::ip_endpoint const& endpoint
+        ( endpoint_type const& endpoint
         , MessageType const& message )
     {
         if ( sent_messages_.empty() )
@@ -166,13 +170,13 @@ public:
 private:
     struct sent_message final
     {
-        detail::ip_endpoint endpoint;
+        endpoint_type endpoint;
         detail::buffer message;
     };
 
     struct message_to_receive final
     {
-        detail::ip_endpoint endpoint;
+        endpoint_type endpoint;
         detail::header::type message_type;
         detail::id source_id;
         detail::buffer body;

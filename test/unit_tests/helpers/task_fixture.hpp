@@ -23,68 +23,62 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
-#define KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
+#ifndef KADEMLIA_TEST_HELPERS_TASK_FIXTURE_HPP
+#define KADEMLIA_TEST_HELPERS_TASK_FIXTURE_HPP
 
-#include <vector>
-#include <deque>
-#include <utility>
-#include <stdexcept>
+#include <cstdint>
+#include <system_error>
 
-#include "kademlia/message.hpp"
-#include "kademlia/ip_endpoint.hpp"
+#include <boost/asio/io_service.hpp>
+
 #include "kademlia/peer.hpp"
+#include "helpers/common.hpp"
+#include "helpers/tracker_mock.hpp"
+#include "helpers/routing_table_mock.hpp"
 
 namespace kademlia {
 namespace tests {
 
-struct routing_table_mock
+struct task_fixture
 {
-    using peer_type = std::pair< detail::id, detail::ip_endpoint >;
-    using peers_type = std::vector< peer_type >;
-    using expected_ids_type = std::deque< detail::id >;
-
-    using iterator_type = peers_type::iterator;
-
-    routing_table_mock
+    task_fixture
         ( void )
-        : expected_ids_()
-        , peers_()
-        , find_call_count_()
+        : io_service_()
+        , io_service_work_( io_service_ )
+        , tracker_( io_service_ )
+        , failure_()
+        , routing_table_()
+        , callback_call_count_()
     { }
 
-    iterator_type
-    find
-        ( detail::id const& id )
+    detail::peer
+    create_peer
+        ( std::string const& ip, detail::id const& id )
     {
-        if ( expected_ids_.empty() || id != expected_ids_.front() )
-            throw std::runtime_error("Unexpected searched id.");
+        auto e = detail::to_ip_endpoint( ip, 5555 );
 
-        expected_ids_.pop_front();
-
-        ++ find_call_count_;
-
-        return peers_.begin();
+        return detail::peer{ id, e };
     }
 
-    void
-    push
-        ( detail::id const& id
-        , detail::ip_endpoint const& endpoint )
-    { peers_.emplace_back( id, endpoint ); }
+    detail::peer
+    create_and_add_peer
+        ( std::string const& ip, detail::id const& id )
+    {
+        auto p = create_peer( ip, id );
+        routing_table_.peers_.emplace_back( p.id_, p.endpoint_ );
 
-    iterator_type
-    end
-        ( void )
-    { return peers_.end(); }
+        return p;
+    }
 
-    expected_ids_type expected_ids_;
-    peers_type peers_;
-    uint64_t find_call_count_;
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work io_service_work_;
+    tracker_mock tracker_;
+    std::error_code failure_;
+    routing_table_mock routing_table_;
+    std::size_t callback_call_count_;
 };
 
 } // namespace tests
 } // namespace kademlia
 
-#endif // KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
-
+#endif
