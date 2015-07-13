@@ -77,7 +77,7 @@ public:
                                      , routing_table
                                      , std::move( handler ) ) );
 
-        store_value( c );
+        try_to_store_value( c );
     }
 
 private:
@@ -124,13 +124,13 @@ private:
     /**
      *
      */
-    static bool
-    store_value
+    static void
+    try_to_store_value
         ( std::shared_ptr< store_value_task > task
         , std::size_t concurrent_requests_count = CONCURRENT_FIND_PEER_REQUESTS_COUNT )
     {
         LOG_DEBUG( store_value_task, task.get() )
-                << "sending find peer to store '"
+                << "trying to find closer peer to store '"
                 << task->get_key() << "' value." << std::endl;
 
         find_peer_request_body const request{ task->get_key() };
@@ -141,7 +141,11 @@ private:
         for ( auto const& c : closest_candidates )
             send_find_peer_to_store_request( request, c, task );
 
-        return ! closest_candidates.empty();
+        // If no more requests are in flight
+        // we know the closest peers hence ask
+        // them to store the value.
+        if ( task->have_all_requests_completed() )
+            send_store_requests( task ); 
     }
 
     /**
@@ -154,7 +158,8 @@ private:
         , std::shared_ptr< store_value_task > task )
     {
         LOG_DEBUG( store_value_task, task.get() )
-                << "sending find peer request to store to '"
+                << "sending find peer request to store '"
+                << task->get_key() << "' to '"
                 << current_candidate << "'." << std::endl;
 
         // On message received, process it.
@@ -177,11 +182,7 @@ private:
             // present in routing table.
             task->flag_candidate_as_invalid( current_candidate.id_ );
 
-            // If no more requests are in flight
-            // we know the closest peers hence ask
-            // them to store the value.
-            if ( task->have_all_requests_completed() )
-                send_store_requests( task );
+            try_to_store_value( task );
         };
 
         task->tracker_.send_request( request
@@ -216,26 +217,9 @@ private:
             return;
         }
 
-        // If new candidate have been discovered, ask them.
-        if ( task->are_these_candidates_closest( response.peers_ ) )
-            store_value( task );
-        else
-        {
-            LOG_DEBUG( store_value_task, task.get() ) << "'" << s
-                    << "' did'nt provided closer peer to '"
-                    << task->get_key() << "' value." << std::endl;
+        task->add_candidates( response.peers_ );
 
-            // Else if all candidates have responded,
-            // we know the closest peers hence ask them
-            // to store the value.
-            if ( task->have_all_requests_completed()
-                    && ! store_value( task, ROUTING_TABLE_BUCKET_SIZE ) )
-                send_store_requests( task );
-            else
-                LOG_DEBUG( store_value_task, task.get() )
-                        << "waiting for other peer(s) response to find '"
-                        << task->get_key() << "' value." << std::endl;
-        }
+        try_to_store_value( task );
     }
 
     /**
@@ -248,12 +232,13 @@ private:
         auto const & candidates
                 = task->select_closest_valid_candidates( REDUNDANT_SAVE_COUNT );
 
-        assert( "at least one candidate exists" && ! candidates.empty() );
-
         for ( auto c : candidates )
             send_store_request( c, task );
 
-        task->notify_caller( std::error_code{} );
+        if ( candidates.empty() )
+            task->notify_caller( make_error_code( INITIAL_PEER_FAILED_TO_RESPOND ) );
+        else
+            task->notify_caller( std::error_code{} );
     }
 
     /**

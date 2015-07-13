@@ -81,6 +81,5 @@ struct routing_table_mock
 } // namespace tests
 } // namespace kademlia
 
-
 #endif // KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP
 

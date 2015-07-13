@@ -52,13 +52,18 @@ struct fixture
         , failure_()
         , data_()
         , routing_table_()
+        , callback_call_count_()
     { }
 
     void
     operator()
         ( std::error_code const& f
         , data_type const& d )
-    { failure_ = f; data_ = d; }
+    {
+        ++ callback_call_count_;
+        failure_ = f;
+        data_ = d;
+    }
 
     k::tests::routing_table_mock::peer_type
     add_peer
@@ -77,6 +82,7 @@ struct fixture
     std::error_code failure_;
     data_type data_;
     k::tests::routing_table_mock routing_table_;
+    std::size_t callback_call_count_;
 };
 
 } // anonymous namespace
@@ -97,9 +103,15 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
 
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
-    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+
+    // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the error.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
 }
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
@@ -115,10 +127,19 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
                                           , std::ref( *this ) );
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
-    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+
+    // Task asked p1 for a closer peer or the value.
     kd::find_value_request_body const fv{ searched_key };
     BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the error.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
 }
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
@@ -135,14 +156,23 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
                                           , std::ref( *this ) );
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
-    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+
+    // Task asked p1 & p2 for a closer peer or the value.
     kd::find_value_request_body const fv{ searched_key };
     BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
     BOOST_REQUIRE( tracker_.has_sent_message( p2.second, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the error.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
 }
 
-BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
+BOOST_AUTO_TEST_CASE( can_notify_error_when_no_already_known_peer_has_the_value )
 {
     kd::id const searched_key{ "a" };
     routing_table_.expected_ids_.emplace_back( searched_key );
@@ -150,9 +180,12 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
     auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
     auto p2 = add_peer( "192.168.1.2", kd::id{ "c" } );
 
+    // p1 doesn't know closer peer.
     tracker_.add_message_to_receive( p1.second
                                    , p1.first
                                    , kd::find_peer_response_body{} );
+
+    // p2 doesn't know closer peer.
     tracker_.add_message_to_receive( p2.second
                                    , p2.first
                                    , kd::find_peer_response_body{} );
@@ -163,11 +196,64 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_no_peer_has_the_value )
                                           , std::ref( *this ) );
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
-    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+
+    // Task asked p1 & p2 for a closer peer or the value.
     kd::find_value_request_body const fv{ searched_key };
     BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
     BOOST_REQUIRE( tracker_.has_sent_message( p2.second, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the error.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
+}
+
+BOOST_AUTO_TEST_CASE( can_notify_error_when_no_discovered_peer_has_the_value )
+{
+    kd::id const searched_key{ "a" };
+    routing_table_.expected_ids_.emplace_back( searched_key );
+
+    // p1 is the only known peer atm.
+    auto p1 = add_peer( "192.168.1.1", kd::id{ "b" } );
+
+    // p2 is unknown atm.
+    auto i2 = kd::id{ searched_key };
+    auto e2 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
+    kd::peer const p2{ i2, e2 };
+
+    // p1 knows p2.
+    kd::find_peer_response_body const fp1{ { p2 } };
+    tracker_.add_message_to_receive( p1.second, p1.first, fp1 );
+
+    // p2 does'nt known closer peer nor has the value.
+    tracker_.add_message_to_receive( e2
+                                   , i2
+                                   , kd::find_peer_response_body{} );
+
+    kd::start_find_value_task< data_type >( searched_key
+                                          , tracker_
+                                          , routing_table_
+                                          , std::ref( *this ) );
+    io_service_.poll();
+
+    // Task queried routing table to find closest known peers.
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+
+    // Task asked p1 & p2 for a closer peer or the value.
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( e2, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the error.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::VALUE_NOT_FOUND );
 }
 
 BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
@@ -184,15 +270,22 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_already_known_peer_has_the_value )
                                           , std::ref( *this ) );
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+
+    // Task asked p1 for a closer peer or the value.
+    kd::find_value_request_body const fv{ searched_key };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the success.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
     BOOST_REQUIRE( ! failure_ );
     BOOST_REQUIRE_EQUAL_COLLECTIONS( b1.data_.begin(), b1.data_.end()
                                    , data_.begin(), data_.end() );
-    kd::find_value_request_body const fv{ searched_key };
-    BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
 }
 
-BOOST_AUTO_TEST_CASE( can_return_value_when_unknown_peer_has_the_value )
+BOOST_AUTO_TEST_CASE( can_return_value_when_discovered_peer_has_the_value )
 {
     kd::id const searched_key{ "a" };
     routing_table_.expected_ids_.emplace_back( searched_key );
@@ -218,13 +311,22 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_unknown_peer_has_the_value )
                                           , std::ref( *this ) );
     io_service_.poll();
 
+    // Task queried routing table to find closest known peers.
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
-    BOOST_REQUIRE( ! failure_ );
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( fv2.data_.begin(), fv2.data_.end()
-                                   , data_.begin(), data_.end() );
+
+    // Task asked p1 for a closer peer or the value.
     kd::find_value_request_body const fv{ searched_key };
     BOOST_REQUIRE( tracker_.has_sent_message( p1.second, fv ) );
     BOOST_REQUIRE( tracker_.has_sent_message( e2, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+
+    // Task notified the success.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( ! failure_ );
+    BOOST_REQUIRE_EQUAL_COLLECTIONS( fv2.data_.begin(), fv2.data_.end()
+                                   , data_.begin(), data_.end() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
