@@ -48,7 +48,10 @@ struct fixture : k::tests::task_fixture
     void
     operator()
         ( std::error_code const& failure )
-    { failure_ = failure; }
+    {
+        ++ callback_call_count_;
+        failure_ = failure;
+    }
 };
 
 } // anonymous namespace
@@ -72,6 +75,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_initial_endpoints_fail_to_respond )
     io_service_.poll();
 
     // As neither of theses addresses responded, the task throws.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
     BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
 }
 
@@ -85,9 +89,10 @@ BOOST_AUTO_TEST_CASE( can_contact_endpoints_until_one_respond )
     auto const e3 = kd::to_ip_endpoint( "::4", 5555 );
     endpoints_type const endpoints{ e1, e2, e3 };
 
+    auto p1 = create_peer( "192.168.1.4", kd::id{ "b" } );
     tracker_.add_message_to_receive( e2
                                    , my_id
-                                   , kd::find_peer_response_body{} );
+                                   , kd::find_peer_response_body{ { p1 } } );
 
     kd::start_discover_neighbors_task( my_id 
                                      , tracker_
@@ -108,7 +113,12 @@ BOOST_AUTO_TEST_CASE( can_contact_endpoints_until_one_respond )
     // Task didn't send any more message as previous peer responded.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
 
+    // the callback has been called.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
     BOOST_REQUIRE( ! failure_ );
+
+    // Ensure e2 response listed peer p1 has been added.
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.peers_.size() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
