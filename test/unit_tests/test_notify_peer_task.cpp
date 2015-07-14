@@ -47,14 +47,46 @@ using fixture = k::tests::task_fixture;
 
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
-BOOST_AUTO_TEST_CASE( can_notify_error_when_initial_endpoints_fail_to_respond )
+BOOST_AUTO_TEST_CASE( can_query_known_peer_for_specific_id )
 {
     kd::id const my_id{ "a" };
     routing_table_.expected_ids_.emplace_back( my_id );
+    auto p1 = create_and_add_peer( "192.168.1.2", kd::id{ "1a" } );
+    auto p2 = create_and_add_peer( "192.168.1.3", kd::id{ "2a" } );
+    auto p3 = create_and_add_peer( "192.168.1.4", kd::id{ "4a" } );
+
+    // p1 doesn't know closer peer.
+    tracker_.add_message_to_receive( p1.endpoint_
+                                   , p1.id_
+                                   , kd::find_peer_response_body{} );
+
+    // p2 doesn't know closer peer.
+    tracker_.add_message_to_receive( p2.endpoint_
+                                   , p2.id_
+                                   , kd::find_peer_response_body{} );
+
+    // p3 doesn't know closer peer.
+    tracker_.add_message_to_receive( p3.endpoint_
+                                   , p3.id_
+                                   , kd::find_peer_response_body{} );
+
+
 
     kd::start_notify_peer_task( my_id, tracker_, routing_table_ );
 
     io_service_.poll();
+
+    // Task queried routing table to find closest known peers.
+    BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
+
+    // Task asked p1, p2 & p3 for a closer peer or the value.
+    kd::find_peer_request_body const fv{ my_id };
+    BOOST_REQUIRE( tracker_.has_sent_message( p1.endpoint_, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p2.endpoint_, fv ) );
+    BOOST_REQUIRE( tracker_.has_sent_message( p3.endpoint_, fv ) );
+
+    // Task didn't send any more message.
+    BOOST_REQUIRE( ! tracker_.has_sent_message() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
