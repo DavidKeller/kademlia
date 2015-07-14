@@ -90,9 +90,11 @@ BOOST_AUTO_TEST_CASE( can_contact_endpoints_until_one_respond )
     endpoints_type const endpoints{ e1, e2, e3 };
 
     auto p1 = create_peer( "192.168.1.4", kd::id{ "b" } );
-    tracker_.add_message_to_receive( e2
-                                   , my_id
-                                   , kd::find_peer_response_body{ { p1 } } );
+    auto p2 = create_peer( "192.168.1.5", kd::id{ "b" } );
+    auto p3 = create_peer( "192.168.1.6", kd::id{ "b" } );
+    auto p4 = create_peer( "192.168.1.7", kd::id{ "b" } );
+    kd::find_peer_response_body const req{ { p1, p2, p3, p4 } };
+    tracker_.add_message_to_receive( e2, my_id, req );
 
     kd::start_discover_neighbors_task( my_id 
                                      , tracker_
@@ -118,7 +120,7 @@ BOOST_AUTO_TEST_CASE( can_contact_endpoints_until_one_respond )
     BOOST_REQUIRE( ! failure_ );
 
     // Ensure e2 response listed peer p1 has been added.
-    BOOST_REQUIRE_EQUAL( 1, routing_table_.peers_.size() );
+    BOOST_REQUIRE_EQUAL( req.peers_.size(), routing_table_.peers_.size() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
