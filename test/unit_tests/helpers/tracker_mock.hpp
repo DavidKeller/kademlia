@@ -122,7 +122,8 @@ public:
     {
         save_sent_message( request, endpoint );
 
-        if ( responses_to_receive_.empty() )
+        if ( responses_to_receive_.empty() 
+           || responses_to_receive_.front().endpoint != endpoint )
             io_service_.post( [ on_error ]( void )
                     { on_error( make_error_code( UNIMPLEMENTED ) ); } );
         else {

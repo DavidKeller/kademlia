@@ -39,7 +39,6 @@
 #include "kademlia/log.hpp"
 #include "kademlia/constants.hpp"
 #include "kademlia/message.hpp"
-#include "kademlia/notify_peer_task.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -47,7 +46,8 @@ namespace detail {
 ///
 template< typename TrackerType
         , typename RoutingTableType
-        , typename EndpointsType >
+        , typename EndpointsType
+        , typename OnCompleteType >
 class discover_neighbors_task final
 {
 public:
@@ -57,6 +57,8 @@ public:
     using endpoints_type = EndpointsType;
     ///
     using routing_table_type = RoutingTableType;
+    ///
+    using on_complete_type = OnCompleteType;
 
 public:
     /**
@@ -67,13 +69,15 @@ public:
         ( id const & my_id
         , tracker_type & tracker
         , routing_table_type & routing_table
-        , endpoints_type const& endpoints_to_query )
+        , endpoints_type const& endpoints_to_query
+        , on_complete_type const& on_complete )
     {
         std::shared_ptr< discover_neighbors_task > d;
         d.reset( new discover_neighbors_task( my_id
                                             , tracker
                                             , routing_table
-                                            , endpoints_to_query ) );
+                                            , endpoints_to_query
+                                            , on_complete ) );
 
         search_ourselves( d );
     }
@@ -86,11 +90,13 @@ private:
         ( id const & my_id
         , tracker_type & tracker
         , routing_table_type & routing_table
-        , endpoints_type const& endpoints_to_query )
+        , endpoints_type const& endpoints_to_query
+        , on_complete_type const& on_complete )
             : my_id_( my_id )
             , tracker_( tracker )
             , routing_table_( routing_table )
             , endpoints_to_query_( endpoints_to_query )
+            , on_complete_( on_complete )
     {
         LOG_DEBUG( discover_neighbors_task, this )
                 << "create discover neighbors task." << std::endl;
@@ -104,8 +110,11 @@ private:
         ( std::shared_ptr< discover_neighbors_task > task )
     {
         if ( task->endpoints_to_query_.empty() )
-            throw std::system_error
-                    { make_error_code( INITIAL_PEER_FAILED_TO_RESPOND ) };
+        {
+            auto f = make_error_code( INITIAL_PEER_FAILED_TO_RESPOND );
+            task->on_complete_( f );
+            return;
+        }
 
         // Retrieve the next endpoint to query.
         auto const endpoint_to_query = task->endpoints_to_query_.back();
@@ -123,6 +132,10 @@ private:
         auto on_error = [ task ]
             ( std::error_code const& )
         { search_ourselves( task ); };
+
+        LOG_DEBUG( discover_neighbors_task, task.get() )
+                << "query '" << endpoint_to_query 
+                << "'." << std::endl;
 
         task->tracker_.send_request( find_peer_request_body{ task->my_id_ }
                                    , endpoint_to_query
@@ -166,26 +179,7 @@ private:
                 << "added '" << response.peers_.size()
                 << "' initial peer(s)." << std::endl;
 
-        notify_neighbors();
-    }
-
-    /**
-     *  Refresh each bucket.
-     */
-    void
-    notify_neighbors
-        ( void )
-    {
-        id refresh_id = my_id_;
-
-        for ( std::size_t i = id::BIT_SIZE; i > 0; -- i )
-        {
-            // Flip bit to select find peers in the current k_bucket.
-            id::reference bit = refresh_id[ i - 1 ];
-            bit = ! bit;
-
-            start_notify_peer_task( refresh_id, tracker_, routing_table_ );
-        }
+        on_complete_( std::error_code{} );
     }
 
 private:
@@ -197,6 +191,8 @@ private:
     routing_table_type & routing_table_;
     ///
     endpoints_type endpoints_to_query_;
+    ///
+    on_complete_type on_complete_;
 };
 
 /**
@@ -204,19 +200,23 @@ private:
  */
 template< typename TrackerType
         , typename RoutingTableType
-        , typename EndpointsType >
+        , typename EndpointsType
+        , typename OnCompleteType >
 void
 start_discover_neighbors_task
     ( id const& my_id
     , TrackerType & tracker
     , RoutingTableType & routing_table
-    , EndpointsType const& endpoints_to_query )
+    , EndpointsType const& endpoints_to_query
+    , OnCompleteType const& on_complete )
 {
     using task = discover_neighbors_task< TrackerType
                                         , RoutingTableType
-                                        , EndpointsType >;
+                                        , EndpointsType
+                                        , OnCompleteType >;
 
-    task::start( my_id, tracker, routing_table, endpoints_to_query );
+    task::start( my_id, tracker, routing_table
+               , endpoints_to_query, on_complete );
 }
 
 } // namespace detail

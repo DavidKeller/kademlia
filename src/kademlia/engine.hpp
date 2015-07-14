@@ -55,6 +55,7 @@
 #include "kademlia/find_value_task.hpp"
 #include "kademlia/store_value_task.hpp"
 #include "kademlia/discover_neighbors_task.hpp"
+#include "kademlia/notify_peer_task.hpp"
 #include "kademlia/tracker.hpp"
 
 namespace kademlia {
@@ -411,8 +412,37 @@ private:
         // him which peers are close to our own id.
         auto endoints_to_query = network_.resolve_endpoint( initial_peer );
 
+        auto on_discovery = [ this ]
+            ( std::error_code const& failure )
+        {
+            if ( failure )
+                throw std::system_error{ failure };
+
+            notify_neighbors();
+        };
+
         start_discover_neighbors_task( my_id_, tracker_, routing_table_
-                                     , std::move( endoints_to_query ) );
+                                     , std::move( endoints_to_query )
+                                     , on_discovery );
+    }
+
+    /**
+     *  Refresh each bucket.
+     */
+    void
+    notify_neighbors
+        ( void )
+    {
+        id refresh_id = my_id_;
+
+        for ( std::size_t i = id::BIT_SIZE; i > 0; -- i )
+        {
+            // Flip bit to select find peers in the current k_bucket.
+            id::reference bit = refresh_id[ i - 1 ];
+            bit = ! bit;
+
+            start_notify_peer_task( refresh_id, tracker_, routing_table_ );
+        }
     }
 
     /**

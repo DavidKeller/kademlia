@@ -58,7 +58,7 @@ struct routing_table_mock
         ( detail::id const& id )
     {
         if ( expected_ids_.empty() || id != expected_ids_.front() )
-            throw std::runtime_error("Unexpected searched id.");
+            throw std::runtime_error( "Unexpected searched id." );
 
         expected_ids_.pop_front();
 

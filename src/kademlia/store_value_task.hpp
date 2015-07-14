@@ -283,7 +283,7 @@ start_store_value_task
     , RoutingTableType & routing_table
     , HandlerType && save_handler )
 {
-    using handler_type = typename std::remove_reference< HandlerType >::type;
+    using handler_type = typename std::decay< HandlerType >::type;
     using task = store_value_task< handler_type, TrackerType, DataType >;
 
     task::start( key, data, tracker, routing_table
