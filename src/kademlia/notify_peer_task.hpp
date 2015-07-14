@@ -67,7 +67,7 @@ public:
         std::shared_ptr< notify_peer_task > c;
         c.reset( new notify_peer_task( key, tracker, routing_table ) );
 
-        notify_neighbors( c );
+        try_to_notify_neighbors( c );
     }
 
 private:
@@ -93,7 +93,7 @@ private:
      *
      */
     static void
-    notify_neighbors
+    try_to_notify_neighbors
         ( std::shared_ptr< notify_peer_task > task )
     {
         LOG_DEBUG( notify_peer_task, task.get() )
@@ -160,6 +160,7 @@ private:
 
         assert( h.type_ == header::FIND_PEER_RESPONSE );
         find_peer_response_body response;
+
         if ( auto failure = deserialize( i, e, response ) )
         {
             LOG_DEBUG( notify_peer_task, &task )
@@ -169,8 +170,8 @@ private:
         }
 
         // If new candidate have been discovered, ask them.
-        if ( task->are_these_candidates_closest( response.peers_ ) )
-            notify_neighbors( task );
+        task->add_candidates( response.peers_ );
+        try_to_notify_neighbors( task );
     }
 
 private:

@@ -76,14 +76,6 @@ public:
      *
      */
     template< typename Peers >
-    bool
-    are_these_candidates_closest
-        ( Peers const& peers );
-
-    /**
-     *
-     */
-    template< typename Peers >
     void
     add_candidates 
         ( Peers const& peers );
@@ -233,7 +225,7 @@ lookup_task::select_closest_valid_candidates
     std::vector< peer > candidates;
 
     // Iterate over all candidates until we picked
-    // candidates_max_count not-contacted candidates.
+    // candidates_max_count responsive candidates.
     for ( auto i = candidates_.begin(), e = candidates_.end()
         ; i != e && candidates.size() < max_count
         ; ++ i )
@@ -252,24 +244,6 @@ lookup_task::add_candidates
 {
     for ( auto const& p : peers )
         add_candidate( p );
-}
-
-template< typename Peers >
-inline bool
-lookup_task::are_these_candidates_closest
-    ( Peers const& peers )
-{
-    // Keep track of the closest candidate before
-    // new candidate insertion.
-    auto closest_candidate = candidates_.begin();
-
-    add_candidates( peers );
-
-    // If no closest candidate has been found.
-    if ( closest_candidate == candidates_.begin() )
-        return false;
-
-    return true;
 }
 
 inline bool

@@ -130,18 +130,23 @@ BOOST_AUTO_TEST_CASE( can_add_candidates )
     kd::id const our_id{};
     test_task c{ our_id, candidates.begin(), candidates.end() };
 
+    BOOST_REQUIRE_EQUAL( 1, c.select_new_closest_candidates( 20 ).size() );
+
     std::vector< kd::peer > new_candidates;
+
     new_candidates.emplace_back( create_peer( kd::id{ "7" } ) );
-    BOOST_REQUIRE( ! c.are_these_candidates_closest( new_candidates ) );
+    c.add_candidates( new_candidates );
+    BOOST_REQUIRE_EQUAL( 0, c.select_new_closest_candidates( 20 ).size() );
 
     new_candidates.emplace_back( create_peer( kd::id{ "6" } ) );
     new_candidates.emplace_back( create_peer( kd::id{ "8" } ) );
-
-    BOOST_REQUIRE( c.are_these_candidates_closest( new_candidates ) );
+    c.add_candidates( new_candidates );
+    BOOST_REQUIRE_EQUAL( 2, c.select_new_closest_candidates( 20 ).size() );
 
     candidates.clear();
     new_candidates.emplace_back( create_peer( kd::id{ "9" } ) );
-    BOOST_REQUIRE( ! c.are_these_candidates_closest( new_candidates ) );
+    c.add_candidates( new_candidates );
+    BOOST_REQUIRE_EQUAL( 1, c.select_new_closest_candidates( 20 ).size() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
