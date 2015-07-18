@@ -31,6 +31,7 @@
 #endif
 
 #include <system_error>
+#include <kademlia/detail/symbol_visibility.hpp>
 
 namespace kademlia {
 
@@ -76,38 +77,20 @@ enum error_type
 };
 
 /**
- *  @brief Get the library error category.
- *
- *  @return A const reference to the error category instance.
- */
-std::error_category const&
-error_category
-    ( void );
-
-/**
  *  @brief Create a library error condition.
  *
  *  @return The created error condition.
  */
-std::error_condition
+KADEMLIA_SYMBOL_VISIBILITY std::error_condition
 make_error_condition
     ( error_type condition );
-
-/**
- *  @brief Create a library error code.
- *
- *  @return The created error code.
- */
-std::error_code
-make_error_code
-    ( error_type code );
 
 } // namespace kademlia
 
 namespace std {
 
 template <>
-struct is_error_condition_enum<kademlia::error_type> : true_type {};
+struct is_error_condition_enum< kademlia::error_type > : true_type {};
 
 } // namespace std
 

@@ -26,7 +26,7 @@
 #include "kademlia/message.hpp"
 
 #include <iostream>
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 namespace kademlia {
 namespace detail {

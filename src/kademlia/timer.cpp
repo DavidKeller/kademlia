@@ -25,7 +25,7 @@
 
 #include "kademlia/timer.hpp"
 
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 namespace kademlia {
 namespace detail {

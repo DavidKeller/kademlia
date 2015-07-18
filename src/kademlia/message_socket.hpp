@@ -36,7 +36,7 @@
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/asio/buffer.hpp>
 
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 #include <kademlia/detail/cxx11_macros.hpp>
 
 #include "kademlia/buffer.hpp"

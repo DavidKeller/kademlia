@@ -23,46 +23,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/response_callbacks.hpp"
-
-#include <cassert>
-
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-void
-response_callbacks::push_callback
-    ( id const& message_id
-    , callback const& on_message_received )
-{
-    auto i = callbacks_.emplace( message_id, on_message_received );
-    (void)i;
-    assert( i.second && "an id can't be registered twice" );
-}
-
-bool
-response_callbacks::remove_callback
-    ( id const& message_id )
-{ return callbacks_.erase( message_id ) > 0; }
+std::error_category const&
+error_category
+    ( void );
 
 std::error_code
-response_callbacks::dispatch_response
-    ( endpoint_type const& sender
-    , header const& h
-    , buffer::const_iterator i
-    , buffer::const_iterator e )
-{
-    auto callback = callbacks_.find( h.random_token_ );
-    if ( callback == callbacks_.end() )
-        return make_error_code( UNASSOCIATED_MESSAGE_ID );
-
-    callback->second( sender, h, i, e );
-    callbacks_.erase( callback );
-
-    return std::error_code{};
-}
+make_error_code
+    ( error_type code );
 
 } // namespace detail
 } // namespace kademlia

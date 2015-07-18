@@ -26,7 +26,7 @@
 #include "helpers/common.hpp"
 
 #include <vector>
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 #include "kademlia/timer.hpp"
 

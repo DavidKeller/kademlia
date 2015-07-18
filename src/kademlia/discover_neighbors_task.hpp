@@ -34,7 +34,7 @@
 #include <memory>
 #include <type_traits>
 
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 #include "kademlia/log.hpp"
 #include "kademlia/constants.hpp"

@@ -42,7 +42,7 @@
 #include <boost/asio/io_service.hpp>
 
 #include <kademlia/endpoint.hpp>
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 #include "kademlia/log.hpp"
 #include "kademlia/ip_endpoint.hpp"

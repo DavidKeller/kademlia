@@ -37,7 +37,7 @@
 
 #include <botan/sha1_sse2.h>
 
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 namespace kademlia {
 namespace detail {

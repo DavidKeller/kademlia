@@ -38,6 +38,8 @@ set(kademlia_sources
     endpoint.cpp
     engine.hpp
     error.cpp
+    error_impl.hpp
+    error_impl.cpp
     find_value_task.hpp
     id.cpp
     id.hpp

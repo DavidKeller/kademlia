@@ -23,97 +23,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/error.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
+#include "kademlia/error_impl.hpp"
 
-#include <string>
+#include "kademlia/error_impl.hpp"
 
 namespace kademlia {
-
-namespace {
-
-/**
- *
- */
-struct kademlia_error_category : std::error_category
-{
-    char const*
-    name
-        ( void )
-        const CXX11_NOEXCEPT override
-    {
-        return "kademlia";
-    }
-
-    std::string
-    message
-        ( int condition )
-        const CXX11_NOEXCEPT override
-    {
-        switch ( condition )
-        {
-            case RUN_ABORTED:
-                return "run aborted";
-            case INITIAL_PEER_FAILED_TO_RESPOND:
-                return "initial peer failed to respond";
-            case UNIMPLEMENTED:
-                return "unimplemented";
-            case INVALID_ID:
-                return "invalid id";
-            case TRUNCATED_ID:
-                return "truncated id";
-            case TRUNCATED_ENDPOINT:
-                return "truncated endpoint";
-            case TRUNCATED_ADDRESS:
-                return "truncated address";
-            case TRUNCATED_HEADER:
-                return "truncated header";
-            case TRUNCATED_SIZE:
-                return "truncated size";
-            case CORRUPTED_BODY:
-                return "corrupted body";
-            case UNKNOWN_PROTOCOL_VERSION:
-                return "unknown protocol version";
-            case UNASSOCIATED_MESSAGE_ID:
-                return "unassociated message id";
-            case INVALID_IPV4_ADDRESS:
-                return "invalid IPv4 address";
-            case INVALID_IPV6_ADDRESS:
-                return "invalid IPv6 address";
-            case VALUE_NOT_FOUND:
-                return "value not found";
-            case TIMER_MALFUNCTION:
-                return "timer malfunction";
-            case ALREADY_RUNNING:
-                return "already running";
-            default:
-                return "unknown error";
-        }
-    }
-};
-
-} // namespace
-
-std::error_category const&
-error_category
-    ( void )
-{
-    static const kademlia_error_category category_{};
-    return category_;
-}
 
 std::error_condition
 make_error_condition
     ( error_type code )
 {
-    return std::error_condition{ static_cast<int>(code), error_category() };
-}
-
-std::error_code
-make_error_code
-    ( error_type code )
-{
-    return std::error_code{ static_cast<int>(code), error_category() };
+    return std::error_condition{ static_cast<int>(code)
+                               , detail::error_category() };
 }
 
 } // namespace kademlia

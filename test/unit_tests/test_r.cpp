@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_an_error )
 {
     using type = kd::r< int >;
 
-    auto error = std::make_error_code( std::errc::address_in_use );
+    auto error = make_error_code( std::errc::address_in_use );
     {
         type r{ error };
         BOOST_REQUIRE( ! r );
@@ -151,14 +151,14 @@ BOOST_AUTO_TEST_CASE( can_be_copy_constructed )
     }
 
     {
-        type r1{ std::make_error_code( std::errc::address_in_use ) };
+        type r1{ make_error_code( std::errc::address_in_use ) };
         type r2{ r1 };
         BOOST_REQUIRE( ! r2 );
         BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
     }
 
     {
-        const type r1{ std::make_error_code( std::errc::address_in_use ) };
+        const type r1{ make_error_code( std::errc::address_in_use ) };
         type r2{ r1 };
         BOOST_REQUIRE( ! r2 );
         BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( can_be_move_constructed )
         BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
     }
     {
-        type r1{ std::make_error_code( std::errc::address_in_use ) };
+        type r1{ make_error_code( std::errc::address_in_use ) };
         type r2{ std::move( r1 ) };
         BOOST_REQUIRE( ! r2 );
         BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
@@ -209,28 +209,28 @@ BOOST_AUTO_TEST_CASE( can_be_assigned )
     }
     {
         type r1{ 0, 0 };
-        auto e1 = std::make_error_code( std::errc::address_in_use );
+        auto e1 = make_error_code( std::errc::address_in_use );
         r1 = e1;
         BOOST_REQUIRE( ! r1 );
         BOOST_REQUIRE_EQUAL( e1, r1.e() );
     }
     {
         type r1{ 0, 0 };
-        auto const e1 = std::make_error_code( std::errc::address_in_use );
+        auto const e1 = make_error_code( std::errc::address_in_use );
         r1 = e1;
         BOOST_REQUIRE( ! r1 );
         BOOST_REQUIRE_EQUAL( e1, r1.e() );
     }
     {
-        type r1{ std::make_error_code( std::errc::address_family_not_supported ) };
-        auto e1 = std::make_error_code( std::errc::address_in_use );
+        type r1{ make_error_code( std::errc::address_family_not_supported ) };
+        auto e1 = make_error_code( std::errc::address_in_use );
         r1 = e1;
         BOOST_REQUIRE( ! r1 );
         BOOST_REQUIRE_EQUAL( e1, r1.e() );
     }
     {
-        type r1{ std::make_error_code( std::errc::address_family_not_supported ) };
-        auto const e1 = std::make_error_code( std::errc::address_in_use );
+        type r1{ make_error_code( std::errc::address_family_not_supported ) };
+        auto const e1 = make_error_code( std::errc::address_in_use );
         r1 = e1;
         BOOST_REQUIRE( ! r1 );
         BOOST_REQUIRE_EQUAL( e1, r1.e() );

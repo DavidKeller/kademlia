@@ -30,7 +30,7 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include <kademlia/error.hpp>
+#include "kademlia/error_impl.hpp"
 
 #include "kademlia/message.hpp"
 #include "kademlia/message_serializer.hpp"
@@ -125,7 +125,7 @@ public:
         if ( responses_to_receive_.empty() 
            || responses_to_receive_.front().endpoint != endpoint )
             io_service_.post( [ on_error ]( void )
-                    { on_error( make_error_code( UNIMPLEMENTED ) ); } );
+                    { on_error( detail::make_error_code( UNIMPLEMENTED ) ); } );
         else {
             auto const r = responses_to_receive_.front();
             responses_to_receive_.pop();
