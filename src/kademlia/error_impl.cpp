@@ -25,6 +25,8 @@
 
 #include "kademlia/error_impl.hpp"
 
+#include <string>
+
 #include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
