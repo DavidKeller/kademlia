@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE( can_skip_wrong_response )
     auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
     endpoints_type const endpoints{ e1 };
 
-    kd::find_value_response_body const req;
+    kd::find_value_response_body const req{};
     tracker_.add_message_to_receive( e1, my_id, req );
 
     kd::start_discover_neighbors_task( my_id 
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
     auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
     endpoints_type const endpoints{ e1 };
 
-    k::tests::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req;
+    k::tests::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
     tracker_.add_message_to_receive( e1, my_id, req );
 
     kd::start_discover_neighbors_task( my_id 
