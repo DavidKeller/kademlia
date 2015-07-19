@@ -45,10 +45,7 @@ macro(build_and_run_test source_file)
     add_executable(${test_name} ${source_file} ${ARG_UNPARSED_ARGUMENTS})
     target_link_libraries(${test_name}
         test_helpers_common
-        ${ARG_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${BOTAN_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT})
+        ${ARG_LIBRARIES})
     add_dependencies(check ${test_name})
     add_test(${test_name} ${test_name})
 endmacro()

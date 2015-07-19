@@ -68,6 +68,7 @@ set(kademlia_sources
     value_store.hpp
     lookup_task.hpp)
 
+# Kademlia shared
 add_library(kademlia SHARED
     ${kademlia_sources})
 
@@ -81,8 +82,14 @@ target_link_libraries(kademlia
     ${BOTAN_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
 
+# Kademlia static
 add_library(kademlia_static STATIC
     ${kademlia_sources})
+
+target_link_libraries(kademlia_static
+    ${Boost_LIBRARIES}
+    ${BOTAN_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(kademlia_static
     PROPERTIES
