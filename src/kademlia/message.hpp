@@ -156,7 +156,6 @@ template<>
 struct message_traits< find_peer_response_body >
 { static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_PEER_RESPONSE; };
 
-
 /**
  *
  */

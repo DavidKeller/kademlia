@@ -126,7 +126,7 @@ private:
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
-        { task->handle_initial_contact_response( s, h, i, e ); };
+        { handle_initial_contact_response( task, s, h, i, e ); };
 
         // On error, retry with another endpoint.
         auto on_error = [ task ]
@@ -147,39 +147,49 @@ private:
     /**
      *
      */
-    void
+    static void
     handle_initial_contact_response
-        ( ip_endpoint const& s
+        ( std::shared_ptr< discover_neighbors_task > task
+        , ip_endpoint const& s
         , header const& h
         , buffer::const_iterator i
         , buffer::const_iterator e )
     {
-        LOG_DEBUG( discover_neighbors_task, this )
+        LOG_DEBUG( discover_neighbors_task, task.get() )
                 << "handling initial contact response."
                 << std::endl;
 
         if ( h.type_ != header::FIND_PEER_RESPONSE )
+        {
+            LOG_DEBUG( discover_neighbors_task, task.get() )
+                    << "unexpected find peer response (type="
+                    << int( h.type_ ) << ")" << std::endl;
+
+            search_ourselves( task );
             return;
+
+        };
 
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
-            LOG_DEBUG( discover_neighbors_task, this )
+            LOG_DEBUG( discover_neighbors_task, task.get() )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
 
+            search_ourselves( task );
             return;
         }
 
         // Add discovered peers.
         for ( auto const& peer : response.peers_ )
-            routing_table_.push( peer.id_, peer.endpoint_ );
+            task->routing_table_.push( peer.id_, peer.endpoint_ );
 
-        LOG_DEBUG( discover_neighbors_task, this )
+        LOG_DEBUG( discover_neighbors_task, task.get() )
                 << "added '" << response.peers_.size()
                 << "' initial peer(s)." << std::endl;
 
-        on_complete_( std::error_code{} );
+        task->on_complete_( std::error_code{} );
     }
 
 private:

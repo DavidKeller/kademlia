@@ -34,6 +34,7 @@ add_library(test_helpers_common STATIC
     helpers/peer_factory.hpp
     helpers/routing_table_mock.hpp
     helpers/tracker_mock.hpp
+    helpers/corrupted_message.hpp
     helpers/task_fixture.hpp)
 
 set_target_properties(test_helpers_common PROPERTIES

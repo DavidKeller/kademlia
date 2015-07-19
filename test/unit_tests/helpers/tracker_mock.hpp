@@ -70,7 +70,7 @@ public:
         message_to_receive m{ endpoint
                             , detail::message_traits< MessageType >::TYPE_ID
                             , source_id };
-        detail::serialize( message, m.body );
+        serialize( message, m.body );
 
         responses_to_receive_.push( std::move( m ) );
     }
