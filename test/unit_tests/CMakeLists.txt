@@ -53,6 +53,7 @@ endmacro()
 
 build_and_run_test(test_id.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_endpoint.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_boost_to_std_error.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_message.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_value_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_store_value_task.cpp LIBRARIES kademlia_static)
