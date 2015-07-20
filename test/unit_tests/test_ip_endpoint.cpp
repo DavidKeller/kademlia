@@ -37,12 +37,18 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_default_constructed )
 {
-    BOOST_REQUIRE_NO_THROW( kd::ip_endpoint{} );
+    BOOST_REQUIRE_NO_THROW(
+        kd::ip_endpoint const e{};
+        (void)e;
+    );
 }
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_with_ip_and_port )
 {
-    BOOST_REQUIRE_NO_THROW( kd::to_ip_endpoint( "192.168.0.1", 1234 ) );
+    BOOST_REQUIRE_NO_THROW(
+        auto const e = kd::to_ip_endpoint( "192.168.0.1", 1234 ); 
+        (void)e;
+    );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
