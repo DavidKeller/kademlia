@@ -36,5 +36,6 @@ lcov --quiet  --output-file app_total_stripped.info \
 # Generate html report.
 genhtml --output-directory html --prefix ${project_root} \
         --num-spaces 4 --title 'Kademlia unit tests' \
+        --no-function-coverage \
         app_total_stripped.info 
 
