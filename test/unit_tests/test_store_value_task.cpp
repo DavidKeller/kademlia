@@ -26,6 +26,7 @@
 #include "helpers/common.hpp"
 #include "helpers/tracker_mock.hpp"
 #include "helpers/routing_table_mock.hpp"
+#include "helpers/corrupted_message.hpp"
 #include "helpers/task_fixture.hpp"
 
 #include <vector>
@@ -243,6 +244,56 @@ BOOST_AUTO_TEST_CASE( can_store_value_when_discovered_peer_is_the_target )
     // Task notified the success.
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
     BOOST_REQUIRE( ! failure_ );
+}
+
+BOOST_AUTO_TEST_CASE( can_skip_wrong_response )
+{
+    kd::id const chosen_key{ "a" };
+    kd::buffer const data{ 1, 2, 3, 4 };
+    routing_table_.expected_ids_.emplace_back( chosen_key );
+
+    // p1 is the only known peer.
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
+
+    kd::find_value_response_body const req{};
+    tracker_.add_message_to_receive( p1.endpoint_, p1.id_, req );
+
+    kd::start_store_value_task( chosen_key
+                              , data
+                              , tracker_
+                              , routing_table_
+                              , std::ref( *this ) );
+
+    io_service_.poll();
+
+    // the callback has been called.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+}
+
+BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
+{
+    kd::id const chosen_key{ "a" };
+    kd::buffer const data{ 1, 2, 3, 4 };
+    routing_table_.expected_ids_.emplace_back( chosen_key );
+
+    // p1 is the only known peer.
+    auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
+
+    k::tests::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
+    tracker_.add_message_to_receive( p1.endpoint_, p1.id_, req );
+
+    kd::start_store_value_task( chosen_key
+                              , data
+                              , tracker_
+                              , routing_table_
+                              , std::ref( *this ) );
+
+    io_service_.poll();
+
+    // the callback has been called.
+    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
+    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -163,14 +163,12 @@ private:
                 << current_candidate << "'." << std::endl;
 
         // On message received, process it.
-        auto on_message_received = [ task, current_candidate ]
+        auto on_message_received = [ task ]
             ( ip_endpoint const& s
             , header const& h
             , buffer::const_iterator i
             , buffer::const_iterator e )
         {
-            task->flag_candidate_as_valid( current_candidate.id_ );
-
             handle_find_peer_to_store_response( s, h, i, e, task );
         };
 
@@ -207,17 +205,31 @@ private:
                 << "handle find peer to store response from '"
                 << s << "'." << std::endl;
 
-        assert( h.type_ == header::FIND_PEER_RESPONSE );
+        if ( h.type_ != header::FIND_PEER_RESPONSE )
+        {
+            LOG_DEBUG( store_value_task, task.get() )
+                    << "unexpected find peer response (type="
+                    << int( h.type_ ) << ")" << std::endl;
+
+            task->flag_candidate_as_invalid( h.source_id_ );
+            try_to_store_value( task );
+            return;
+
+        };
+
         find_peer_response_body response;
         if ( auto failure = deserialize( i, e, response ) )
         {
             LOG_DEBUG( store_value_task, task.get() )
                     << "failed to deserialize find peer response ("
                     << failure.message() << ")" << std::endl;
-            return;
+            task->flag_candidate_as_invalid( h.source_id_ );
         }
-
-        task->add_candidates( response.peers_ );
+        else
+        {
+            task->flag_candidate_as_valid( h.source_id_ );
+            task->add_candidates( response.peers_ );
+        }
 
         try_to_store_value( task );
     }
