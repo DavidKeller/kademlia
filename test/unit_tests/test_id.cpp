@@ -200,6 +200,20 @@ BOOST_AUTO_TEST_CASE( id_can_be_sorted )
     BOOST_REQUIRE_LT( kd::id{ "1" }, kd::id{ "8000000000000" } );
 }
 
+BOOST_AUTO_TEST_CASE( id_bit_can_be_updated )
+{
+    kd::id i{ "0" };
+    i[0] = true;
+    i[kd::id::BIT_SIZE - 1] = true;
+    i[kd::id::BIT_SIZE - 2] = true;
+
+    BOOST_REQUIRE_EQUAL( kd::id{ "8000000000000000000000000000000000000003" }, i );
+
+    i[kd::id::BIT_SIZE - 1] = false;
+
+    BOOST_REQUIRE_EQUAL( kd::id{ "8000000000000000000000000000000000000002" }, i );
+}
+
 BOOST_AUTO_TEST_CASE( id_distance_can_be_evaluated )
 {
     {
