@@ -79,7 +79,7 @@ set_target_properties(kademlia
 
 target_link_libraries(kademlia
     ${Boost_LIBRARIES}
-    ${BOTAN_LIBRARIES}
+    ${OPENSSL_CRYPTO_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
 # Kademlia static
@@ -88,7 +88,7 @@ add_library(kademlia_static STATIC
 
 target_link_libraries(kademlia_static
     ${Boost_LIBRARIES}
-    ${BOTAN_LIBRARIES}
+    ${OPENSSL_CRYPTO_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(kademlia_static

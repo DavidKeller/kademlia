@@ -68,7 +68,7 @@ find_package(Boost REQUIRED COMPONENTS
     program_options
     unit_test_framework)
 # Crypto
-find_package(Botan REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 add_definitions(-DPACKAGE_VERSION="0.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
