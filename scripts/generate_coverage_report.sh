@@ -10,7 +10,7 @@ fi
 project_root=`realpath $1`
 
 # Build project.
-CXXFLAGS='-fprofile-arcs -ftest-coverage' cmake ${project_root}
+CXXFLAGS='--coverage' cmake ${project_root}
 make -j`nproc`
 
 # Generate initial coverage file.
