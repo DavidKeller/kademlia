@@ -89,7 +89,7 @@ endif()
 
 # Setup includes directories.
 include_directories(BEFORE include src test)
-include_directories(${Boost_INCLUDE_DIRS} ${BOTAN_INCLUDE_DIR})
+include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 
 # Build everything.
 add_subdirectory(include)
