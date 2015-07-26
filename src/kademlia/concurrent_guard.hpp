@@ -47,6 +47,15 @@ public:
      */
     class sentry;
 
+public:
+    /**
+     *
+     */
+    explicit concurrent_guard
+        ( void )
+            : flag_( false )
+    { }
+
 private:
     ///
     std::atomic< bool > flag_;
