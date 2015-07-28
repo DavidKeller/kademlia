@@ -56,6 +56,18 @@ BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
     }
 }
 
+BOOST_AUTO_TEST_CASE( dns_can_be_resolved )
+{
+    boost::asio::io_service io_service;
+
+    k::endpoint const endpoint{ "localhost"
+                              , "27980" };
+
+    auto const e = message_socket_type::resolve_endpoint( io_service, endpoint );
+
+    BOOST_REQUIRE_LE( 1, e.size() );
+}
+
 BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
 {
     boost::asio::io_service io_service;
@@ -67,7 +79,6 @@ BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
 
     BOOST_REQUIRE_EQUAL( 1, e.size() );
 }
-
 
 BOOST_AUTO_TEST_CASE( ipv6_address_can_be_resolved )
 {
