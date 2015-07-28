@@ -53,12 +53,12 @@ public:
      */
     explicit concurrent_guard
         ( void )
-            : flag_( false )
+            : flag_( ATOMIC_FLAG_INIT )
     { }
 
 private:
     ///
-    std::atomic< bool > flag_;
+    std::atomic_flag flag_;
 };
 
 /**
@@ -73,12 +73,7 @@ public:
     explicit sentry
         ( concurrent_guard & guard )
             : guard_( guard )
-    {
-        bool expected = false;
-
-        is_owner_of_flag_ = guard_.flag_.compare_exchange_strong( expected
-                                                                , true );
-    }
+    { is_owner_of_flag_ = ! guard_.flag_.test_and_set(); }
 
 
     /**
@@ -88,7 +83,7 @@ public:
         ( void )
     {
         if ( is_owner_of_flag_ )
-            guard_.flag_.exchange( false );
+            guard_.flag_.clear();
     }
 
     /**
