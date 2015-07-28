@@ -53,7 +53,7 @@ public:
      */
     explicit concurrent_guard
         ( void )
-            : flag_( ATOMIC_FLAG_INIT )
+            : flag_{ ATOMIC_FLAG_INIT }
     { }
 
 private:
