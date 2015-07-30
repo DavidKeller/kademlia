@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/DavidKeller/kademlia.svg?branch=master)](https://travis-ci.org/DavidKeller/kademlia)
+[![Coverage Status](https://coveralls.io/repos/DavidKeller/kademlia/badge.svg?branch=master&service=github)](https://coveralls.io/github/DavidKeller/kademlia?branch=master)
+
+
 # Description
 C++11 distributed hash table library
 
@@ -81,18 +85,15 @@ Destruction:
 * [Tracker](http://redmine.litchis.fr/projects/kademlia)
 
 ### Supported targets
-* FreeBSD 9
-  * [![FreeBSD 9 build](http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder)
-* Fedora 21
-  * [![Fedora 21 build](http://buildbot.litchis.fr/kademlia/png?builder=fedora21-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/fedora21-x64-builder)
-* Ubuntu 14
-  * [![Ubuntu 14 build](http://buildbot.litchis.fr/kademlia/png?builder=ubuntu14-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/ubuntu14-x64-builder)
-* Centos 7
-  * [![Centos 7 build](http://buildbot.litchis.fr/kademlia/png?builder=centos7-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/centos7-x64-builder)
-* Debian 8
-  * [![Debian 8 build](http://buildbot.litchis.fr/kademlia/png?builder=debian8-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/debian8-x64-builder)
-* Windows 7
-  * [![Windows 7 build](http://buildbot.litchis.fr/kademlia/png?builder=win2008r2-x64-builder)](http://buildbot.litchis.fr/kademlia/builders/win2008r2-x64-builder)
+<table>
+<tr><th>OS</th><th>Compiler</th><th>Build + Unit tests</th></tr>
+<tr><td>FreeBSD 9</td><td>clang</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder" /></a></td></tr>
+<tr><td>Fedora 21</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/fedora21-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=fedora21-x64-builder" /></a></td></tr>
+<tr><td>Ubuntu 14</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/ubuntu14-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=ubuntu14-x64-builder" /></a></td></tr>
+<tr><td>Centos 7</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/centos7-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=centos7-x64-builder" /></a></td></tr>
+<tr><td>Debian 8</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/debian8-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=debian8-x64-builder" /></a></td></tr>
+<tr><td>Windows 7</td><td>MSVC</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/win2008r2-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=win2008r2-x64-builder" /></a></td></tr>
+</table>
 
 ### Project structure
 ```
