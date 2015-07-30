@@ -27,12 +27,13 @@ install:
     - popd
 
 script:
-    - mkdir build_cov && cd build_cov
+    - mkdir build_cov && pushd build_cov
     - ../scripts/generate_coverage_report.sh ..
+    - popd
 
 after_success:
     # Upload coverage report to coveralls.
-    - cd .. && coveralls-lcov build_cov/app_total_stripped.info
+    - coveralls-lcov build_cov/app_total_stripped.info
 
 addons:
     apt:
