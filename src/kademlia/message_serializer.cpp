@@ -55,7 +55,7 @@ message_serializer::serialize
     buffer b;
     detail::serialize( header, b );
 
-    return std::move( b );
+    return b;
 }
 
 } // namespace detail
