@@ -1,4 +1,3 @@
-
 // Copyright (c) 2013-2014, David Keller
 // All rights reserved.
 // Redistribution and use in source and binary forms, with or without
@@ -24,41 +23,49 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <sstream>
-
 #include "helpers/common.hpp"
-#include "kademlia/peer.hpp"
+
+#include <iostream>
+#include <boost/test/output_test_stream.hpp>
+
+#include "kademlia/log.hpp"
 
 namespace kd = kademlia::detail;
 
-struct fixture 
+namespace {
+
+struct rdbuf_saver
 {
-    fixture()
-            : id_{}
-            , ip_endpoint_( kd::to_ip_endpoint( "127.0.0.1", 1234 ) )
+    rdbuf_saver
+        ( std::ostream & stream
+        , std::streambuf * buffer )
+            : stream_( stream )
+            , old_buffer_( stream.rdbuf( buffer ) )
     { }
 
-    kd::id id_;
-    kd::ip_endpoint ip_endpoint_;
+    ~rdbuf_saver
+        ( void )
+    { stream_.rdbuf( old_buffer_ ); }
+
+    std::ostream & stream_;
+    std::streambuf * old_buffer_;
 };
 
-BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
+} // anonymous namespace
 
-BOOST_AUTO_TEST_CASE( can_be_constructed )
-{
-    kd::peer const p{ id_, ip_endpoint_ };
-    (void)p;
-}
+BOOST_AUTO_TEST_SUITE( test_usage )
 
-BOOST_AUTO_TEST_CASE( can_be_printed )
+BOOST_AUTO_TEST_CASE( can_write_to_debug_log )
 {
     boost::test_tools::output_test_stream out;
 
-    out << kd::peer{ id_, ip_endpoint_ };
+    {
+        rdbuf_saver const s{ std::cout, out.rdbuf() };
+        auto const ptr = reinterpret_cast< void *>( 0x12345678 );
+        kd::get_debug_log( "test", ptr ) << "message" << std::endl;
+    }
 
-    std::ostringstream expected;
-    expected << id_ << "@" << ip_endpoint_;
-    BOOST_REQUIRE( out.is_equal( expected.str() ) );
+    BOOST_REQUIRE( out.is_equal( "[debug] (test @ 345678) message\n" ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

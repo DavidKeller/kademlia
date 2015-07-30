@@ -23,10 +23,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "helpers/common.hpp"
+
 #include "kademlia/message_serializer.hpp"
 #include "kademlia/message.hpp"
-
-#include "helpers/common.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
