@@ -63,7 +63,6 @@ if(WIN32)
 endif()
 find_package(Boost REQUIRED COMPONENTS
     system
-    chrono
     filesystem
     program_options
     unit_test_framework)

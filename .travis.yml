@@ -1,0 +1,47 @@
+sudo: false
+
+os:
+    - linux
+
+language:
+    - cpp
+
+before_install:
+    - export CXXFLAGS='-std=c++11'
+    - export CXX='g++-5'
+    - export CC='gcc-5'
+
+install:
+    # lcov from travis packages is quite old.
+    - git clone https://github.com/linux-test-project/lcov
+    - export PATH="`pwd`/lcov/bin:$PATH"
+    - echo 'geninfo_gcov_tool=gcov-5' >> ~/.lcovrc
+
+    - gem install coveralls-lcov
+
+    # Build our own c++11 enabled boost.
+    - wget -qO- http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2 | tar xj
+    - pushd boost_1_58_0 && ./bootstrap.sh --with-libraries=system,filesystem,program_options,test
+    - ./b2 -q -j`nproc` variant=release link=shared threading=multi toolset=${CC} address-model=64
+    - export BOOST_ROOT="`pwd`"
+    - popd
+
+script:
+    - mkdir build_cov && cd build_cov
+    - ../scripts/generate_coverage_report.sh ..
+
+after_success:
+    # Upload coverage report to coveralls.
+    - cd .. && coveralls-lcov build_cov/app_total_stripped.info
+
+addons:
+    apt:
+        sources:
+            # This is required to install recent g++.
+            - ubuntu-toolchain-r-test
+
+        packages:
+            - g++-5
+            - realpath
+            - cmake
+            - libssl-dev

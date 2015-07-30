@@ -3,14 +3,14 @@
 set -e
 
 if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
-    echo "Usage: $0 PROJECT_ROOT" >&2
+    echo "Usage: $0 SOURCE_ROOT" >&2
     exit -1
 fi
 
-project_root=`realpath $1`
+source_root=`realpath $1`
 
 # Build project.
-CXXFLAGS='--coverage' cmake ${project_root}
+CXXFLAGS='--coverage' cmake ${source_root}
 make -j`nproc`
 
 # Generate initial coverage file.
@@ -31,10 +31,10 @@ lcov --quiet --output-file app_total.info \
 
 # Clean coverage file.
 lcov --quiet  --output-file app_total_stripped.info \
-     --extract app_total.info '*kademlia/include*' '*kademlia/src*'
+     --extract app_total.info '*include/kademlia/*' '*src/kademlia/*'
 
 # Generate html report.
-genhtml --output-directory html --prefix ${project_root} \
+genhtml --output-directory html --prefix ${source_root} \
         --num-spaces 4 --title 'Kademlia unit tests' \
         --no-function-coverage \
         app_total_stripped.info 
