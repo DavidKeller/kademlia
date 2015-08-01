@@ -63,6 +63,10 @@ BOOST_AUTO_TEST_CASE( invalid_string_cannot_generate_id )
     BOOST_REQUIRE_THROW( kd::id{ "1?2" }, std::system_error );
     BOOST_REQUIRE_THROW( kd::id{ "x" }, std::system_error );
     BOOST_REQUIRE_THROW( kd::id{ " " }, std::system_error );
+    BOOST_REQUIRE_THROW( kd::id{ "                        "
+                                 "                        "
+                                 "                        " }
+                       , std::system_error );
 }
 
 BOOST_AUTO_TEST_CASE( valid_string_generates_valid_id )
