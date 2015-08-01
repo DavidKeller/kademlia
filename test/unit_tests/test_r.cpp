@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
 {
     using type = kd::r< int >;
 
-    type::value_type value{ 42 };
     static type::error_type const NO_ERROR;
 
     {
+        type::value_type value{ 42 };
         type r{ value };
         BOOST_REQUIRE( r );
         BOOST_REQUIRE_EQUAL( value, r.v() );
@@ -94,7 +94,8 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
     }
 
     {
-        const type r{ value };
+        type::value_type const value{ 42 };
+        type r{ value };
         BOOST_REQUIRE( r );
         BOOST_REQUIRE_EQUAL( value, r.v() );
         BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
@@ -111,10 +112,14 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
 BOOST_AUTO_TEST_CASE( can_be_constructed_emplace )
 {
     kd::r< test_type > r{ 42, 69 };
-
     BOOST_REQUIRE( r );
     BOOST_REQUIRE_EQUAL( 42, r.v().a_ );
     BOOST_REQUIRE_EQUAL( 69, r.v().b_ );
+
+    auto const & rc = r;
+    BOOST_REQUIRE( rc );
+    BOOST_REQUIRE_EQUAL( 42, rc.v().a_ );
+    BOOST_REQUIRE_EQUAL( 69, rc.v().b_ );
 }
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_from_an_error )
@@ -127,6 +132,11 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_an_error )
         BOOST_REQUIRE( ! r );
         BOOST_REQUIRE_THROW( r.v(), type::exception_type );
         BOOST_REQUIRE_EQUAL( error, r.e() );
+
+        auto const & rc = r;
+        BOOST_REQUIRE( ! rc );
+        BOOST_REQUIRE_THROW( rc.v(), type::exception_type );
+        BOOST_REQUIRE_EQUAL( error, rc.e() );
     }
 }
 
