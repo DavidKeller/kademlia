@@ -68,5 +68,41 @@ BOOST_AUTO_TEST_CASE( can_write_to_debug_log )
     BOOST_REQUIRE( out.is_equal( "[debug] (test @ 345678) message\n" ) );
 }
 
+BOOST_AUTO_TEST_CASE( can_write_to_debug_log_using_macro )
+{
+    boost::test_tools::output_test_stream out;
+
+    {
+        rdbuf_saver const s{ std::cout, out.rdbuf() };
+        auto const ptr = reinterpret_cast< void *>( 0x12345678 );
+        LOG_DEBUG( test, ptr ) << "message" << std::endl;
+    }
+
+#ifdef KADEMLIA_ENABLE_DEBUG
+    BOOST_REQUIRE( out.is_equal( "[debug] (test @ 345678) message\n" ) );
+#else
+    BOOST_REQUIRE( out.is_equal( "" ) );
+#endif
+}
+
+
+BOOST_AUTO_TEST_CASE( can_enable_log_module )
+{
+    // By default, unit tests enable log on all modules.
+    kd::disable_log_for( "*" );
+
+    BOOST_REQUIRE( ! kd::is_log_enabled( "test1" ) );
+    BOOST_REQUIRE( ! kd::is_log_enabled( "test2" ) );
+
+    kd::enable_log_for( "test1" );
+    BOOST_REQUIRE( kd::is_log_enabled( "test1" ) );
+    BOOST_REQUIRE( ! kd::is_log_enabled( "test2" ) );
+
+    kd::enable_log_for( "*" );
+    BOOST_REQUIRE( kd::is_log_enabled( "test1" ) );
+    BOOST_REQUIRE( kd::is_log_enabled( "test2" ) );
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

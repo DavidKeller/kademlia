@@ -66,6 +66,14 @@ enable_log_for
 /**
  *
  */
+void
+disable_log_for
+    ( std::string const& module )
+{ get_enabled_modules().erase( module ); }
+
+/**
+ *
+ */
 bool
 is_log_enabled
     ( std::string const& module )

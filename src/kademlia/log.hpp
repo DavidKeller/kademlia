@@ -56,6 +56,14 @@ enable_log_for
 /**
  *
  */
+void
+disable_log_for
+    ( std::string const& module );
+
+
+/**
+ *
+ */
 bool
 is_log_enabled
     ( std::string const& module );
@@ -71,18 +79,15 @@ is_log_enabled
  *  can be costly, its result is cached in a static variable.
  */
 #ifdef KADEMLIA_ENABLE_DEBUG
-#   define LOG_DEBUG( module, thiz )                                    \
-    for ( bool used = false                                             \
-        ; ! used                                                        \
-        ; used = true )                                                 \
-        for ( static bool enabled = detail::is_log_enabled( #module )   \
-            ; enabled && ! used                                         \
-            ; used = true )                                             \
-            detail::get_debug_log( #module, thiz )
+#   define LOG_DEBUG( module, thiz )                                           \
+    for ( bool used = false; ! used; used = true )                             \
+        for ( static bool enabled = kademlia::detail::is_log_enabled( #module )\
+            ; enabled && ! used; used = true )                                 \
+            kademlia::detail::get_debug_log( #module, thiz )
 #else
-#   define LOG_DEBUG( module, thiz )                                    \
-    while ( false )                                                     \
-        detail::get_debug_log( #module, thiz )
+#   define LOG_DEBUG( module, thiz )                                           \
+    while ( false )                                                            \
+        kademlia::detail::get_debug_log( #module, thiz )
 #endif
 
 /**
