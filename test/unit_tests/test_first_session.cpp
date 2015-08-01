@@ -29,7 +29,7 @@
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
-#include <kademlia/session.hpp>
+#include <kademlia/first_session.hpp>
 
 #include "helpers/common.hpp"
 #include "helpers/network.hpp"
@@ -42,17 +42,15 @@ namespace bo = boost::asio;
  */
 BOOST_AUTO_TEST_SUITE( test_construction )
 
-BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
+BOOST_AUTO_TEST_CASE( first_session_opens_sockets_on_all_interfaces_by_default )
 {
-    k::endpoint initial_peer{ "127.0.0.1", 12345 };
+    k::first_session s;
 
-    k::session s{ initial_peer };
-
-    k::tests::check_listening( "0.0.0.0", k::session::DEFAULT_PORT );
-    k::tests::check_listening( "::", k::session::DEFAULT_PORT );
+    k::tests::check_listening( "0.0.0.0", k::first_session::DEFAULT_PORT );
+    k::tests::check_listening( "::", k::first_session::DEFAULT_PORT );
 }
 
-BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
+BOOST_AUTO_TEST_CASE( first_session_opens_both_ipv4_ipv6_sockets )
 {
     // Create listening socket.
     std::uint16_t const port1 = k::tests::get_temporary_listening_port();
@@ -60,16 +58,13 @@ BOOST_AUTO_TEST_CASE( session_opens_both_ipv4_ipv6_sockets )
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 
-    k::endpoint const initial_peer{ "127.0.0.1", 12345 };
-    k::session s{ initial_peer
-                , ipv4_endpoint
-                , ipv6_endpoint };
+    k::first_session s{ ipv4_endpoint, ipv6_endpoint };
 
     k::tests::check_listening( "127.0.0.1", port1 );
     k::tests::check_listening( "::1", port2 );
 }
 
-BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
+BOOST_AUTO_TEST_CASE( first_session_throw_on_invalid_ipv6_address )
 {
     // Create listening socket.
     std::uint16_t const port1 = k::tests::get_temporary_listening_port();
@@ -77,14 +72,12 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv6_address )
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
 
-    k::endpoint const initial_peer{ "127.0.0.1", 12345 };
-    BOOST_REQUIRE_THROW( k::session s( initial_peer
-                                     , ipv4_endpoint
-                                     , ipv6_endpoint )
+    BOOST_REQUIRE_THROW( k::first_session s( ipv4_endpoint
+                                           , ipv6_endpoint )
                        , std::exception );
 }
 
-BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
+BOOST_AUTO_TEST_CASE( first_session_throw_on_invalid_ipv4_address )
 {
     // Create listening socket.
     std::uint16_t const port1 = k::tests::get_temporary_listening_port();
@@ -92,10 +85,8 @@ BOOST_AUTO_TEST_CASE( session_throw_on_invalid_ipv4_address )
     k::endpoint ipv4_endpoint{ "::", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 
-    k::endpoint const initial_peer{ "127.0.0.1", 12345 };
-    BOOST_REQUIRE_THROW( k::session s( initial_peer
-                                     , ipv4_endpoint
-                                     , ipv6_endpoint )
+    BOOST_REQUIRE_THROW( k::first_session s( ipv4_endpoint
+                                           , ipv6_endpoint )
                        , std::exception );
 }
 
@@ -105,10 +96,9 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
 {
-    k::endpoint const initial_peer{ "127.0.0.1", 12345 };
-    k::session s{ initial_peer };
+    k::first_session s;
 
-    std::thread t( std::bind( &k::session::run, &s ) );
+    std::thread t( std::bind( &k::first_session::run, &s ) );
     s.abort();
     t.join();
 }

@@ -29,7 +29,6 @@
 #include <iostream>
 #include <boost/system/system_error.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/asio/ip/udp.hpp>
 
 namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;
@@ -46,28 +45,6 @@ filesystem::path const tests_directory_{ TESTS_DIR };
 std::string get_capture_path( std::string const & capture_name )
 {
     return ( tests_directory_ / "captures" / capture_name ).string();
-}
-
-std::uint16_t
-get_temporary_listening_port
-    ( std::uint16_t port )
-{
-    boost::system::error_code failure;
-
-    do
-    {
-        ++ port;
-        boost::asio::ip::udp::endpoint const e
-                { boost::asio::ip::udp::v4() , port };
-
-        boost::asio::io_service io_service;
-        // Try to open a socket at this address.
-        boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
-        socket.bind( e, failure );
-    }
-    while ( failure == boost::system::errc::address_in_use );
-
-    return port;
 }
 
 } // namespace tests

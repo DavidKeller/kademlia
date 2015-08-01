@@ -23,30 +23,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TEST_HELPERS_COMMON_HPP
-#define KADEMLIA_TEST_HELPERS_COMMON_HPP
-#ifdef __clang__
-#   pragma clang diagnostic push
-#   pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#   pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-#include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp>
-#ifdef __clang__
-#   pragma clang diagnostic pop
-#endif
+#include "helpers/network.hpp"
 
-#include <string>
-#include <cstdint>
+#include <boost/asio/ip/udp.hpp>
 
 namespace kademlia {
 namespace tests {
 
-std::string
-get_capture_path
-    ( std::string const & capture_name );
+void
+check_listening
+    ( std::string const& ip
+    , std::uint16_t port )
+{
+    using boost::asio::ip::udp;
+    auto udp_failure = create_socket< udp::socket >( ip, port );
+    BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, udp_failure );
+}
+
+std::uint16_t
+get_temporary_listening_port
+    ( std::uint16_t port )
+{
+    boost::system::error_code failure;
+
+    do
+    {
+        ++ port;
+        boost::asio::ip::udp::endpoint const e
+                { boost::asio::ip::udp::v4() , port };
+
+        boost::asio::io_service io_service;
+        // Try to open a socket at this address.
+        boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
+        socket.bind( e, failure );
+    }
+    while ( failure == boost::system::errc::address_in_use );
+
+    return port;
+}
 
 } // namespace tests
 } // namespace kademlia
 
-#endif

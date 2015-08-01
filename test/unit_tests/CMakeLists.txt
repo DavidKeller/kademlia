@@ -31,6 +31,8 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --tim
 add_library(test_helpers_common STATIC
     helpers/common.cpp
     helpers/common.hpp
+    helpers/network.hpp
+    helpers/network.cpp
     helpers/peer_factory.hpp
     helpers/routing_table_mock.hpp
     helpers/tracker_mock.hpp
@@ -61,7 +63,6 @@ build_and_run_test(test_store_value_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_find_value_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_ip_endpoint.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_peer.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_log.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_discover_neighbors_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_notify_peer_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_response_callbacks.cpp LIBRARIES kademlia_static)
@@ -70,6 +71,7 @@ build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_r.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_routing_table.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_first_session.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
 
 build_and_run_test(test_fake_socket.cpp LIBRARIES simulator_impl)

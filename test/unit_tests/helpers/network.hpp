@@ -23,30 +23,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KADEMLIA_TEST_HELPERS_COMMON_HPP
-#define KADEMLIA_TEST_HELPERS_COMMON_HPP
-#ifdef __clang__
-#   pragma clang diagnostic push
-#   pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#   pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-#include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp>
-#ifdef __clang__
-#   pragma clang diagnostic pop
-#endif
+#ifndef KADEMLIA_TEST_HELPERS_NETWORK_HPP
+#define KADEMLIA_TEST_HELPERS_NETWORK_HPP
 
-#include <string>
 #include <cstdint>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/v6_only.hpp>
+#include <boost/system/system_error.hpp>
+
+#include "helpers/common.hpp"
 
 namespace kademlia {
 namespace tests {
 
-std::string
-get_capture_path
-    ( std::string const & capture_name );
+template< typename Socket >
+boost::system::error_code
+create_socket
+    ( std::string const& ip
+    , std::uint16_t port )
+{
+    auto const a = boost::asio::ip::address::from_string( ip );
+    boost::asio::io_service io_service;
+
+    // Try to create a socket.
+    typename Socket::endpoint_type endpoint( a, port );
+    Socket socket( io_service, endpoint.protocol() );
+
+    if ( endpoint.address().is_v6() )
+        socket.set_option( boost::asio::ip::v6_only{ true } );
+
+    boost::system::error_code failure;
+    socket.bind( endpoint, failure );
+
+    return failure;
+}
+
+void
+check_listening
+    ( std::string const& ip
+    , std::uint16_t port );
+
+std::uint16_t
+get_temporary_listening_port
+    ( std::uint16_t port = 1234 );
 
 } // namespace tests
 } // namespace kademlia
 
 #endif
+
