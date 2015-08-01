@@ -85,7 +85,6 @@ BOOST_AUTO_TEST_CASE( can_write_to_debug_log_using_macro )
 #endif
 }
 
-
 BOOST_AUTO_TEST_CASE( can_enable_log_module )
 {
     // By default, unit tests enable log on all modules.
@@ -102,6 +101,22 @@ BOOST_AUTO_TEST_CASE( can_enable_log_module )
     BOOST_REQUIRE( kd::is_log_enabled( "test1" ) );
     BOOST_REQUIRE( kd::is_log_enabled( "test2" ) );
 
+}
+
+BOOST_AUTO_TEST_CASE( can_convert_container_to_string )
+{
+    {
+        std::vector< std::uint8_t > const c{ 'a', 'b', 'c' };
+        auto const r = kd::to_string( c );
+
+        BOOST_REQUIRE_EQUAL( "abc", r );
+    }
+    {
+        std::vector< std::uint8_t > const c{ 1, 2, 3 };
+        auto const r = kd::to_string( c );
+
+        BOOST_REQUIRE_EQUAL( "\\1\\2\\3", r );
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
