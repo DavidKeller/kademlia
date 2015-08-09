@@ -147,7 +147,7 @@ private:
             if ( failure )
                 throw std::system_error{ failure };
 
-            on_message_received_( sender, i, e);
+            on_message_received_( sender, i, e );
             schedule_receive_on_socket( current_subnet );
         };
 

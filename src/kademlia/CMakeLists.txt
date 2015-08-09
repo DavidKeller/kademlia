@@ -47,6 +47,7 @@ set(kademlia_sources
     ip_endpoint.hpp
     log.cpp
     log.hpp
+    network.hpp
     message.cpp
     message.hpp
     message_serializer.cpp
