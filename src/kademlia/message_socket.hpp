@@ -95,15 +95,7 @@ public:
      *
      */
     message_socket
-        ( message_socket && o )
-#ifdef _MSC_VER
-        : reception_buffer_( std::move( o.reception_buffer_ ) )
-        , current_message_sender_( std::move( o.current_message_sender_ ) )
-        , socket_( std::move( o.socket_ ) )
-    { }
-#else
-        = default;
-#endif
+        ( message_socket && o ) = default;
 
     /**
      *
@@ -262,6 +254,15 @@ message_socket< UnderlyingSocketType >::async_receive
         ( boost::system::error_code const& failure
         , std::size_t bytes_received )
     {
+#ifdef _MSC_VER
+        // On Windows, an UDP socket may return connection_reset
+        // to inform application that a previous send by this socket
+        // has generated an ICMP port unreachable.
+        // https://msdn.microsoft.com/en-us/library/ms740120.aspx
+        // Ignore it and schedule another read.
+        if ( failure == boost::system::errc::connection_reset )
+            return async_receive( callback );
+#endif
         auto i = reception_buffer_.begin(), e = i;
 
         if ( ! failure )
