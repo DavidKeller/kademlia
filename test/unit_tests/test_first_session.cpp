@@ -24,11 +24,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
-#include <thread>
+#include <future>
 
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
+#include <kademlia/error.hpp>
 #include <kademlia/first_session.hpp>
 
 #include "helpers/common.hpp"
@@ -98,9 +99,10 @@ BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
 {
     k::first_session s;
 
-    std::thread t( std::bind( &k::first_session::run, &s ) );
+    auto result = std::async( &k::first_session::run, &s );
     s.abort();
-    t.join();
+
+    BOOST_REQUIRE( result.get() == k::RUN_ABORTED );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
