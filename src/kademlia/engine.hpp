@@ -91,7 +91,7 @@ public:
         ( boost::asio::io_service & io_service
         , endpoint const& ipv4
         , endpoint const& ipv6 )
-            : random_engine_( std::random_device()() )
+            : random_engine_( std::random_device{}() )
             , my_id_( random_engine_ )
             , network_( io_service, ipv4, ipv6
                       , std::bind( &engine::handle_new_message

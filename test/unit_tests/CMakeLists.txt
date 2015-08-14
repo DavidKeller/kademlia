@@ -36,6 +36,7 @@ add_library(test_helpers_common STATIC
     helpers/peer_factory.hpp
     helpers/routing_table_mock.hpp
     helpers/tracker_mock.hpp
+    helpers/socket_mock.hpp
     helpers/corrupted_message.hpp
     helpers/task_fixture.hpp)
 
@@ -67,6 +68,7 @@ build_and_run_test(test_discover_neighbors_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_notify_peer_task.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_response_callbacks.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_timer.cpp LIBRARIES kademlia_static)
+build_and_run_test(test_network.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_log.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_r.cpp LIBRARIES kademlia_static)

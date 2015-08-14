@@ -7,10 +7,10 @@ if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
     exit -1
 fi
 
-source_root=`realpath $1`
+source_root=`grealpath $1`
 
 # Build project.
-CXXFLAGS='--coverage' cmake ${source_root}
+CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ${source_root}
 make -j`nproc`
 
 # Generate initial coverage file.
