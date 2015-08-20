@@ -33,7 +33,6 @@
 #include <functional>
 #include <boost/asio/io_service.hpp>
 
-#include "kademlia/endpoint.hpp"
 #include "kademlia/log.hpp"
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/message_socket.hpp"
@@ -45,12 +44,12 @@ namespace detail {
 /**
  *
  */
-template< typename UnderlyingSocketType >
+template< typename MessageSocketType >
 class network final
 {
 public:
     ///
-    using message_socket_type = message_socket< UnderlyingSocketType >;
+    using message_socket_type = MessageSocketType;
 
     ///
     using endpoint_type = ip_endpoint;
@@ -69,12 +68,12 @@ public:
      */
     network
         ( boost::asio::io_service & io_service
-        , endpoint const& ipv4
-        , endpoint const& ipv6
+        , message_socket_type && socket_ipv4
+        , message_socket_type && socket_ipv6
         , on_message_received_type on_message_received )
             : io_service_( io_service )
-            , socket_ipv4_( message_socket_type::ipv4( io_service_, ipv4 ) )
-            , socket_ipv6_( message_socket_type::ipv6( io_service_, ipv6 ) )
+            , socket_ipv4_( std::move( socket_ipv4 ) )
+            , socket_ipv6_( std::move( socket_ipv6 ) )
             , on_message_received_( on_message_received )
     {
         start_message_reception();

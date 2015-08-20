@@ -81,7 +81,6 @@ public:
         ( boost::asio::io_service & io_service
         , EndpointType const& e );
 
-
     /**
      *
      */

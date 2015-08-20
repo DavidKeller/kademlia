@@ -25,26 +25,37 @@
 
 #include "kademlia/network.hpp"
 
+#include <kademlia/endpoint.hpp>
+
 #include "helpers/common.hpp"
 #include "helpers/socket_mock.hpp"
 
 namespace k = kademlia;
 namespace kd = kademlia::detail;
+namespace kt = kademlia::test;
 
-using mocked_network = kd::network< k::test::socket_mock >;
+using socket_type = kd::message_socket< kt::socket_mock >;
+using network_type = kd::network< socket_type >;
 
 struct fixture
 {
-    boost::asio::io_service io_service_;
-    k::endpoint const ipv4_endpoint_{ "127.0.0.1", 1234 };
-    k::endpoint const ipv6_endpoint_{ "::1", 1234 };
+    fixture
+        ( void )
+            : io_service_()
+            , ipv4_( "172.0.0.1", 1234 )
+            , ipv6_( "::1", 1234 )
+    { }
 
     void
     on_message_received
-        ( mocked_network::endpoint_type const&
+        ( network_type::endpoint_type const&
         , kd::buffer::const_iterator
         , kd::buffer::const_iterator )
     { };
+
+    boost::asio::io_service io_service_;
+    k::endpoint ipv4_;
+    k::endpoint ipv6_;
 };
 
 /**
@@ -52,35 +63,16 @@ struct fixture
  */
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
-BOOST_AUTO_TEST_CASE( create_sockets_on_construction )
+BOOST_AUTO_TEST_CASE( schedule_receive_on_construction )
 {
-    BOOST_REQUIRE_NO_THROW
-    (
-        using namespace std::placeholders;
-        mocked_network m( io_service_
-                        , ipv4_endpoint_
-                        , ipv6_endpoint_
-                        , std::bind( &fixture::on_message_received
-                                   , this
-                                   , _1, _2, _3 ) );
-        (void)m;
-    );
+    using namespace std::placeholders;
+    network_type m{ io_service_
+                  , socket_type::ipv4( io_service_, ipv4_ )
+                  , socket_type::ipv6( io_service_, ipv6_ )
+                  , std::bind( &fixture::on_message_received
+                             , this
+                             , _1, _2, _3 ) };
+    (void)m;
 }
-
-BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
-{
-    BOOST_REQUIRE_NO_THROW
-    (
-        using namespace std::placeholders;
-        mocked_network m( io_service_
-                        , ipv4_endpoint_
-                        , ipv6_endpoint_
-                        , std::bind( &fixture::on_message_received
-                                   , this
-                                   , _1, _2, _3 ) );
-        (void)m;
-    );
-}
-
 
 BOOST_AUTO_TEST_SUITE_END()
