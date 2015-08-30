@@ -61,10 +61,11 @@ deserialize_integer
     , buffer::const_iterator e
     , IntegerType & value )
 {
+    value = 0;
+
     if ( std::size_t( std::distance( i, e ) ) < sizeof( value ) )
         return make_error_code( TRUNCATED_SIZE );
 
-    value = 0;
     for ( auto j = 0u; j < sizeof( value ); ++j )
         value |= IntegerType{ *i++ } << 8 * j;
 
