@@ -10,7 +10,7 @@ fi
 source_root=`realpath $1`
 
 # Build project.
-CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ${source_root}
+CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=Debug ${source_root}
 make -j`nproc`
 
 # Generate initial coverage file.

@@ -105,7 +105,6 @@ deserialize
     return std::error_code{};
 }
 
-
 inline void
 serialize
     ( id const& i
