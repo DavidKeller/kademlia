@@ -174,8 +174,7 @@ lookup_task::flag_candidate_as_valid
     ( id const& candidate_id )
 {
     auto i = find_candidate( candidate_id );
-    if ( i == candidates_.end()
-       && i->second.state_ == candidate::STATE_CONTACTED )
+    if ( i == candidates_.end() )
         return;
 
     -- in_flight_requests_count_;
@@ -187,8 +186,7 @@ lookup_task::flag_candidate_as_invalid
     ( id const& candidate_id )
 {
     auto i = find_candidate( candidate_id );
-    if ( i == candidates_.end()
-       && i->second.state_ == candidate::STATE_CONTACTED )
+    if ( i == candidates_.end() )
         return;
 
     -- in_flight_requests_count_;
