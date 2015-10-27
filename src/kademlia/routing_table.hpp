@@ -73,8 +73,9 @@ public:
     routing_table
         ( id const& my_id
         , std::size_t k_bucket_size = DEFAULT_K_BUCKET_SIZE )
-        : k_buckets_( id::BIT_SIZE ), my_id_( my_id )
-        , peer_count_( 0 ), k_bucket_size_( k_bucket_size )
+            : k_buckets_( id::BIT_SIZE ), my_id_( my_id )
+            , peer_count_( 0 ), k_bucket_size_( k_bucket_size )
+            , largest_k_bucket_index_( 0 )
     {
         assert( k_bucket_size_ > 0 && "k_bucket size must be > 0" );
 
@@ -127,8 +128,13 @@ public:
         auto & bucket = k_buckets_[ k_bucket_index ];
 
         // If there is room in the bucket.
-        if ( bucket.size() == get_k_bucket_size( k_bucket_index ) )
-            return false;
+        if ( bucket.size() == k_bucket_size_ )
+        {
+            update_largest_k_bucket_index( k_bucket_index );
+
+            if ( k_bucket_index != largest_k_bucket_index_ )
+                return false;
+        }
 
         auto const end = bucket.end();
 
@@ -299,11 +305,14 @@ private:
     /**
      *
      */
-    std::size_t
-    get_k_bucket_size
+    void
+    update_largest_k_bucket_index
         ( std::size_t index )
-        const
-    { return k_bucket_size_  + ( k_buckets_.size() - index ) / 4; }
+    {
+        auto & largest_k_bucket = k_buckets_[ largest_k_bucket_index_ ];
+        if ( largest_k_bucket.size() <= k_bucket_size_ )
+            largest_k_bucket_index_ = index;
+    }
 
 private:
     /// This contains buckets up to id bit count.
@@ -314,6 +323,8 @@ private:
     std::size_t peer_count_;
     /// This is max number of peers stored per k_bucket.
     std::size_t k_bucket_size_;
+    /// This keeps the index of the largest subtree.
+    std::size_t largest_k_bucket_index_;
 };
 
 /**

@@ -150,7 +150,7 @@ public:
         ( value_to_hash_type const& value );
 
     /**
-     *
+     *  @note From msb to lsb.
      */
     blocks_type::iterator
     begin
@@ -158,7 +158,7 @@ public:
     { return blocks_.begin(); }
 
     /**
-     *
+     *  @note From msb to lsb.
      */
     blocks_type::iterator
     end
@@ -166,7 +166,7 @@ public:
     { return blocks_.end(); }
 
     /**
-     *
+     *  @note From msb to lsb.
      */
     blocks_type::const_iterator
     begin
@@ -175,7 +175,7 @@ public:
     { return blocks_.begin(); }
 
     /**
-     *
+     *  @note From msb to lsb.
      */
     blocks_type::const_iterator
     end
@@ -204,7 +204,7 @@ public:
     /**
      *  @brief Return a const reference to a bit of the id.
      *  @param index The index of the bit (from 0 to BIT_SIZE - 1).
-     *  @note Index 0 is the lowest bit.
+     *  @note Index 0 is the msb.
      */
     const_reference
     operator[]
@@ -215,7 +215,7 @@ public:
     /**
      *  @brief Return a reference to a bit of the id.
      *  @param index The index of the bit (from 0 to BIT_SIZE - 1).
-     *  @note Index 0 is the lowest bit.
+     *  @note Index 0 is the msb.
      */
     reference
     operator[]

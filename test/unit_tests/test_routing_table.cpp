@@ -57,52 +57,36 @@ BOOST_AUTO_TEST_SUITE_END()
  */
 BOOST_AUTO_TEST_SUITE( test_push )
 
-#if 0
-BOOST_AUTO_TEST_CASE( fill_buckets_and_split_them )
+BOOST_AUTO_TEST_CASE( largest_k_bucket_can_receive_unlimited_peers )
 {
     // My id is 128 bit assigned to 0.
     kd::id const my_id;
     // Each bucket can contain up to 4 peers.
-    std::size_t const bucket_size = 3;
+    std::size_t const bucket_size = 2;
 
     routing_table rt{ my_id, bucket_size };
 
     // This peer will be associated with every id.
     // Unicity applies only to id, not peer.
     auto const test_peer( create_endpoint() );
-    // FIXME: Okay, not my best test.
-    for ( std::size_t bucket_index = 0
-        ; bucket_index < kd::id::BIT_SIZE
-        ; ++ bucket_index )
-    {
-        kd::id current_id;
-        // Fill 'current_depth' nth bucket.
-        for ( auto position = bucket_index; position < kd::id::BIT_SIZE; ++ position )
-        {
-            // bucket_index => number of lower bit set to 0.
-            // First iteration with depth equal to 2 : 00..0100
-            // Then : 00..1100
-            // Until: 11..1100
-            current_id[ position ] = 1;
 
-            std::size_t const index_in_new_bucket = position - bucket_index;
-            // Until we reach current bucket limit, expect to new peers
-            // to be added.
-            if ( index_in_new_bucket < bucket_size )
-                BOOST_REQUIRE_MESSAGE
-                        ( rt.push( current_id, test_peer ) == true
-                        , position << " nth peer in bucket "
-                            << bucket_index << " should have been accepted" );
-            // Now peers should be droped.
-            else
-                BOOST_REQUIRE_MESSAGE
-                        ( rt.push( current_id, test_peer ) == false
-                        , position << " nth peer in bucket "
-                            << bucket_index << " should have been kicked" );
-        }
-    }
+    // Theses should go into high bucket.
+    BOOST_REQUIRE( rt.push( kd::id{ "10" }, test_peer ) );
+    BOOST_REQUIRE( rt.push( kd::id{ "11" }, test_peer ) );
+
+    // While theses go to a lower bucket.
+    BOOST_REQUIRE( rt.push( kd::id{ "20" }, test_peer ) );
+    BOOST_REQUIRE( rt.push( kd::id{ "21" }, test_peer ) );
+    // This one should flag the lower bucket as the largest.
+    BOOST_REQUIRE( rt.push( kd::id{ "22" }, test_peer ) );
+    // This one can be saved as the largest bucket
+    // is allowed to exceed bucket_size.
+    BOOST_REQUIRE( rt.push( kd::id{ "23" }, test_peer ) );
+
+    // This one can't go into first bucket as it is full
+    // and is not the largest bucket.
+    BOOST_REQUIRE(! rt.push( kd::id{ "12" }, test_peer ) );
 }
-#endif
 
 BOOST_AUTO_TEST_CASE( discards_already_pushed_ids )
 {
