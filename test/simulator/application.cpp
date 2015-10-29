@@ -224,6 +224,10 @@ run
 
     std::cout << "Perfoming loads" << std::endl;
     schedule_loads( engines, io_service, c.total_messages_count );
+
+    std::cout <<  "Messages count: "
+              << fake_socket::get_writes_count()
+              << std::endl;
 }
 
 } // namespace application

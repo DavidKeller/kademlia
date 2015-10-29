@@ -78,8 +78,7 @@ serialize
     , buffer & b )
 {
     serialize_integer( data.size(), b );
-    for ( auto const& d : data )
-        b.push_back( d );
+    b.insert( b.end(), data.begin(), data.end() );
 }
 
 /**
@@ -99,8 +98,9 @@ deserialize
     if ( std::size_t( std::distance( i, e ) ) < size )
         return make_error_code( CORRUPTED_BODY );
 
-    for ( ; size > 0; -- size )
-        data.push_back( *i++ );
+    e = std::next( i, size );
+    data.insert( data.end(), i, e );
+    i = e;
 
     return std::error_code{};
 }
@@ -110,9 +110,7 @@ serialize
     ( id const& i
     , buffer & b )
 {
-    std::copy( i.begin()
-             , i.end()
-             , std::back_inserter( b ) );
+    b.insert( b.end(), i.begin(), i.end() );
 }
 
 /**

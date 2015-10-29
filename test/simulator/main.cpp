@@ -24,6 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
+#include <locale>
 
 #include "simulator/executable.hpp"
 
@@ -34,6 +35,8 @@ main
 {
     try
     {
+        std::locale( "" );
+
         return kademlia::executable::run( argc, argv );
     }
     catch ( std::exception const& e )

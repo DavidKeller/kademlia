@@ -65,9 +65,9 @@ public:
     fake_socket
         ( boost::asio::io_service & io_service
         , protocol_type const& )
-        : io_service_( io_service )
-        , local_endpoint_()
-        , pending_reads_()
+            : io_service_( io_service )
+            , local_endpoint_()
+            , pending_reads_()
     { }
 
     /**
@@ -82,10 +82,10 @@ public:
      */
     fake_socket
         ( fake_socket && o )
-        : io_service_( o.io_service_ )
-        , local_endpoint_( o.local_endpoint_ )
-        , pending_reads_( std::move( o.pending_reads_ ) )
-        , pending_writes_( std::move( o.pending_writes_ ) )
+            : io_service_( o.io_service_ )
+            , local_endpoint_( o.local_endpoint_ )
+            , pending_reads_( std::move( o.pending_reads_ ) )
+            , pending_writes_( std::move( o.pending_writes_ ) )
     { add_route_to_socket( local_endpoint(), this ); }
 
     /**
@@ -152,8 +152,7 @@ public:
     close
         ( boost::system::error_code & failure )
     {
-        // This socket does'nt must no longer
-        // read messages.
+        // This socket no longer reads messages.
         if ( get_socket( local_endpoint() ) == this )
         {
             add_route_to_socket( local_endpoint(), nullptr );
@@ -222,6 +221,19 @@ public:
             // It's already waiting for the current packet.
             async_execute_write( target, buffer
                                , std::forward< Callback >( callback ) );
+
+        ++ get_writes_count();
+    }
+
+    /**
+     *
+     */
+    static std::size_t &
+    get_writes_count
+        ( void )
+    { 
+        static std::size_t writes_count_;
+        return writes_count_;
     }
 
     /**
@@ -290,9 +302,9 @@ private:
             if ( e.address().is_v4() )
                 return get_socket_from( ipv4_sockets_
                                       , e.address().to_v4() );
-            else
-                return get_socket_from( ipv6_sockets_
-                                      , e.address().to_v6() );
+
+            return get_socket_from( ipv6_sockets_
+                                  , e.address().to_v6() );
         }
 
     private:
