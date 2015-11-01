@@ -434,21 +434,42 @@ private:
     }
 
     /**
+     *
+     */
+    id
+    get_closest_neighbor_id
+        ( void )
+    {
+        // Find our closest neighbor.
+        auto closest_neighbor = routing_table_.find( my_id_ );
+        if ( closest_neighbor->first == my_id_ )
+            ++ closest_neighbor;
+
+        assert( closest_neighbor != routing_table_.end()
+              && "at least one peer is known" );
+
+        return closest_neighbor->first;
+    }
+
+    /**
      *  Refresh each bucket.
      */
     void
     notify_neighbors
         ( void )
     {
-        id refresh_id = my_id_;
+        auto closest_neighbor_id = get_closest_neighbor_id();
+        auto searched_id = my_id_;
 
-        for ( std::size_t i = id::BIT_SIZE; i > 0; -- i )
+        auto e = std::mismatch( searched_id.begin(), searched_id.end()
+                              , closest_neighbor_id.begin() ).first;
+
+        for ( auto i = searched_id.begin(); i != e; ++i )
         {
-            // Flip bit to select find peers in the current k_bucket.
-            id::reference bit = refresh_id[ i - 1 ];
-            bit = ! bit;
+            *i = !*i;
 
-            start_notify_peer_task( refresh_id, tracker_, routing_table_ );
+            start_notify_peer_task( searched_id
+                                  , tracker_, routing_table_ );
         }
     }
 

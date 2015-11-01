@@ -84,14 +84,14 @@ public:
     }
 
     /**
-     * Disabled copy constructor.
+     *  Disabled copy constructor.
      */
     routing_table
         ( routing_table const& )
         = delete;
 
     /**
-     * Disabled assignement operator.
+     *  Disabled assignement operator.
      */
     routing_table&
     operator=
@@ -309,8 +309,7 @@ private:
     update_largest_k_bucket_index
         ( std::size_t index )
     {
-        auto & largest_k_bucket = k_buckets_[ largest_k_bucket_index_ ];
-        if ( largest_k_bucket.size() <= k_bucket_size_ )
+        if ( k_buckets_[ largest_k_bucket_index_ ].size() <= k_bucket_size_ )
             largest_k_bucket_index_ = index;
     }
 
