@@ -33,6 +33,7 @@
 #include <functional>
 #include <cstdlib>
 #include <deque>
+#include <queue>
 #include <vector>
 #include <cstdint>
 
@@ -40,8 +41,10 @@
 #include <boost/asio/ip/udp.hpp>
 
 #include "kademlia/error_impl.hpp"
+#include "kademlia/message.hpp"
 
 namespace kademlia {
+namespace test {
 
 /**
  *
@@ -57,6 +60,17 @@ public:
 
     ///
     enum { FIXED_PORT = 27980 };
+
+    ///
+    struct packet final
+    {
+        endpoint_type from_;
+        endpoint_type to_;
+        detail::buffer data_;
+    };
+
+    ///
+    using packets = std::queue< packet >;
 
 public:
     /**
@@ -212,7 +226,7 @@ public:
         // Check if it's not waiting for any packet.
         else if ( target->pending_reads_.empty() )
         {
-            boost::asio::io_service::work work( io_service_ );
+            boost::asio::io_service::work work{ io_service_ };
             target->pending_writes_.push_back( { buffer, local_endpoint_
                                                , std::move( work )
                                                , std::forward< Callback >( callback ) } );
@@ -222,18 +236,35 @@ public:
             async_execute_write( target, buffer
                                , std::forward< Callback >( callback ) );
 
-        ++ get_writes_count();
+        log_packet( buffer, to );
     }
 
     /**
      *
      */
-    static std::size_t &
-    get_writes_count
+    void
+    log_packet
+        ( boost::asio::const_buffer const& buffer
+        , endpoint_type const & to )
+    {
+        packet p{ local_endpoint_, to }; 
+
+        auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
+        auto e = i + boost::asio::buffer_size( buffer );
+
+        get_packets().push( packet{ local_endpoint_, to
+                                  , { i, e } } );
+    }
+
+    /**
+     *
+     */
+    static packets &
+    get_packets
         ( void )
     { 
-        static std::size_t writes_count_;
-        return writes_count_;
+        static packets packets_;
+        return packets_;
     }
 
     /**
@@ -454,7 +485,7 @@ private:
         assert( source_size <= boost::asio::buffer_size( to )
               && "can't store message into target buffer" );
 
-        auto source_data = boost::asio::buffer_cast< const uint8_t * >( from );
+        auto source_data = boost::asio::buffer_cast< uint8_t const * >( from );
         auto target_data = boost::asio::buffer_cast< uint8_t * >( to );
 
         std::memcpy( target_data, source_data, source_size );
@@ -542,6 +573,7 @@ private:
     std::deque< pending_write > pending_writes_;
 };
 
+} // namespace test
 } // namespace kademlia
 
 #endif

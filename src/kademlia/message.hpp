@@ -86,6 +86,22 @@ struct header final
 /**
  *
  */
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , header::type const& h );
+
+/**
+ *
+ */
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , header const& h );
+
+/**
+ *
+ */
 template< typename MessageBodyType >
 struct message_traits;
 

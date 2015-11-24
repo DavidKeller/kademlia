@@ -47,21 +47,17 @@ namespace detail {
 /**
  *
  */
-template< typename KeyType
-        , typename DataType >
 class session_impl
 {
 public:
     ///
-    using data_type = DataType;
+    using data_type = std::vector< std::uint8_t >;
     ///
-    using key_type = KeyType;
+    using key_type = std::vector< std::uint8_t >;
     ///
     using socket_type = boost::asio::ip::udp::socket;
     ///
-    using engine_type = detail::engine< key_type
-                                      , data_type
-                                      , socket_type >;
+    using engine_type = detail::engine< socket_type >;
 
 public:
     /**

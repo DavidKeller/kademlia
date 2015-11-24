@@ -23,10 +23,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include_directories(BEFORE .)
-
 # Run all tests, timeouting if it takes more than 30 seconds.
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
+add_custom_target(unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
+add_dependencies(check unit_tests)
+
+include_directories(BEFORE .)
 
 add_library(test_helpers_common STATIC
     helpers/common.cpp
@@ -39,6 +40,10 @@ add_library(test_helpers_common STATIC
     helpers/socket_mock.hpp
     helpers/corrupted_message.hpp
     helpers/task_fixture.hpp)
+
+target_link_libraries(test_helpers_common
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 set_target_properties(test_helpers_common PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -77,5 +82,5 @@ build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_first_session.cpp LIBRARIES kademlia_static)
 build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
 
-build_and_run_test(test_fake_socket.cpp LIBRARIES simulator_impl)
+build_and_run_test(test_fake_socket.cpp LIBRARIES kademlia_static)
 

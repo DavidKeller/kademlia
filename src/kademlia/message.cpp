@@ -26,6 +26,7 @@
 #include "kademlia/message.hpp"
 
 #include <iostream>
+
 #include "kademlia/error_impl.hpp"
 
 namespace kademlia {
@@ -276,6 +277,40 @@ deserialize
 }
 
 } // anonymous namespace
+
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , header::type const& t )
+{
+    switch ( t )
+    {
+        default:
+            throw std::runtime_error{ "unknown message type" };
+        case header::PING_REQUEST:
+            return out << "ping_request";
+        case header::PING_RESPONSE:
+            return out << "ping_response";
+        case header::STORE_REQUEST:
+            return out << "store_request";
+        case header::FIND_PEER_REQUEST:
+            return out << "find_peer_request";
+        case header::FIND_PEER_RESPONSE:
+            return out << "find_peer_response";
+        case header::FIND_VALUE_REQUEST:
+            return out << "find_value_request";
+        case header::FIND_VALUE_RESPONSE:
+            return out << "find_value_response";
+    }
+}
+
+std::ostream &
+operator<<
+    ( std::ostream & out
+    , header const& h )
+{
+    return out << h.type_;    
+}
 
 void
 serialize

@@ -23,30 +23,31 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-add_library(simulator_impl STATIC
-    fake_socket.hpp
-    application.hpp
-    application.cpp
-    executable.hpp
-    executable.cpp
-    configuration.hpp)
+if (${PYTHONLIBS_FOUND} AND ${Boost_PYTHON_FOUND})
 
-target_link_libraries(simulator_impl
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+add_custom_target(behavior_tests COMMAND ${CMAKE_CTEST_COMMAND} --extra-verbose --timeout 30)
+add_dependencies(check behavior_tests)
+
+set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH})
+
+add_library(_kademlia SHARED
+    wrapper.cpp)
+
+set_target_properties(_kademlia
+    PROPERTIES
+        MACOSX_RPATH ON
+        SUFFIX ".so"
+        PREFIX "")
+
+target_link_libraries(_kademlia
     kademlia_static
-    ${Boost_LIBRARIES} 
-    ${BOTAN_LIBRARIES} 
+    ${Boost_PYTHON_LIBRARY} 
+    ${PYTHON_LIBRARIES} 
     ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(simulator
-    main.cpp)
+add_test("behavior_tests" behave ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(simulator
-    simulator_impl)
+endif ()
 
-#target_link_libraries(simulator
-#    kademlia_static
-#    simulator_impl
-#    ${Boost_LIBRARIES} 
-#    ${BOTAN_LIBRARIES} 
-#    ${CMAKE_THREAD_LIBS_INIT})
-#

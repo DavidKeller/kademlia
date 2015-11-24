@@ -33,7 +33,7 @@ namespace kademlia {
  *
  */
 struct session::impl final
-        : detail::session_impl< key_type, data_type >
+        : detail::session_impl
 {
     /**
      *

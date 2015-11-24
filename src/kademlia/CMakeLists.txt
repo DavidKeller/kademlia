@@ -60,6 +60,7 @@ set(kademlia_sources
     response_router.hpp
     routing_table.hpp
     session.cpp
+    session_base.cpp
     first_session.cpp
     store_value_task.hpp
     discover_neighbors_task.hpp
@@ -79,7 +80,7 @@ set_target_properties(kademlia
         COMPILE_DEFINITIONS "KADEMLIA_BUILDING_AS_SHARED;KADEMLIA_AS_SHARED")
 
 target_link_libraries(kademlia
-    ${Boost_LIBRARIES}
+    ${Boost_SYSTEM_LIBRARY}
     ${OPENSSL_CRYPTO_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 
@@ -88,7 +89,7 @@ add_library(kademlia_static STATIC
     ${kademlia_sources})
 
 target_link_libraries(kademlia_static
-    ${Boost_LIBRARIES}
+    ${Boost_SYSTEM_LIBRARY}
     ${OPENSSL_CRYPTO_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT})
 

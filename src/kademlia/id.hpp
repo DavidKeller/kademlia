@@ -125,7 +125,7 @@ public:
      */
     id
         ( void )
-        : blocks_{ }
+            : blocks_{ }
     { }
 
     /**

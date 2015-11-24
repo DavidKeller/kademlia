@@ -30,7 +30,7 @@
 #include <boost/asio/io_service.hpp>
 
 #include "kademlia/buffer.hpp"
-#include "simulator/fake_socket.hpp"
+#include "utils/fake_socket.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 BOOST_AUTO_TEST_CASE( can_be_created )
 {
     a::io_service io_service;
-    k::fake_socket s( io_service
-                    , a::ip::udp::endpoint().protocol() );
+    k::test::fake_socket s( io_service
+                          , a::ip::udp::endpoint().protocol() );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 }
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( does_not_invoke_receive_callback_until_data_is_received )
 {
     a::io_service io_service;
     boost::asio::ip::udp::endpoint endpoint;
-    k::fake_socket s( io_service, endpoint.protocol() );
+    k::test::fake_socket s( io_service, endpoint.protocol() );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE( invokes_send_callback_when_host_is_unreachable )
 {
     a::io_service io_service;
     boost::asio::ip::udp::endpoint endpoint;
-    k::fake_socket s( io_service, endpoint.protocol() );
+    k::test::fake_socket s( io_service, endpoint.protocol() );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 
@@ -99,12 +99,12 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
     a::io_service io_service;
     a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
-    endpoint.port( k::fake_socket::FIXED_PORT );
+    endpoint.port( k::test::fake_socket::FIXED_PORT );
 
-    k::fake_socket receiver( io_service, endpoint.protocol() );
+    k::test::fake_socket receiver( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! receiver.bind( endpoint ) );
 
-    k::fake_socket sender( io_service, endpoint.protocol() );
+    k::test::fake_socket sender( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! sender.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
@@ -150,9 +150,9 @@ BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
 {
     a::io_service io_service;
     boost::asio::ip::udp::endpoint endpoint;
-    endpoint.port( k::fake_socket::FIXED_PORT );
+    endpoint.port( k::test::fake_socket::FIXED_PORT );
 
-    k::fake_socket s( io_service, endpoint.protocol() );
+    k::test::fake_socket s( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! s.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
@@ -184,12 +184,12 @@ BOOST_AUTO_TEST_CASE( can_detect_closed_socket )
     a::io_service io_service;
     a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
-    endpoint.port( k::fake_socket::FIXED_PORT );
+    endpoint.port( k::test::fake_socket::FIXED_PORT );
 
-    k::fake_socket receiver( io_service, endpoint.protocol() );
+    k::test::fake_socket receiver( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! receiver.bind( endpoint ) );
 
-    k::fake_socket sender( io_service, endpoint.protocol() );
+    k::test::fake_socket sender( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! sender.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
@@ -231,9 +231,9 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages_to_self )
     a::io_service io_service;
     a::io_service::work work(io_service);
     boost::asio::ip::udp::endpoint endpoint;
-    endpoint.port( k::fake_socket::FIXED_PORT );
+    endpoint.port( k::test::fake_socket::FIXED_PORT );
 
-    k::fake_socket sender( io_service, endpoint.protocol() );
+    k::test::fake_socket sender( io_service, endpoint.protocol() );
     BOOST_REQUIRE(! sender.bind( endpoint ) );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );

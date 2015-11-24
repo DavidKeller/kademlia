@@ -356,3 +356,43 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_store_value_request_body )
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE( test_print )
+
+BOOST_AUTO_TEST_CASE( header_is_printable )
+{
+    boost::test_tools::output_test_stream out( k::tests::get_capture_path( "pattern_header.out" )
+                                             , true );
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::PING_REQUEST }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::PING_RESPONSE }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::STORE_REQUEST }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::FIND_PEER_REQUEST }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::FIND_PEER_RESPONSE }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::FIND_VALUE_REQUEST }
+        << std::endl;
+
+    out << kd::header{ kd::header::V1
+                     , kd::header::FIND_VALUE_RESPONSE }
+        << std::endl;
+
+    BOOST_REQUIRE( out.match_pattern() );
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+

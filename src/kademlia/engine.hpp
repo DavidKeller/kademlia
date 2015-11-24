@@ -64,15 +64,15 @@ namespace detail {
 /**
  *
  */
-template< typename KeyType, typename DataType, typename UnderlyingSocketType >
+template< typename UnderlyingSocketType >
 class engine final
 {
 public:
     ///
-    using key_type = KeyType;
+    using key_type = std::vector< std::uint8_t >;
 
     ///
-    using data_type = DataType;
+    using data_type = std::vector< std::uint8_t >;
 
     ///
     using endpoint_type = ip_endpoint;
@@ -90,9 +90,10 @@ public:
     engine
         ( boost::asio::io_service & io_service
         , endpoint const& ipv4
-        , endpoint const& ipv6 )
+        , endpoint const& ipv6
+        , id const& new_id = id{} )
             : random_engine_( std::random_device{}() )
-            , my_id_( random_engine_ )
+            , my_id_( new_id == id{} ? id{ random_engine_ } : new_id )
             , network_( io_service
                       , message_socket_type::ipv4( io_service, ipv4 )
                       , message_socket_type::ipv6( io_service, ipv6 )
@@ -118,25 +119,9 @@ public:
         ( boost::asio::io_service & io_service
         , endpoint const& initial_peer
         , endpoint const& ipv4
-        , endpoint const& ipv6 )
-            : random_engine_( std::random_device()() )
-            , my_id_( random_engine_ )
-            , network_( io_service
-                      , message_socket_type::ipv4( io_service, ipv4 )
-                      , message_socket_type::ipv6( io_service, ipv6 )
-                      , std::bind( &engine::handle_new_message
-                                 , this
-                                 , std::placeholders::_1
-                                 , std::placeholders::_2
-                                 , std::placeholders::_3 ) )
-            , tracker_( io_service
-                      , my_id_
-                      , network_
-                      , random_engine_ )
-            , routing_table_( my_id_ )
-            , value_store_()
-            , is_connected_()
-            , pending_tasks_()
+        , endpoint const& ipv6
+        , id const& new_id = id{} )
+            : engine( io_service, ipv4, ipv6, new_id )
     {
         discover_neighbors( initial_peer );
 
