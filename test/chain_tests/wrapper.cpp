@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <boost/asio/io_service.hpp>
+
 #include <boost/python.hpp>
 
 #include "utils/fake_socket.hpp"
@@ -53,6 +54,7 @@ struct engine
         , k::endpoint const & ipv6
         , kd::id const& new_id )
             : io_service_( service )
+            , work_( service )
             , engine_( service
                      , ipv4, ipv6, new_id )
             , listen_ipv4_( k::test::fake_socket::get_last_allocated_ipv4()
@@ -68,6 +70,7 @@ struct engine
         , k::endpoint const & ipv6
         , kd::id const& new_id )
             : io_service_( service )
+            , work_( service )
             , engine_( service
                      , initial_peer
                      , ipv4, ipv6
@@ -87,7 +90,6 @@ struct engine
         test_engine::key_type const k{ key.begin(), key.end() };
         test_engine::data_type const d{ data.begin(), data.end() };
         engine_.async_save( k, d, callable );
-        io_service_.poll();
     }
 
     void
@@ -103,7 +105,6 @@ struct engine
         };
 
         engine_.async_load( k, c );
-        io_service_.poll();
     }
 
     k::endpoint
@@ -125,6 +126,7 @@ struct engine
     }
 
     boost::asio::io_service & io_service_;
+    boost::asio::io_service::work work_;
     test_engine engine_;
     k::test::fake_socket::endpoint_type listen_ipv4_;
     k::test::fake_socket::endpoint_type listen_ipv6_;
@@ -209,14 +211,36 @@ clear_messages
         packets.pop();
 }
 
+void
+forget_attributed_ip
+    ( void )
+{
+    using k::test::fake_socket;
+    fake_socket::get_last_allocated_ipv4() = fake_socket::get_first_ipv4();
+    fake_socket::get_last_allocated_ipv6() = fake_socket::get_first_ipv6();
+}
+
+std::size_t ( boost::asio::io_service::*io_service_poll )( void )
+    = &boost::asio::io_service::poll;
+
 } // anonymous namespace
 
 BOOST_PYTHON_MODULE( _kademlia )
 {
+    p::def( "enable_log_for", &kd::enable_log_for );
+
     p::scope().attr( "DEFAULT_PORT" ) = k::session_base::DEFAULT_PORT;
 
     p::class_< boost::asio::io_service, boost::noncopyable >
-        ( "Service" );
+        ( "Service" )
+        
+        .def( "poll"
+            , io_service_poll );
+
+    p::class_< boost::asio::io_service::work, boost::noncopyable >
+        ( "ServiceWork"
+        , p::init< boost::asio::io_service & >()
+        [ p::with_custodian_and_ward< 1, 2 >() ] );
 
     p::class_< k::endpoint >
         ( "Endpoint"
@@ -257,6 +281,8 @@ BOOST_PYTHON_MODULE( _kademlia )
 
     p::def( "clear_messages", &clear_messages );
 
+    p::def( "forget_attributed_ip", &forget_attributed_ip );
+
     p::class_< std::error_code >
         ( "Error"
         , p::no_init )
@@ -281,7 +307,7 @@ BOOST_PYTHON_MODULE( _kademlia )
                  , k::endpoint const& 
                  , k::endpoint const&
                  , kd::id const& >()
-                 [ p::with_custodian_and_ward< 1, 2 >() ] )
+        [ p::with_custodian_and_ward< 1, 2 >() ] )
 
         .def( "ipv4"
             , &engine::ipv4 )
@@ -296,7 +322,7 @@ BOOST_PYTHON_MODULE( _kademlia )
                  , k::endpoint const& 
                  , k::endpoint const&
                  , kd::id const& >()
-                 [ p::with_custodian_and_ward< 1, 2 >() ] )
+        [ p::with_custodian_and_ward< 1, 2 >() ] )
 
         .def( "ipv4"
             , &engine::ipv4 )

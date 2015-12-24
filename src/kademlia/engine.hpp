@@ -123,10 +123,10 @@ public:
         , id const& new_id = id{} )
             : engine( io_service, ipv4, ipv6, new_id )
     {
-        discover_neighbors( initial_peer );
-
-        LOG_DEBUG( engine, this ) << "boostraping using peer '"
+        LOG_DEBUG( engine, this ) << "bootstrapping using peer '"
                 << initial_peer << "'." << std::endl;
+
+        discover_neighbors( initial_peer );
     }
 
     /**

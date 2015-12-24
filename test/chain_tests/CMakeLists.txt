@@ -27,9 +27,11 @@ if (${PYTHONLIBS_FOUND} AND ${Boost_PYTHON_FOUND})
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-add_custom_target(behavior_tests COMMAND ${CMAKE_CTEST_COMMAND} --extra-verbose --timeout 30)
-add_dependencies(check behavior_tests)
+add_custom_target(chain_tests COMMAND behave --no-color --no-source ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies(check chain_tests)
+add_dependencies(chain_tests _kademlia)
 
+# Append path to _kademlia module to python search paths.
 set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH})
 
 add_library(_kademlia SHARED
@@ -46,8 +48,6 @@ target_link_libraries(_kademlia
     ${Boost_PYTHON_LIBRARY} 
     ${PYTHON_LIBRARIES} 
     ${CMAKE_THREAD_LIBS_INIT})
-
-add_test("behavior_tests" behave ${CMAKE_CURRENT_SOURCE_DIR})
 
 endif ()
 

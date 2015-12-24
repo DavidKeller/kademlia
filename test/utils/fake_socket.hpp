@@ -40,6 +40,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/udp.hpp>
 
+#include "kademlia/log.hpp"
 #include "kademlia/error_impl.hpp"
 #include "kademlia/message.hpp"
 
@@ -194,18 +195,24 @@ public:
         // Check if there is packets waiting.
         if ( pending_writes_.empty() )
         {
+            LOG_DEBUG( fake_socket, this )
+                << "saving pending read." << std::endl;
+
             // No packet are waiting, hence register that
             // the current socket is waiting for packet.
-            boost::asio::io_service::work work( io_service_ );
             pending_reads_.push_back( { buffer, from
-                                      , std::move( work )
                                       , std::forward< Callback >( callback ) } );
         }
         else
+        {
+            LOG_DEBUG( fake_socket, this )
+                << "execute read." << std::endl;
+
             // A packet is waiting to be read, so read it
             // asynchronously.
             async_execute_read( buffer, from
                               , std::forward< Callback >( callback ) );
+        }
     }
 
     /**
@@ -226,15 +233,21 @@ public:
         // Check if it's not waiting for any packet.
         else if ( target->pending_reads_.empty() )
         {
-            boost::asio::io_service::work work{ io_service_ };
+            LOG_DEBUG( fake_socket, this )
+                << "saving pending write." << std::endl;
+
             target->pending_writes_.push_back( { buffer, local_endpoint_
-                                               , std::move( work )
                                                , std::forward< Callback >( callback ) } );
         }
         else
+        {
+            LOG_DEBUG( fake_socket, this )
+                << "execute write." << std::endl;
+
             // It's already waiting for the current packet.
             async_execute_write( target, buffer
                                , std::forward< Callback >( callback ) );
+        }
 
         log_packet( buffer, to );
     }
@@ -270,13 +283,35 @@ public:
     /**
      *
      */
+    static boost::asio::ip::address_v4
+    get_first_ipv4
+        ( void )
+    {
+        using boost::asio::ip::address_v4;
+        return address_v4::from_string( "10.0.0.0" );
+    }
+
+    /**
+     *
+     */
     static boost::asio::ip::address_v4 &
     get_last_allocated_ipv4
         ( void )
     {
         using boost::asio::ip::address_v4;
-        static auto ipv4_ = address_v4::from_string( "10.0.0.0" );
+        static auto ipv4_ = get_first_ipv4();
         return ipv4_;
+    }
+
+    /**
+     *
+     */
+    static boost::asio::ip::address_v6
+    get_first_ipv6
+        ( void )
+    {
+        using boost::asio::ip::address_v6;
+        return address_v6::from_string( "fc00::" );
     }
 
     /**
@@ -287,7 +322,7 @@ public:
         ( void )
     {
         using boost::asio::ip::address_v6;
-        static auto ipv6_ = address_v6::from_string( "fc00::" );
+        static auto ipv6_ = get_first_ipv6();
         return ipv6_;
     }
 
@@ -302,7 +337,6 @@ private:
     {
         boost::asio::mutable_buffer buffer_;
         endpoint_type & source_;
-        boost::asio::io_service::work work_;
         callback_type callback_;
     };
 
@@ -311,7 +345,6 @@ private:
     {
         boost::asio::const_buffer buffer_;
         endpoint_type const& source_;
-        boost::asio::io_service::work work_;
         callback_type callback_;
     };
 

@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from behave import *
 from _kademlia import *
 
-def before_all( context ):
-    context.listen_ipv4 = Endpoint( "0.0.0.0", DEFAULT_PORT )
-    context.listen_ipv6 = Endpoint( "::", DEFAULT_PORT )
-    context.service = Service()
+#enable_log_for( '*' )
+
+def before_scenario( context, scenario ):
+    context.sessions = dict()
+
+def after_step( context, step ):
+    if context.service:
+        context.service.poll()
 
 def after_scenario( context, scenario ):
+    del context.sessions
+    forget_attributed_ip()
     clear_messages()
