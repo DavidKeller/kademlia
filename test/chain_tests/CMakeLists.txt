@@ -50,9 +50,15 @@ target_link_libraries(_kademlia
     ${CMAKE_THREAD_LIBS_INIT})
 
 else()
-    message("++ Disabling chain tests due to lack of:\n"
-            "\tpython devel\n"
-            "\tboost-python\n"
-            "\tpython-behave")
+    message("++ Disabling chain tests due to lack of:")
+    if(NOT PythonBehave)
+        message("++   python-behave")
+    endif()
+    if(NOT PYTHONLIBS_FOUND)
+        message("++   python devel")
+    endif()
+    if(NOT Boost_PYTHON_FOUND)
+        message("++   boost-python")
+    endif()
 endif()
 

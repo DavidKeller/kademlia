@@ -51,28 +51,39 @@ else()
     set(CMAKE_CXX_FLAGS "-fvisibility=hidden ${CMAKE_CXX_FLAGS}")
 endif()
 
-
-# Check environment.
 # Threads
 find_package(Threads REQUIRED)
+
 # Boost
 if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
 #elseif(APPLE)
 #    set(Boost_USE_STATIC_LIBS ON)
 endif()
-
-# python-behave
-find_program(PythonBehave behave)
-
-find_package(Boost COMPONENTS
+set(Boost_DETAILED_FAILURE_MSG ON)
+find_package(Boost REQUIRED COMPONENTS
     system
     filesystem
     unit_test_framework)
+find_package(Boost QUIET COMPONENTS
+    python)
+if(Boost_PYTHON_FOUND)
+   message(STATUS "  python")
+else()
+   message("++ Missing the following Boost libraries:")
+   message("++   python")
+endif()
+
+# Python
+find_package(PythonLibs)
+
+# Python behave
+find_program(PythonBehave behave)
 
 # Crypto
 find_package(OpenSSL REQUIRED)
 
+# Setup C++ definitions.
 add_definitions(-DPACKAGE_VERSION="0.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
 add_definitions(-DBOOST_ALL_NO_LIB

@@ -6,6 +6,10 @@ os:
 language:
     - cpp
 
+cache:
+    directories:
+        - ${TRAVIS_BUILD_DIR}/boost_dep
+
 before_install:
     - export CXXFLAGS='-std=c++11'
     - export CXX='g++-5'
@@ -13,18 +17,23 @@ before_install:
 
 install:
     # lcov from travis packages is quite old.
-    - git clone https://github.com/linux-test-project/lcov
-    - export PATH="`pwd`/lcov/bin:$PATH"
+    - export LCOV_ROOT="${TRAVIS_BUILD_DIR}/lcov_dep"
+    - git clone https://github.com/linux-test-project/lcov ${LCOV_ROOT};
+    - export PATH="${LCOV_ROOT}/bin:${PATH}"
     - echo 'geninfo_gcov_tool=gcov-5' >> ~/.lcovrc
 
     - gem install coveralls-lcov
 
     # Build our own c++11 enabled boost.
-    - wget -qO- http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2 | tar xj
-    - pushd boost_1_58_0 && ./bootstrap.sh --with-libraries=system,filesystem,program_options,test
-    - ./b2 -q -j`nproc` variant=release link=shared threading=multi toolset=${CC} address-model=64
-    - export BOOST_ROOT="`pwd`"
-    - popd
+    - export BOOST_ROOT="${TRAVIS_BUILD_DIR}/boost_dep"
+    - if [ ! -f "${BOOST_ROOT}/INSTALL" ];
+      then
+        pushd ${BOOST_ROOT};
+        wget -qO- http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2 | tar xj --strip-components=1;
+        ./bootstrap.sh --with-libraries=system,filesystem,program_options,test;
+        ./b2 -q -j`nproc` variant=release link=shared threading=multi toolset=${CC} address-model=64;
+        popd;
+      fi
 
 script:
     - mkdir build_cov && pushd build_cov
