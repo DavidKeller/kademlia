@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if (PYTHONLIBS_FOUND AND Boost_PYTHON_FOUND)
+if(PythonBehave AND PYTHONLIBS_FOUND AND Boost_PYTHON_FOUND)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
@@ -49,5 +49,10 @@ target_link_libraries(_kademlia
     ${PYTHON_LIBRARIES} 
     ${CMAKE_THREAD_LIBS_INIT})
 
-endif ()
+else()
+    message("++ Disabling chain tests due to lack of:\n"
+            "\tpython devel\n"
+            "\tboost-python\n"
+            "\tpython-behave")
+endif()
 

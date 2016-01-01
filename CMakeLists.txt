@@ -62,24 +62,16 @@ if(WIN32)
 #    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-#set(Boost_DETAILED_FAILURE_MSG ON)
+# python-behave
+find_program(PythonBehave behave)
+
 find_package(Boost COMPONENTS
     system
     filesystem
-    python
     unit_test_framework)
-
-if (NOT Boost_FOUND
-    AND NOT Boost_SYSTEM_FOUND
-    AND NOT Boost_FILESYSTEM_FOUND
-    AND NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    message(SEND_ERROR "${Boost_ERROR_REASON}")
-endif ()
 
 # Crypto
 find_package(OpenSSL REQUIRED)
-# Python
-find_package(PythonLibs)
 
 add_definitions(-DPACKAGE_VERSION="0.0.0")
 add_definitions(-DPACKAGE_BUGREPORT="david.keller@litchis.fr")
