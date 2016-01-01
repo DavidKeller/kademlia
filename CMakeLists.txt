@@ -61,11 +61,21 @@ if(WIN32)
 #elseif(APPLE)
 #    set(Boost_USE_STATIC_LIBS ON)
 endif()
-find_package(Boost REQUIRED COMPONENTS
+
+#set(Boost_DETAILED_FAILURE_MSG ON)
+find_package(Boost COMPONENTS
     system
     filesystem
     python
     unit_test_framework)
+
+if (NOT Boost_FOUND
+    AND NOT Boost_SYSTEM_FOUND
+    AND NOT Boost_FILESYSTEM_FOUND
+    AND NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    message(SEND_ERROR "${Boost_ERROR_REASON}")
+endif ()
+
 # Crypto
 find_package(OpenSSL REQUIRED)
 # Python
