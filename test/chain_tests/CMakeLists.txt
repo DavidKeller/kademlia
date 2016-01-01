@@ -23,19 +23,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if (${PYTHONLIBS_FOUND} AND ${Boost_PYTHON_FOUND})
+if (PYTHONLIBS_FOUND AND Boost_PYTHON_FOUND)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-add_custom_target(chain_tests COMMAND behave --no-color --no-source ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target(chain_tests COMMAND behave --no-color ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(check chain_tests)
 add_dependencies(chain_tests _kademlia)
 
-# Append path to _kademlia module to python search paths.
+# Append output directory path to python search paths.
 set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH})
 
 add_library(_kademlia SHARED
-    wrapper.cpp)
+    _kademlia.cpp)
 
 set_target_properties(_kademlia
     PROPERTIES
