@@ -25,7 +25,8 @@ Initialization:
     kademlia::session s{ initial_peer };
 
     // Run the library main loop in a dedicated thread.
-    auto main_loop_result = std::async( &kademlia::session::run, &s );
+    auto main_loop_result = std::async( std::launch::async
+                                      , &kademlia::session::run, &s );
 
     // [...]
 ```
