@@ -31,11 +31,11 @@
 #include <kademlia/session_base.hpp>
 #include <kademlia/endpoint.hpp>
 
-#include "utils/fake_socket.hpp"
-
 #include "kademlia/log.hpp"
 #include "kademlia/buffer.hpp"
 #include "kademlia/engine.hpp"
+
+#include "fake_socket.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

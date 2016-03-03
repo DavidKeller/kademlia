@@ -25,7 +25,7 @@
 
 #include "kademlia/message.hpp"
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 
 #include <random>
 #include <kademlia/error.hpp>

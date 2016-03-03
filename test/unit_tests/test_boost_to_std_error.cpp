@@ -28,7 +28,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/asio/error.hpp>
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 #include "kademlia/boost_to_std_error.hpp"
 
 namespace k = kademlia;

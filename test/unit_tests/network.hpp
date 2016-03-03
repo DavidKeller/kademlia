@@ -31,7 +31,7 @@
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 
 namespace kademlia {
 namespace tests {

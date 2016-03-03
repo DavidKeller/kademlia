@@ -33,8 +33,8 @@
 #include <kademlia/error.hpp>
 #include <kademlia/session.hpp>
 
-#include "helpers/common.hpp"
-#include "helpers/network.hpp"
+#include "common.hpp"
+#include "network.hpp"
 
 namespace k = kademlia;
 namespace bo = boost::asio;

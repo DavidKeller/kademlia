@@ -27,8 +27,8 @@
 
 #include <kademlia/endpoint.hpp>
 
-#include "helpers/common.hpp"
-#include "helpers/socket_mock.hpp"
+#include "common.hpp"
+#include "socket_mock.hpp"
 
 namespace k = kademlia;
 namespace kd = kademlia::detail;

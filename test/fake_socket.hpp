@@ -255,22 +255,6 @@ public:
     /**
      *
      */
-    void
-    log_packet
-        ( boost::asio::const_buffer const& buffer
-        , endpoint_type const & to )
-    {
-        auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
-        auto e = i + boost::asio::buffer_size( buffer );
-
-        packet p{ local_endpoint_, to, { i, e } }; 
-
-        get_logged_packets().push( std::move( p ) );
-    }
-
-    /**
-     *
-     */
     static packets &
     get_logged_packets
         ( void )
@@ -423,6 +407,22 @@ private:
     };
 
 private:
+    /**
+     *
+     */
+    void
+    log_packet
+        ( boost::asio::const_buffer const& buffer
+        , endpoint_type const & to )
+    {
+        auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
+        auto e = i + boost::asio::buffer_size( buffer );
+
+        packet p{ local_endpoint_, to, { i, e } }; 
+
+        get_logged_packets().push( std::move( p ) );
+    }
+
     /**
      *
      */

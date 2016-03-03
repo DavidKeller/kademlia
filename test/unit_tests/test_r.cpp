@@ -25,7 +25,7 @@
 
 #include <iostream>
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 #include "kademlia/r.hpp"
 
 namespace k = kademlia;

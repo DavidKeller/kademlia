@@ -24,7 +24,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 add_custom_target(check)
 
-add_subdirectory(utils)
 add_subdirectory(unit_tests)
 add_subdirectory(chain_tests)
 

@@ -29,23 +29,23 @@ add_dependencies(check unit_tests)
 
 include_directories(BEFORE .)
 
-add_library(test_helpers_common STATIC
-    helpers/common.cpp
-    helpers/common.hpp
-    helpers/network.hpp
-    helpers/network.cpp
-    helpers/peer_factory.hpp
-    helpers/routing_table_mock.hpp
-    helpers/tracker_mock.hpp
-    helpers/socket_mock.hpp
-    helpers/corrupted_message.hpp
-    helpers/task_fixture.hpp)
+add_library(test_helpers STATIC
+    common.cpp
+    common.hpp
+    network.hpp
+    network.cpp
+    peer_factory.hpp
+    routing_table_mock.hpp
+    tracker_mock.hpp
+    socket_mock.hpp
+    corrupted_message.hpp
+    task_fixture.hpp)
 
-target_link_libraries(test_helpers_common
+target_link_libraries(test_helpers
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
-set_target_properties(test_helpers_common PROPERTIES
+set_target_properties(test_helpers PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 macro(build_and_run_test source_file)
@@ -53,9 +53,9 @@ macro(build_and_run_test source_file)
     get_filename_component(test_name ${source_file} NAME_WE)
     add_executable(${test_name} ${source_file} ${ARG_UNPARSED_ARGUMENTS})
     target_link_libraries(${test_name}
-        test_helpers_common
+        test_helpers
         ${ARG_LIBRARIES})
-    add_dependencies(check ${test_name})
+    add_dependencies(unit_tests ${test_name})
     add_test(${test_name} ${test_name})
 endmacro()
 

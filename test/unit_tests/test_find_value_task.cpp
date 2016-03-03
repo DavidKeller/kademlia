@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helpers/common.hpp"
-#include "helpers/task_fixture.hpp"
+#include "common.hpp"
+#include "task_fixture.hpp"
 
 #include <vector>
 #include <utility>

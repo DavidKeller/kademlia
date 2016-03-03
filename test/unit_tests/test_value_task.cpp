@@ -23,8 +23,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helpers/common.hpp"
-#include "helpers/peer_factory.hpp"
+#include "common.hpp"
+#include "peer_factory.hpp"
 
 #include <vector>
 #include <utility>

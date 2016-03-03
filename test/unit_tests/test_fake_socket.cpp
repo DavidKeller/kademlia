@@ -23,14 +23,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 
 #include <numeric>
 
 #include <boost/asio/io_service.hpp>
 
 #include "kademlia/buffer.hpp"
-#include "utils/fake_socket.hpp"
+#include "fake_socket.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

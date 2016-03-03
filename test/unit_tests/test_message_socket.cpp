@@ -30,8 +30,8 @@
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/message_socket.hpp"
 
-#include "helpers/common.hpp"
-#include "helpers/network.hpp"
+#include "common.hpp"
+#include "network.hpp"
 
 namespace k = kademlia;
 namespace kd = kademlia::detail;

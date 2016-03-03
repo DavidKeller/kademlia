@@ -23,45 +23,62 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "helpers/network.hpp"
+#ifndef KADEMLIA_TEST_HELPERS_TASK_FIXTURE_HPP
+#define KADEMLIA_TEST_HELPERS_TASK_FIXTURE_HPP
 
-#include <boost/asio/ip/udp.hpp>
+#include <cstdint>
+#include <system_error>
+
+#include <boost/asio/io_service.hpp>
+
+#include "kademlia/peer.hpp"
+#include "common.hpp"
+#include "tracker_mock.hpp"
+#include "routing_table_mock.hpp"
 
 namespace kademlia {
 namespace tests {
 
-void
-check_listening
-    ( std::string const& ip
-    , std::uint16_t port )
+struct task_fixture
 {
-    using boost::asio::ip::udp;
-    auto udp_failure = create_socket< udp::socket >( ip, port );
-    BOOST_REQUIRE_EQUAL( boost::system::errc::address_in_use, udp_failure );
-}
+    task_fixture
+        ( void )
+        : io_service_()
+        , io_service_work_( io_service_ )
+        , tracker_( io_service_ )
+        , failure_()
+        , routing_table_()
+        , callback_call_count_()
+    { }
 
-std::uint16_t
-get_temporary_listening_port
-    ( std::uint16_t port )
-{
-    boost::system::error_code failure;
-
-    do
+    detail::peer
+    create_peer
+        ( std::string const& ip, detail::id const& id )
     {
-        ++ port;
-        boost::asio::ip::udp::endpoint const e
-                { boost::asio::ip::udp::v4() , port };
+        auto e = detail::to_ip_endpoint( ip, 5555 );
 
-        boost::asio::io_service io_service;
-        // Try to open a socket at this address.
-        boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
-        socket.bind( e, failure );
+        return detail::peer{ id, e };
     }
-    while ( failure == boost::system::errc::address_in_use );
 
-    return port;
-}
+    detail::peer
+    create_and_add_peer
+        ( std::string const& ip, detail::id const& id )
+    {
+        auto p = create_peer( ip, id );
+        routing_table_.peers_.emplace_back( p.id_, p.endpoint_ );
+
+        return p;
+    }
+
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work io_service_work_;
+    tracker_mock tracker_;
+    std::error_code failure_;
+    routing_table_mock routing_table_;
+    std::size_t callback_call_count_;
+};
 
 } // namespace tests
 } // namespace kademlia
 
+#endif

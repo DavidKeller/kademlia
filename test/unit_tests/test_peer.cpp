@@ -26,7 +26,7 @@
 
 #include <sstream>
 
-#include "helpers/common.hpp"
+#include "common.hpp"
 #include "kademlia/peer.hpp"
 
 namespace kd = kademlia::detail;
