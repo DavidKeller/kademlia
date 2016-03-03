@@ -26,13 +26,12 @@
 #include <memory>
 
 #include <boost/asio/io_service.hpp>
-
 #include <boost/python.hpp>
-
-#include "utils/fake_socket.hpp"
 
 #include <kademlia/session_base.hpp>
 #include <kademlia/endpoint.hpp>
+
+#include "utils/fake_socket.hpp"
 
 #include "kademlia/log.hpp"
 #include "kademlia/buffer.hpp"
@@ -132,8 +131,9 @@ struct engine
     k::test::fake_socket::endpoint_type listen_ipv6_;
 };
 
-struct message final
+class message final
 {
+public:
     message
         ( k::endpoint const& from
         , k::endpoint const& to
@@ -141,25 +141,29 @@ struct message final
             : from_( from ), to_( to ), type_( type )
     { }
 
-    bool
-    operator==
-        ( message const& m )
-    { return from_ == m.from_ && to_ == m.to_ && type_ == m.type_; }
+    k::endpoint const&
+    from
+        ( void )
+        const
+    { return from_; }
 
-    bool
-    operator!=
-        ( message const& m )
-    { return ! operator==( m ); }
+    k::endpoint const&
+    to
+        ( void )
+        const
+    { return to_; }
 
+    kd::header::type const&
+    type
+        ( void )
+        const
+    { return type_; }
+
+private:
     k::endpoint from_;
     k::endpoint to_;
     kd::header::type type_;
 };
-
-std::ostream &
-operator<<
-    ( std::ostream & out, message const& m )
-{ return out << m.from_ << " -> " << m.to_ << " = " << m.type_; }
 
 kd::header
 extract_header
@@ -177,7 +181,7 @@ message
 pop_message
     ( void )
 {
-    auto & packets = k::test::fake_socket::get_packets();
+    auto & packets = k::test::fake_socket::get_logged_packets();
 
     if ( packets.empty() )
         throw std::runtime_error{ "no message left" };
@@ -198,14 +202,14 @@ std::size_t
 count_messages
     ( void )
 {
-    return k::test::fake_socket::get_packets().size();
+    return k::test::fake_socket::get_logged_packets().size();
 }
 
 void
 clear_messages
     ( void )
 { 
-    auto & packets = k::test::fake_socket::get_packets();
+    auto & packets = k::test::fake_socket::get_logged_packets();
 
     while ( ! packets.empty() )
         packets.pop();
@@ -249,8 +253,8 @@ BOOST_PYTHON_MODULE( _kademlia )
 
         .def( p::init< std::string const&
                      , std::uint16_t >() )
-                     
-        .def( str( p::self ) );
+
+        .def( repr( p::self ) );
 
     p::enum_< kd::header::type >( "MessageType" )
         .value( "PING_REQUEST", kd::header::PING_REQUEST )
@@ -267,13 +271,17 @@ BOOST_PYTHON_MODULE( _kademlia )
                  , k::endpoint const&
                  , kd::header::type const& >() )
                      
-        .def( "__eq__"
-            , &message::operator == )
+        .def( "from_endpoint"
+            , &message::from
+            , p::return_value_policy< p::copy_const_reference >() )
 
-        .def( "__ne__"
-            , &message::operator != )
+        .def( "to_endpoint"
+            , &message::to
+            , p::return_value_policy< p::copy_const_reference >() )
 
-        .def( str( p::self ) );
+        .def( "type"
+            , &message::type
+            , p::return_value_policy< p::copy_const_reference >() );
 
     p::def( "count_messages", &count_messages );
 
@@ -299,7 +307,7 @@ BOOST_PYTHON_MODULE( _kademlia )
 
         .def( p::init< std::string >() )
 
-        .def( str( p::self ) );
+        .def( repr( p::self ) );
 
     p::class_< engine, boost::noncopyable >
         ( "FirstSession"

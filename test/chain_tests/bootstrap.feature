@@ -14,17 +14,17 @@ Feature: boostrap sessions
     Given a first session "a" has been created
     When we create a session "b" knowing "a"
     Then following messages have been sent
-      | from      | to        | type                |
-      | 10.0.0.2  | 10.0.0.1  | FIND_PEER_REQUEST   |
-      | 10.0.0.1  | 10.0.0.2  | FIND_PEER_RESPONSE  |
+      | from | to | type                |
+      | b    | a  | FIND_PEER_REQUEST   |
+      | a    | b  | FIND_PEER_RESPONSE  |
 
   Scenario: start the third session
     Given a first session "a" has been created
     And a session "b" knowing "a" has been created
     When we create a session "c" knowing "a"
     Then following messages have been sent
-      | from      | to        | type                |
-      | 10.0.0.2  | 10.0.0.1  | FIND_PEER_REQUEST   |
-      | 10.0.0.1  | 10.0.0.2  | FIND_PEER_RESPONSE  |
-      | 10.0.0.3  | 10.0.0.1  | FIND_PEER_REQUEST   |
-      | 10.0.0.1  | 10.0.0.3  | FIND_PEER_RESPONSE  |
+      | from | to | type                |
+      | b    | a  | FIND_PEER_REQUEST   |
+      | a    | b  | FIND_PEER_RESPONSE  |
+      | c    | a  | FIND_PEER_REQUEST   |
+      | a    | c  | FIND_PEER_RESPONSE  |

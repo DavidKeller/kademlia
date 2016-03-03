@@ -146,7 +146,7 @@ public:
     bind
         ( endpoint_type const& e )
     {
-        // Only fixe port is handled right now.
+        // Only fixed port is handled right now.
         if ( e.port() != FIXED_PORT )
             return make_error_code( boost::system::errc::invalid_argument );
 
@@ -260,24 +260,23 @@ public:
         ( boost::asio::const_buffer const& buffer
         , endpoint_type const & to )
     {
-        packet p{ local_endpoint_, to }; 
-
         auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
         auto e = i + boost::asio::buffer_size( buffer );
 
-        get_packets().push( packet{ local_endpoint_, to
-                                  , { i, e } } );
+        packet p{ local_endpoint_, to, { i, e } }; 
+
+        get_logged_packets().push( std::move( p ) );
     }
 
     /**
      *
      */
     static packets &
-    get_packets
+    get_logged_packets
         ( void )
     { 
-        static packets packets_;
-        return packets_;
+        static packets logged_packets_;
+        return logged_packets_;
     }
 
     /**

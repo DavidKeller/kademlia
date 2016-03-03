@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from _kademlia import *
+import _kademlia as k
 
 #enable_log_for( '*' )
 
@@ -13,5 +13,5 @@ def after_step( context, step ):
 
 def after_scenario( context, scenario ):
     del context.sessions
-    forget_attributed_ip()
-    clear_messages()
+    k.forget_attributed_ip()
+    k.clear_messages()

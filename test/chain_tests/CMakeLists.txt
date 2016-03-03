@@ -27,7 +27,7 @@ if(PythonBehave AND PYTHONLIBS_FOUND AND Boost_PYTHON_FOUND)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-add_custom_target(chain_tests COMMAND behave --no-color ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target(chain_tests COMMAND behave --logging-level=DEBUG --no-color ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(check chain_tests)
 add_dependencies(chain_tests _kademlia)
 
