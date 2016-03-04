@@ -31,8 +31,8 @@
 #include "socket_mock.hpp"
 
 namespace k = kademlia;
-namespace kd = kademlia::detail;
-namespace kt = kademlia::test;
+namespace kd = k::detail;
+namespace kt = k::test;
 
 using socket_type = kd::message_socket< kt::socket_mock >;
 using network_type = kd::network< socket_type >;

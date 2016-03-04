@@ -40,13 +40,13 @@
 #include <cstdint>
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 std::string
 get_capture_path
     ( std::string const & capture_name );
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 #endif

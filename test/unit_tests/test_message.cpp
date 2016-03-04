@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_SUITE( test_print )
 
 BOOST_AUTO_TEST_CASE( header_is_printable )
 {
-    boost::test_tools::output_test_stream out( k::tests::get_capture_path( "pattern_header.out" )
+    boost::test_tools::output_test_stream out( k::test::get_capture_path( "pattern_header.out" )
                                              , true );
 
     out << kd::header{ kd::header::V1

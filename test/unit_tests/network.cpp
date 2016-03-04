@@ -28,7 +28,7 @@
 #include <boost/asio/ip/udp.hpp>
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 void
 check_listening
@@ -62,6 +62,6 @@ get_temporary_listening_port
     return port;
 }
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE( can_be_created )
 {
     a::io_service io_service;
     k::test::fake_socket s( io_service
-                          , a::ip::udp::endpoint().protocol() );
+                           , a::ip::udp::endpoint().protocol() );
 
     BOOST_REQUIRE_EQUAL( 0ULL, io_service.poll() );
 }

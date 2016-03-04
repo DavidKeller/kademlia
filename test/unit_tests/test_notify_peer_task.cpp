@@ -41,7 +41,7 @@ namespace kd = k::detail;
 
 namespace {
 
-using fixture = k::tests::task_fixture;
+using fixture = k::test::task_fixture;
 
 } // anonymous namespace
 

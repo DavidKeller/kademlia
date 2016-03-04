@@ -36,7 +36,7 @@
 #include "kademlia/message_serializer.hpp"
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 class tracker_mock
 {
@@ -213,7 +213,7 @@ private:
     std::queue< sent_message > sent_messages_;
 };
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 #endif // KADEMLIA_TEST_HELPERS_TRACKER_MOCK_HPP

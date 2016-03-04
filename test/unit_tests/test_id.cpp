@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_SUITE( test_print )
 
 BOOST_AUTO_TEST_CASE( id_is_printable )
 {
-    boost::test_tools::output_test_stream out( k::tests::get_capture_path( "pattern_id.out" ), true );
+    boost::test_tools::output_test_stream out( k::test::get_capture_path( "pattern_id.out" ), true );
 
     out << kd::id{ "0123456789abcdef" };
 

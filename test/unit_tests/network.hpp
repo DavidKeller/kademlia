@@ -34,7 +34,7 @@
 #include "common.hpp"
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 template< typename Socket >
 boost::system::error_code
@@ -67,7 +67,7 @@ std::uint16_t
 get_temporary_listening_port
     ( std::uint16_t port = 1234 );
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 #endif

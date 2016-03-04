@@ -23,206 +23,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <memory>
-
-#include <boost/asio/io_service.hpp>
 #include <boost/python.hpp>
 
-#include <kademlia/session_base.hpp>
-#include <kademlia/endpoint.hpp>
-
-#include "kademlia/log.hpp"
-#include "kademlia/buffer.hpp"
-#include "kademlia/engine.hpp"
-
-#include "fake_socket.hpp"
-
-namespace k = kademlia;
-namespace kd = k::detail;
-namespace p = boost::python;
+#include "test_engine.hpp"
 
 namespace {
 
-using test_engine = kd::engine< k::test::fake_socket >;
-
-struct engine
-{
-    engine
-        ( boost::asio::io_service & service
-        , k::endpoint const & ipv4
-        , k::endpoint const & ipv6
-        , kd::id const& new_id )
-            : io_service_( service )
-            , work_( service )
-            , engine_( service
-                     , ipv4, ipv6, new_id )
-            , listen_ipv4_( k::test::fake_socket::get_last_allocated_ipv4()
-                          , k::session_base::DEFAULT_PORT )
-            , listen_ipv6_( k::test::fake_socket::get_last_allocated_ipv6()
-                          , k::session_base::DEFAULT_PORT )
-    { }
-
-    engine
-        ( boost::asio::io_service & service
-        , k::endpoint const & initial_peer
-        , k::endpoint const & ipv4
-        , k::endpoint const & ipv6
-        , kd::id const& new_id )
-            : io_service_( service )
-            , work_( service )
-            , engine_( service
-                     , initial_peer
-                     , ipv4, ipv6
-                     , new_id )
-            , listen_ipv4_( k::test::fake_socket::get_last_allocated_ipv4()
-                          , k::session_base::DEFAULT_PORT )
-            , listen_ipv6_( k::test::fake_socket::get_last_allocated_ipv6()
-                          , k::session_base::DEFAULT_PORT )
-    { }
-
-    void
-    async_save
-        ( std::string const& key
-        , std::string const& data
-        , p::object & callable )
-    {
-        test_engine::key_type const k{ key.begin(), key.end() };
-        test_engine::data_type const d{ data.begin(), data.end() };
-        engine_.async_save( k, d, callable );
-    }
-
-    void
-    async_load
-        ( std::string const& key
-        , p::object & callable )
-    {
-        test_engine::key_type const k{ key.begin(), key.end() };
-        auto c = [ callable ]( std::error_code const& failure
-                             , test_engine::data_type const& data )
-        {
-            callable( failure, std::string{ data.begin(), data.end() } );
-        };
-
-        engine_.async_load( k, c );
-    }
-
-    k::endpoint
-    ipv4
-        ( void )
-        const
-    {
-        return k::endpoint( listen_ipv4_.address().to_string()
-                          , listen_ipv4_.port() );
-    }
-
-    k::endpoint
-    ipv6
-        ( void )
-        const
-    {
-        return k::endpoint( listen_ipv6_.address().to_string()
-                          , listen_ipv6_.port() );
-    }
-
-    boost::asio::io_service & io_service_;
-    boost::asio::io_service::work work_;
-    test_engine engine_;
-    k::test::fake_socket::endpoint_type listen_ipv4_;
-    k::test::fake_socket::endpoint_type listen_ipv6_;
-};
-
-class message final
-{
-public:
-    message
-        ( k::endpoint const& from
-        , k::endpoint const& to
-        , kd::header::type const& type )
-            : from_( from ), to_( to ), type_( type )
-    { }
-
-    k::endpoint const&
-    from
-        ( void )
-        const
-    { return from_; }
-
-    k::endpoint const&
-    to
-        ( void )
-        const
-    { return to_; }
-
-    kd::header::type const&
-    type
-        ( void )
-        const
-    { return type_; }
-
-private:
-    k::endpoint from_;
-    k::endpoint to_;
-    kd::header::type type_;
-};
-
-kd::header
-extract_header
-    ( k::test::fake_socket::packet const& p )
-{
-    kd::header h;
-
-    auto i = p.data_.begin(), e = p.data_.end();
-    deserialize( i, e, h );
-
-    return h;
-}
-
-message
-pop_message
-    ( void )
-{
-    auto & packets = k::test::fake_socket::get_logged_packets();
-
-    if ( packets.empty() )
-        throw std::runtime_error{ "no message left" };
-
-    auto const& p = packets.front();
-
-    message const m{ k::endpoint{ p.from_.address().to_string()
-                                , std::to_string( p.from_.port() ) }
-                   , k::endpoint{ p.to_.address().to_string()
-                                , std::to_string( p.to_.port() ) }
-                   , extract_header( p ).type_ };
-    packets.pop(); 
-
-    return m;
-}
-
-std::size_t
-count_messages
-    ( void )
-{
-    return k::test::fake_socket::get_logged_packets().size();
-}
-
-void
-clear_messages
-    ( void )
-{ 
-    auto & packets = k::test::fake_socket::get_logged_packets();
-
-    while ( ! packets.empty() )
-        packets.pop();
-}
-
-void
-forget_attributed_ip
-    ( void )
-{
-    using k::test::fake_socket;
-    fake_socket::get_last_allocated_ipv4() = fake_socket::get_first_ipv4();
-    fake_socket::get_last_allocated_ipv6() = fake_socket::get_first_ipv6();
-}
+namespace k = kademlia;
+namespace kt = k::test;
+namespace kd = k::detail;
+namespace p = boost::python;
 
 std::size_t ( boost::asio::io_service::*io_service_poll )( void )
     = &boost::asio::io_service::poll;
@@ -265,31 +75,31 @@ BOOST_PYTHON_MODULE( _kademlia )
         .value( "FIND_VALUE_REQUEST", kd::header::FIND_VALUE_REQUEST )
         .value( "FIND_VALUE_RESPONSE", kd::header::FIND_VALUE_RESPONSE );
 
-    p::class_< message >
+    p::class_< kt::packet >
         ( "Message"
         , p::init< k::endpoint const&
                  , k::endpoint const&
                  , kd::header::type const& >() )
                      
         .def( "from_endpoint"
-            , &message::from
+            , &kt::packet::from
             , p::return_value_policy< p::copy_const_reference >() )
 
         .def( "to_endpoint"
-            , &message::to
+            , &kt::packet::to
             , p::return_value_policy< p::copy_const_reference >() )
 
         .def( "type"
-            , &message::type
+            , &kt::packet::type
             , p::return_value_policy< p::copy_const_reference >() );
 
-    p::def( "count_messages", &count_messages );
+    p::def( "count_messages", &kt::count_packets );
 
-    p::def( "pop_message", &pop_message );
+    p::def( "pop_message", &kt::pop_packet );
 
-    p::def( "clear_messages", &clear_messages );
+    p::def( "clear_messages", &kt::clear_packets );
 
-    p::def( "forget_attributed_ip", &forget_attributed_ip );
+    p::def( "forget_attributed_ip", &kt::forget_attributed_ip );
 
     p::class_< std::error_code >
         ( "Error"
@@ -309,7 +119,7 @@ BOOST_PYTHON_MODULE( _kademlia )
 
         .def( repr( p::self ) );
 
-    p::class_< engine, boost::noncopyable >
+    p::class_< kt::test_engine, boost::noncopyable >
         ( "FirstSession"
         , p::init< boost::asio::io_service &
                  , k::endpoint const& 
@@ -318,12 +128,12 @@ BOOST_PYTHON_MODULE( _kademlia )
         [ p::with_custodian_and_ward< 1, 2 >() ] )
 
         .def( "ipv4"
-            , &engine::ipv4 )
+            , &kt::test_engine::ipv4 )
             
         .def( "ipv6"
-            , &engine::ipv6 );
+            , &kt::test_engine::ipv6 );
 
-    p::class_< engine, boost::noncopyable >
+    p::class_< kt::test_engine, boost::noncopyable >
         ( "Session"
         , p::init< boost::asio::io_service &
                  , k::endpoint const& 
@@ -333,15 +143,15 @@ BOOST_PYTHON_MODULE( _kademlia )
         [ p::with_custodian_and_ward< 1, 2 >() ] )
 
         .def( "ipv4"
-            , &engine::ipv4 )
+            , &kt::test_engine::ipv4 )
             
         .def( "ipv6"
-            , &engine::ipv6 )
+            , &kt::test_engine::ipv6 )
 
         .def( "async_save"
-            , &engine::async_save )
+            , &kt::test_engine::async_save< p::object > )
 
         .def( "async_load"
-            , &engine::async_load );
+            , &kt::test_engine::async_load< p::object > );
 }
 

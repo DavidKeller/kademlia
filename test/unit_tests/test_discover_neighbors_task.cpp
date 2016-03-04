@@ -44,7 +44,7 @@ namespace {
 
 using endpoints_type = std::vector< kd::ip_endpoint >;
 
-struct fixture : k::tests::task_fixture
+struct fixture : k::test::task_fixture
 {
     void
     operator()
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
     auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
     endpoints_type const endpoints{ e1 };
 
-    k::tests::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
+    k::test::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
     tracker_.add_message_to_receive( e1, my_id, req );
 
     kd::start_discover_neighbors_task( my_id 

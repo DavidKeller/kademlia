@@ -29,7 +29,7 @@
 #include "kademlia/message.hpp"
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 /**
  *
@@ -47,7 +47,7 @@ serialize
     , detail::buffer & b )
 { }
 
-} // namespace tests
+} // namespace test
 
 namespace detail {
 
@@ -55,7 +55,7 @@ namespace detail {
  *
  */
 template< detail::header::type Type >
-struct message_traits< tests::corrupted_message< Type > >
+struct message_traits< test::corrupted_message< Type > >
 { static CXX11_CONSTEXPR header::type TYPE_ID = Type; };
 
 } // namespace detail

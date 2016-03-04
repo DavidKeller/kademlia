@@ -45,7 +45,7 @@ namespace {
 
 using data_type = std::vector< std::uint8_t >;
 
-struct fixture : k::tests::task_fixture
+struct fixture : k::test::task_fixture
 {
     fixture
         ( void )
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
     // p1 is the only known peer.
     auto p1 = create_and_add_peer( "192.168.1.1", kd::id{ "b" } );
 
-    k::tests::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
+    k::test::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
     tracker_.add_message_to_receive( p1.endpoint_, p1.id_, req );
 
     kd::start_store_value_task( chosen_key

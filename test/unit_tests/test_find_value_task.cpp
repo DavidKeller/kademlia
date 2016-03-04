@@ -41,7 +41,7 @@ namespace {
 
 using data_type = std::vector< std::uint8_t >;
 
-struct fixture : k::tests::task_fixture
+struct fixture : k::test::task_fixture
 {
     fixture
         ( void )

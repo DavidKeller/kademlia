@@ -34,7 +34,7 @@ namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 namespace {
 
@@ -47,7 +47,7 @@ std::string get_capture_path( std::string const & capture_name )
     return ( tests_directory_ / "captures" / capture_name ).string();
 }
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 /**

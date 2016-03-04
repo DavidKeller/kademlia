@@ -36,7 +36,7 @@
 #include "kademlia/peer.hpp"
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 struct routing_table_mock
 {
@@ -83,7 +83,7 @@ struct routing_table_mock
     uint64_t find_call_count_;
 };
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 #endif // KADEMLIA_TEST_HELPERS_ROUTING_TABLE_MOCK_HPP

@@ -35,6 +35,7 @@ add_dependencies(chain_tests _kademlia)
 set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH})
 
 add_library(_kademlia SHARED
+    wrapper.hpp
     _kademlia.cpp)
 
 set_target_properties(_kademlia

@@ -37,7 +37,7 @@
 #include "routing_table_mock.hpp"
 
 namespace kademlia {
-namespace tests {
+namespace test {
 
 struct task_fixture
 {
@@ -78,7 +78,7 @@ struct task_fixture
     std::size_t callback_call_count_;
 };
 
-} // namespace tests
+} // namespace test
 } // namespace kademlia
 
 #endif
