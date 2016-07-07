@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if(PythonBehave AND PYTHONLIBS_FOUND AND Boost_PYTHON_FOUND)
+if(PythonBehave AND PYTHONLIBS_FOUND AND Boost_PYTHON3_FOUND)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
@@ -35,7 +35,6 @@ add_dependencies(chain_tests _kademlia)
 set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH})
 
 add_library(_kademlia SHARED
-    wrapper.hpp
     _kademlia.cpp)
 
 set_target_properties(_kademlia
@@ -46,7 +45,7 @@ set_target_properties(_kademlia
 
 target_link_libraries(_kademlia
     kademlia_static
-    ${Boost_PYTHON_LIBRARY} 
+    ${Boost_PYTHON3_LIBRARY} 
     ${PYTHON_LIBRARIES} 
     ${CMAKE_THREAD_LIBS_INIT})
 
@@ -58,7 +57,7 @@ else()
     if(NOT PYTHONLIBS_FOUND)
         message("++   python devel")
     endif()
-    if(NOT Boost_PYTHON_FOUND)
+    if(NOT Boost_PYTHON3_FOUND)
         message("++   boost-python")
     endif()
 endif()

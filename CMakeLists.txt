@@ -66,8 +66,8 @@ find_package(Boost REQUIRED COMPONENTS
     filesystem
     unit_test_framework)
 find_package(Boost QUIET COMPONENTS
-    python)
-if(Boost_PYTHON_FOUND)
+    python3)
+if(Boost_PYTHON3_FOUND)
    message(STATUS "  python")
 else()
    message("++ Missing the following Boost libraries:")
