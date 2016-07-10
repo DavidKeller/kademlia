@@ -93,7 +93,7 @@ message_serializer::serialize
     detail::serialize( header, b );
     detail::serialize( message, b );
 
-    return std::move( b );
+    return b;
 }
 
 } // namespace detail

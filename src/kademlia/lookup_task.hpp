@@ -213,7 +213,7 @@ lookup_task::select_new_closest_candidates
         }
     }
 
-    return std::move( candidates );
+    return candidates;
 }
 
 inline std::vector< peer >
@@ -232,7 +232,7 @@ lookup_task::select_closest_valid_candidates
             candidates.push_back( i->second.peer_ );
     }
 
-    return std::move( candidates );
+    return candidates;
 }
 
 template< typename Peers >

@@ -287,7 +287,7 @@ distance
                   , result.begin()
                   , std::bit_xor< id::block_type >{} );
 
-    return std::move( result );
+    return result;
 }
 
 } // namespace detail
