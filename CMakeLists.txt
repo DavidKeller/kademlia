@@ -75,7 +75,10 @@ else()
 endif()
 
 # Python
-find_package(PythonLibs)
+if(APPLE)
+    include(${CMAKE_SOURCE_DIR}/cmake/CMakeFindFrameworks.cmake)
+endif()
+find_package(PythonLibs 3 REQUIRED)
 
 # Python behave
 find_program(PythonBehave behave)
