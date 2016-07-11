@@ -4,6 +4,7 @@ from behave import *
 from sure import expect
 import _kademlia as k
 
+
 class _Message(object):
     '''
     This class is used to compare expected with actual messages.
@@ -26,7 +27,7 @@ class _Message(object):
         '''
         return '{0}>{1}:{2}'.format(self.__endpoint_from,
                                     self.__endpoint_to,
-                                    self.__type )
+                                    self.__type)
 
     def __eq__(self, other):
         '''
@@ -46,11 +47,13 @@ class _Message(object):
         '''
         return not self.__eq__(other)
 
+
 def _get_session_name(context, endpoint):
     '''
     Retrieve the session name from its `endpoint` thanks to `context`.
     '''
     return context.sessions[repr(endpoint)][0]
+
 
 def _get_actual_messages(context):
     '''
@@ -69,9 +72,11 @@ def _get_actual_messages(context):
 
     return messages
 
+
 @then('no message has been sent')
 def step_impl(context):
     expect(k.count_messages()).to.equal(0)
+
 
 @then('following messages have been sent')
 def step_impl(context):
