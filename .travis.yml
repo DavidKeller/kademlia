@@ -1,39 +1,26 @@
-sudo: false
+sudo: required
 
-os:
-    - linux
-
-language:
-    - cpp
-
-cache:
-    directories:
-        - ${TRAVIS_BUILD_DIR}/boost_dep
+dist: trusty
 
 before_install:
-    - export CXXFLAGS='-std=c++11'
-    - export CXX='g++-5'
-    - export CC='gcc-5'
+    - sudo apt-get install -y lcov python3-pip
 
-install:
-    # lcov from travis packages is quite old.
-    - export LCOV_ROOT="${TRAVIS_BUILD_DIR}/lcov_dep"
-    - git clone https://github.com/linux-test-project/lcov ${LCOV_ROOT};
-    - export PATH="${LCOV_ROOT}/bin:${PATH}"
-    - echo 'geninfo_gcov_tool=gcov-5' >> ~/.lcovrc
+    - rvm use ruby-2.2.3
+    - sudo gem install coveralls-lcov
 
-    - gem install coveralls-lcov
+    - sudo pip3 install --upgrade behave sure six
 
     # Build our own c++11 enabled boost.
+    - export CXXFLAGS='-std=c++11'
     - export BOOST_ROOT="${TRAVIS_BUILD_DIR}/boost_dep"
-    - if [ ! -f "${BOOST_ROOT}/INSTALL" ];
-      then
-        pushd ${BOOST_ROOT};
-        wget -qO- http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2 | tar xj --strip-components=1;
-        ./bootstrap.sh --with-libraries=system,filesystem,program_options,test;
-        ./b2 -q -j`nproc` variant=release link=shared threading=multi toolset=${CC} address-model=64;
-        popd;
-      fi
+    - mkdir ${BOOST_ROOT} && pushd ${BOOST_ROOT}
+    - wget -qO- http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2 | tar xj --strip-components=1
+    - ./bootstrap.sh --with-libraries=system,filesystem,program_options,test,python --with-python=/usr/bin/python3
+    - ./b2 -q -j`nproc` variant=release link=shared threading=multi address-model=64
+    - popd
+
+    # Enable IPv6 as required by library tests.
+    - sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
 
 script:
     - mkdir build_cov && pushd build_cov
@@ -43,15 +30,3 @@ script:
 after_success:
     # Upload coverage report to coveralls.
     - coveralls-lcov build_cov/app_total_stripped.info
-
-addons:
-    apt:
-        sources:
-            # This is required to install recent g++.
-            - ubuntu-toolchain-r-test
-
-        packages:
-            - g++-5
-            - realpath
-            - cmake
-            - libssl-dev

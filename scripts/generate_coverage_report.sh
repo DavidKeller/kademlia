@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
     exit -1
 fi
 
-source_root=`realpath $1`
+source_root=$1
 
 # Build project.
 CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=Debug ${source_root}
@@ -34,7 +34,7 @@ lcov --quiet  --output-file app_total_stripped.info \
      --extract app_total.info '*include/kademlia/*' '*src/kademlia/*'
 
 # Generate html report.
-genhtml --output-directory html --prefix ${source_root} \
+genhtml --output-directory html \
         --num-spaces 4 --title 'Kademlia unit tests' \
         --no-function-coverage \
         app_total_stripped.info 

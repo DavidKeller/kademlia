@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
     exit -1
 fi
 
-source_root=`realpath $1`
+source_root=$1
 
 CXXFLAGS='-pg' cmake -DCMAKE_BUILD_TYPE=Release ${source_root}
 make -j`nproc`
