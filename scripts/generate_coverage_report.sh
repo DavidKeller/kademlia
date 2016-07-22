@@ -7,14 +7,14 @@ if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
     exit -1
 fi
 
-source_root=$1
+source_root=$(cd "$1"; pwd)
 
 # Build project.
 CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=Debug ${source_root}
 make -j`nproc`
 
 # Run chain tests.
-make chain_tests
+#make chain_tests
 
 # Generate initial coverage file.
 lcov --quiet --output-file app_base.info \
@@ -35,3 +35,10 @@ lcov --quiet --output-file app_total.info \
 # Clean coverage file.
 lcov --quiet  --output-file app_total_stripped.info \
      --extract app_total.info '*include/kademlia/*' '*src/kademlia/*'
+
+# Generate html report.
+genhtml --output-directory html \
+        --num-spaces 4 --title 'Kademlia unit tests' \
+        --no-function-coverage \
+        --prefix ${source_root} \
+        app_total_stripped.info 

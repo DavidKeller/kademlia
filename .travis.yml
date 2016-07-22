@@ -2,31 +2,17 @@ sudo: required
 
 dist: trusty
 
+language: generic
+
+services:
+    - docker
+
 before_install:
-    - sudo apt-get install -y lcov python3-pip
-
-    - rvm use ruby-2.2.3
-    - sudo gem install coveralls-lcov
-
-    - sudo pip3 install --upgrade behave sure six
-
-    # Build our own c++11 enabled boost.
-    - export CXXFLAGS='-std=c++11'
-    - export BOOST_ROOT="${TRAVIS_BUILD_DIR}/boost_dep"
-    - mkdir ${BOOST_ROOT} && pushd ${BOOST_ROOT}
-    - wget -qO- http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2 | tar xj --strip-components=1
-    - ./bootstrap.sh --with-libraries=system,filesystem,program_options,test,python --with-python=/usr/bin/python3
-    - ./b2 -q -j`nproc` variant=release link=shared threading=multi address-model=64
-    - popd
-
-    # Enable IPv6 as required by library tests.
-    - sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+    - docker build -t kademlia ci/travis
 
 script:
-    - mkdir build_cov && pushd build_cov
-    - ../scripts/generate_coverage_report.sh ..
-    - popd
+    - docker run -v $(pwd):/src kademlia /bin/sh -c 'mkdir /src/build_cov && cd /src/build_cov && ../scripts/generate_coverage_report.sh ..'
 
 after_success:
     # Upload coverage report to coveralls.
-    - coveralls-lcov build_cov/app_total_stripped.info
+    - docker run -v $(pwd):/src kademlia /bin/sh -c 'cd /src && coveralls-lcov build_cov/app_total_stripped.info'
