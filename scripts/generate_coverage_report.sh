@@ -13,12 +13,15 @@ source_root=$1
 CXXFLAGS='--coverage' cmake -DCMAKE_BUILD_TYPE=Debug ${source_root}
 make -j`nproc`
 
+# Run chain tests.
+make chain_tests
+
 # Generate initial coverage file.
 lcov --quiet --output-file app_base.info \
      --initial --capture --directory .
 
-# Run tests.
-make -j`nproc` check
+# Run unit tests.
+make -j`nproc` unit_tests
 
 # Generate post test coverage file.
 lcov --quiet --output-file app_test.info \
@@ -32,10 +35,3 @@ lcov --quiet --output-file app_total.info \
 # Clean coverage file.
 lcov --quiet  --output-file app_total_stripped.info \
      --extract app_total.info '*include/kademlia/*' '*src/kademlia/*'
-
-# Generate html report.
-genhtml --output-directory html \
-        --num-spaces 4 --title 'Kademlia unit tests' \
-        --no-function-coverage \
-        app_total_stripped.info 
-
