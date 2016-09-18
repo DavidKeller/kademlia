@@ -81,7 +81,7 @@ endif()
 find_package(PythonLibs 3)
 
 # Python behave
-find_program(PythonBehave behave)
+find_program(PythonBehave NAMES behave behave-3)
 
 # Crypto
 find_package(OpenSSL REQUIRED)
