@@ -85,7 +85,7 @@ private:
             , tracker_( tracker )
     {
         LOG_DEBUG( notify_peer_task, this )
-                << "create find peer task for '"
+                << "create notify peer task for '"
                 << key << "' peer." << std::endl;
     }
 

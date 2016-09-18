@@ -6,25 +6,18 @@ Feature: boostrap sessions
     Given a service has been created
     And listen endpoints have been created
 
-  Scenario: start the first session
-    When we create a first session "a"
+  Scenario: A unique session is created
+    When we create a first session "a" with uid "0"
     Then no message has been sent
 
-  Scenario: start the second session
-    Given a first session "a" has been created
-    When we create a session "b" knowing "a"
+  Scenario: Two sessions are created
+    Given a first session "a" with uid "8000000000000000000000000000000000000000" has been created
+    When we create a session "b" with uid "4000000000000000000000000000000000000000" knowing "a"
     Then following messages have been sent
       | from | to | type                |
-      | b    | a  | FIND_PEER_REQUEST   |
+      | b    | a  | FIND_PEER_REQUEST   | # Initial lookup
       | a    | b  | FIND_PEER_RESPONSE  |
-
-  Scenario: start the third session
-    Given a first session "a" has been created
-    And a session "b" knowing "a" has been created
-    When we create a session "c" knowing "a"
-    Then following messages have been sent
-      | from | to | type                |
-      | b    | a  | FIND_PEER_REQUEST   |
+      | b    | b  | FIND_PEER_REQUEST   | # Bucket refresh
+      | b    | a  | FIND_PEER_REQUEST   | # Bucket refresh
+      | b    | b  | FIND_PEER_RESPONSE  |
       | a    | b  | FIND_PEER_RESPONSE  |
-      | c    | a  | FIND_PEER_REQUEST   |
-      | a    | c  | FIND_PEER_RESPONSE  |

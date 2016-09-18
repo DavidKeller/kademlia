@@ -79,7 +79,7 @@ public:
          *
          */
         explicit
-        operator bool
+        operator const bool
             ( void )
             const
         { return ( current_block_ & mask_ ) != 0; }

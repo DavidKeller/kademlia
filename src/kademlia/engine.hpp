@@ -444,17 +444,20 @@ private:
         ( void )
     {
         auto closest_neighbor_id = get_closest_neighbor_id();
-        auto searched_id = my_id_;
+        auto i = id::BIT_SIZE - 1;
 
-        auto e = std::mismatch( searched_id.begin(), searched_id.end()
-                              , closest_neighbor_id.begin() ).first;
+        // Skip empty buckets.
+        while ( i && closest_neighbor_id[ i ] == my_id_[ i ] )
+            -- i;
 
-        for ( auto i = searched_id.begin(); i != e; ++i )
+        // Send refresh from closest neighbor bucket to farest bucket.
+        auto refresh_id = my_id_;
+        while ( i )
         {
-            *i = !*i;
-
-            start_notify_peer_task( searched_id
+            refresh_id[ i ] = ! refresh_id[ i ];
+            start_notify_peer_task( refresh_id
                                   , tracker_, routing_table_ );
+            -- i;
         }
     }
 
