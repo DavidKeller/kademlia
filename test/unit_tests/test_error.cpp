@@ -23,43 +23,67 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <system_error>
-
-#include <boost/system/error_code.hpp>
-#include <boost/asio/error.hpp>
+#include <kademlia/error.hpp>
+#include <algorithm>
+#include <cctype>
 
 #include "common.hpp"
-#include "kademlia/boost_to_std_error.hpp"
-
-namespace k = kademlia;
-namespace kd = k::detail;
-namespace b = boost;
-namespace ba = b::asio;
-namespace bs = b::system;
 
 namespace {
 
+namespace k = kademlia;
+
+bool
+compare_enum_to_message( char const * name, k::error_type const& error )
+{
+    auto message = make_error_condition( error ).message();
+
+    std::replace( message.begin(), message.end(), ' ', '_' );
+    std::transform( message.begin()
+                  , message.end(), message.begin(),
+                  ::toupper );
+
+    return name == message;
+}
+
+
+/**
+ *
+ */
 BOOST_AUTO_TEST_SUITE( test_usage )
 
-BOOST_AUTO_TEST_CASE( can_convert_generic_error )
+#define KADEMLIA_TEST_ERROR( e ) \
+    BOOST_REQUIRE( compare_enum_to_message( #e, k:: e ) )
+
+BOOST_AUTO_TEST_CASE( error_message_follows_the_error_name )
 {
-    auto const c = make_error_code( bs::errc::address_in_use );
-    auto const e = make_error_code( std::errc::address_in_use );
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == e );
+    KADEMLIA_TEST_ERROR( UNKNOWN_ERROR );
+    KADEMLIA_TEST_ERROR( RUN_ABORTED );
+    KADEMLIA_TEST_ERROR( INITIAL_PEER_FAILED_TO_RESPOND );
+    KADEMLIA_TEST_ERROR( INVALID_ID );
+    KADEMLIA_TEST_ERROR( TRUNCATED_ID );
+    KADEMLIA_TEST_ERROR( TRUNCATED_HEADER );
+    KADEMLIA_TEST_ERROR( TRUNCATED_ENDPOINT );
+    KADEMLIA_TEST_ERROR( TRUNCATED_ADDRESS );
+    KADEMLIA_TEST_ERROR( TRUNCATED_SIZE );
+    KADEMLIA_TEST_ERROR( UNKNOWN_PROTOCOL_VERSION );
+    KADEMLIA_TEST_ERROR( CORRUPTED_BODY );
+    KADEMLIA_TEST_ERROR( UNASSOCIATED_MESSAGE_ID );
+    KADEMLIA_TEST_ERROR( INVALID_IPV4_ADDRESS );
+    KADEMLIA_TEST_ERROR( INVALID_IPV6_ADDRESS );
+    KADEMLIA_TEST_ERROR( UNIMPLEMENTED );
+    KADEMLIA_TEST_ERROR( VALUE_NOT_FOUND );
+    KADEMLIA_TEST_ERROR( TIMER_MALFUNCTION );
+    KADEMLIA_TEST_ERROR( ALREADY_RUNNING );
 }
 
-BOOST_AUTO_TEST_CASE( can_convert_system_error )
+BOOST_AUTO_TEST_CASE( error_category_is_kademlia )
 {
-    bs::error_code const c{ 1000, bs::system_category() };
-    std::error_code const e{ 1000, std::system_category() };
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == e );
+    auto e = make_error_condition( k::UNKNOWN_ERROR );
+    BOOST_REQUIRE_EQUAL( "kademlia", e.category().name() );
 }
 
-BOOST_AUTO_TEST_CASE( cannot_convert_kademlia_error )
-{
-    bs::error_code const c{ 1000, ba::error::misc_category };
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == k::UNKNOWN_ERROR );
-}
+#undef KADEMLIA_TEST_ERROR
 
 BOOST_AUTO_TEST_SUITE_END()
 

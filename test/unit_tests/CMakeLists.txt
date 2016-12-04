@@ -76,6 +76,7 @@ build_test(unit_tests_lib
         test_find_value_task.cpp
         test_ip_endpoint.cpp
         test_peer.cpp
+        test_error.cpp
         test_discover_neighbors_task.cpp
         test_notify_peer_task.cpp
         test_response_callbacks.cpp
@@ -88,6 +89,7 @@ build_test(unit_tests_lib
         test_session.cpp
         test_first_session.cpp
         test_concurrent_guard.cpp
+        test_engine.cpp
     LIBRARIES 
         kademlia_static)
 

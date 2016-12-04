@@ -101,7 +101,8 @@ BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
 {
     k::first_session s;
 
-    auto result = std::async( &k::first_session::run, &s );
+    auto result = std::async( std::launch::async
+                            , &k::first_session::run, &s );
     s.abort();
 
     BOOST_REQUIRE( result.get() == k::RUN_ABORTED );

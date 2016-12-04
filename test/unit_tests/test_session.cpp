@@ -112,7 +112,8 @@ BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
     k::endpoint const initial_peer{ "127.0.0.1", 12345 };
     k::session s{ initial_peer };
 
-    auto result = std::async( &k::session::run, &s );
+    auto result = std::async( std::launch::async
+                            , &k::session::run, &s );
     s.abort();
 
     BOOST_REQUIRE( result.get() == k::RUN_ABORTED );

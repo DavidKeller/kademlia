@@ -25,5 +25,4 @@
 add_custom_target(check)
 
 add_subdirectory(unit_tests)
-add_subdirectory(chain_tests)
 

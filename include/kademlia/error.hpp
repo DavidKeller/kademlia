@@ -39,7 +39,7 @@ namespace kademlia {
 enum error_type
 {
     /// An unknown error.
-    UNKNOWN = 1,
+    UNKNOWN_ERROR = 1,
     /// The session::abort() has been called.
     RUN_ABORTED,
     /// The session failed to contact a valid peer uppon creation.

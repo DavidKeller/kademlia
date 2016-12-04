@@ -50,7 +50,7 @@ boost_to_std_error
     else if ( failure.category() == boost::system::system_category() )
         return std::error_code{ failure.value(), std::system_category() };
     else
-        return make_error_code( UNKNOWN );
+        return make_error_code( UNKNOWN_ERROR );
 }
 
 } // namespace detail

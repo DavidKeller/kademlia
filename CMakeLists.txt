@@ -76,28 +76,10 @@ if(WIN32)
 #elseif(APPLE)
 #    set(Boost_USE_STATIC_LIBS ON)
 endif()
-set(Boost_DETAILED_FAILURE_MSG ON)
 find_package(Boost REQUIRED COMPONENTS
     system
     filesystem
     unit_test_framework)
-find_package(Boost QUIET COMPONENTS
-    python3)
-if(Boost_PYTHON3_FOUND)
-   message(STATUS "  python")
-else()
-   message("++ Missing the following Boost libraries:")
-   message("++   python")
-endif()
-
-# Python
-if(APPLE)
-    include(${CMAKE_SOURCE_DIR}/cmake/CMakeFindFrameworks.cmake)
-endif()
-find_package(PythonLibs 3)
-
-# Python behave
-find_program(PythonBehave NAMES behave behave-3)
 
 # Crypto
 find_package(OpenSSL REQUIRED)
