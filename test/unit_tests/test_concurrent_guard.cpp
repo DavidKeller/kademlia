@@ -29,6 +29,8 @@
 namespace k = kademlia;
 namespace kd = k::detail;
 
+namespace {
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_default_constructed )
@@ -58,4 +60,6 @@ BOOST_AUTO_TEST_CASE( can_detect_concurrent_construction )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

@@ -28,10 +28,10 @@
 #include "common.hpp"
 #include "kademlia/r.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
-
-namespace {
 
 struct test_type
 {
@@ -73,9 +73,6 @@ operator<<
     ( std::ostream & out
     , test_type const & a )
 { return out << a.a_ << " " << a.b_; }
-
-
-} // namespace
 
 BOOST_AUTO_TEST_SUITE( test_construction )
 
@@ -248,4 +245,6 @@ BOOST_AUTO_TEST_CASE( can_be_assigned )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

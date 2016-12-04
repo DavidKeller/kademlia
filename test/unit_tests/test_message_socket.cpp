@@ -33,6 +33,8 @@
 #include "common.hpp"
 #include "network.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = kademlia::detail;
 
@@ -118,3 +120,6 @@ BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
+

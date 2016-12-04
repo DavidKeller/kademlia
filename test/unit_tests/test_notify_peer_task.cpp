@@ -36,14 +36,12 @@
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/notify_peer_task.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
-namespace {
-
 using fixture = k::test::task_fixture;
-
-} // anonymous namespace
 
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
@@ -90,4 +88,6 @@ BOOST_AUTO_TEST_CASE( can_query_known_peer_for_specific_id )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

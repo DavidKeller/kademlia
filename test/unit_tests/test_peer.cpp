@@ -29,6 +29,8 @@
 #include "common.hpp"
 #include "kademlia/peer.hpp"
 
+namespace {
+
 namespace kd = kademlia::detail;
 
 struct fixture 
@@ -62,4 +64,6 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

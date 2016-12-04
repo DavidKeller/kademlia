@@ -29,6 +29,8 @@
 #include "kademlia/routing_table.hpp"
 #include "kademlia/ip_endpoint.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
@@ -251,4 +253,6 @@ BOOST_AUTO_TEST_CASE( print_empty_routing_table )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

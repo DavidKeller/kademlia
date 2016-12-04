@@ -26,6 +26,8 @@
 #include "common.hpp"
 #include <kademlia/endpoint.hpp>
 
+namespace {
+
 namespace k = kademlia;
 
 BOOST_AUTO_TEST_SUITE( test_construction )
@@ -66,4 +68,6 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

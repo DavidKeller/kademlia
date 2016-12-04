@@ -34,6 +34,8 @@
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/find_value_task.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
@@ -303,4 +305,6 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_discovered_peer_has_the_value )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

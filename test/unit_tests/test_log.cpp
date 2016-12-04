@@ -30,9 +30,9 @@
 
 #include "kademlia/log.hpp"
 
-namespace kd = kademlia::detail;
-
 namespace {
+
+namespace kd = kademlia::detail;
 
 struct rdbuf_saver
 {
@@ -50,8 +50,6 @@ struct rdbuf_saver
     std::ostream & stream_;
     std::streambuf * old_buffer_;
 };
-
-} // anonymous namespace
 
 BOOST_AUTO_TEST_SUITE( test_usage )
 
@@ -120,4 +118,6 @@ BOOST_AUTO_TEST_CASE( can_convert_container_to_string )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

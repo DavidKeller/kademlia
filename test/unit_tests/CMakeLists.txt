@@ -48,10 +48,9 @@ target_link_libraries(test_helpers
 set_target_properties(test_helpers PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-macro(build_and_run_test source_file)
-    cmake_parse_arguments(ARG "" "" "LIBRARIES" ${ARGN})
-    get_filename_component(test_name ${source_file} NAME_WE)
-    add_executable(${test_name} ${source_file} ${ARG_UNPARSED_ARGUMENTS})
+macro(build_test test_name)
+    cmake_parse_arguments(ARG "" "" "LIBRARIES;SOURCES" ${ARGN})
+    add_executable(${test_name} ${ARG_SOURCES})
     target_link_libraries(${test_name}
         test_helpers
         ${ARG_LIBRARIES})
@@ -59,28 +58,91 @@ macro(build_and_run_test source_file)
     add_test(${test_name} ${test_name})
 endmacro()
 
-build_and_run_test(test_id.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_endpoint.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_boost_to_std_error.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_message.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_message_serializer.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_value_task.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_store_value_task.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_find_value_task.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_ip_endpoint.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_peer.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_discover_neighbors_task.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_notify_peer_task.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_response_callbacks.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_timer.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_network.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_message_socket.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_log.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_r.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_routing_table.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_session.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_first_session.cpp LIBRARIES kademlia_static)
-build_and_run_test(test_concurrent_guard.cpp LIBRARIES kademlia_static)
+build_test(unit_tests_helpers
+    SOURCES
+        test_fake_socket.cpp
+    LIBRARIES
+        kademlia_static)
 
-build_and_run_test(test_fake_socket.cpp LIBRARIES kademlia_static)
+build_test(unit_tests_lib
+    SOURCES
+        test_id.cpp
+        test_endpoint.cpp
+        test_boost_to_std_error.cpp
+        test_message.cpp
+        test_message_serializer.cpp
+        test_value_task.cpp
+        test_store_value_task.cpp
+        test_find_value_task.cpp
+        test_ip_endpoint.cpp
+        test_peer.cpp
+        test_discover_neighbors_task.cpp
+        test_notify_peer_task.cpp
+        test_response_callbacks.cpp
+        test_timer.cpp
+        test_network.cpp
+        test_message_socket.cpp
+        test_log.cpp
+        test_r.cpp
+        test_routing_table.cpp
+        test_session.cpp
+        test_first_session.cpp
+        test_concurrent_guard.cpp
+    LIBRARIES 
+        kademlia_static)
+
+if(ENABLE_COVERAGE)
+    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+        if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+            find_program(XCRUN xcrun)
+            if(XCRUN)
+                execute_process(COMMAND
+                                    ${XCRUN} -f llvm-cov
+                                OUTPUT_VARIABLE
+                                    LLVM_COV
+                                OUTPUT_STRIP_TRAILING_WHITESPACE)
+            endif()
+        else()
+            find_program(LLVM_COV llvm-cov)
+        endif()
+
+        if (NOT LLVM_COV)
+            message(FATAL_ERROR "Can't find llvm-cov tool")
+        endif()
+
+        set(GCOV ${CMAKE_CURRENT_BINARY_DIR}/llvm_gcov)
+        configure_file(llvm_gcov.in ${GCOV} @ONLY)
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        find_program(GCOV gcov)
+
+        if (NOT GCOV)
+            message(FATAL_ERROR "Can't find gcov tool")
+        endif()
+    endif()
+
+    find_program(LCOV lcov)
+    find_program(GENHTML genhtml)
+
+    if (NOT LCOV OR NOT GENHTML)
+        message(FATAL_ERROR "Can't find lcov tool(s)")
+    endif()
+
+    add_custom_target(coverage
+        COMMAND
+            ${LCOV} --quiet --output-file app_base.info --initial --capture --directory . --gcov-tool ${GCOV}
+        COMMAND
+            ${CMAKE_COMMAND} --build . --target unit_tests
+        COMMAND
+            ${LCOV} --quiet --output-file app_test.info --capture --directory . --gcov-tool ${GCOV}
+        COMMAND
+            ${LCOV} --quiet --output-file app_total.info --add-tracefile app_base.info --add-tracefile app_test.info
+        COMMAND
+            ${LCOV} --quiet --output-file app_total_stripped.info --extract app_total.info "*/include/kademlia/*" "*/src/kademlia/*"
+        COMMAND
+            ${GENHTML} --output-directory html --num-spaces 4 --title "Kademlia unit tests" --demangle-cpp --no-function-coverage --prefix ${CMAKE_SOURCE_DIR} app_total_stripped.info
+        WORKING_DIRECTORY
+            ${CMAKE_BINARY_DIR}
+        VERBATIM)
+    add_dependencies(coverage kademlia_static)
+endif()
 

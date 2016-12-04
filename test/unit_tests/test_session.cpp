@@ -36,6 +36,8 @@
 #include "common.hpp"
 #include "network.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace bo = boost::asio;
 
@@ -117,3 +119,6 @@ BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
+

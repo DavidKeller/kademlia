@@ -38,10 +38,10 @@
 
 #include "kademlia/store_value_task.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
-
-namespace {
 
 using data_type = std::vector< std::uint8_t >;
 
@@ -60,8 +60,6 @@ struct fixture : k::test::task_fixture
         failure_ = f;
     }
 };
-
-} // anonymous namespace
 
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
@@ -297,4 +295,6 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

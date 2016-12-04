@@ -30,6 +30,8 @@
 #include "common.hpp"
 #include "socket_mock.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 namespace kt = k::test;
@@ -76,3 +78,6 @@ BOOST_AUTO_TEST_CASE( schedule_receive_on_construction )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
+

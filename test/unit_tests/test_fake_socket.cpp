@@ -32,6 +32,8 @@
 #include "kademlia/buffer.hpp"
 #include "fake_socket.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 namespace a = boost::asio;
@@ -277,4 +279,6 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages_to_self )
 
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

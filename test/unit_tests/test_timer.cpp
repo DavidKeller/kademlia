@@ -31,6 +31,8 @@
 #include "kademlia/timer.hpp"
 #include "kademlia/log.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
@@ -99,4 +101,6 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

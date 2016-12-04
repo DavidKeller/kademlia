@@ -29,6 +29,8 @@
 
 #include "kademlia/ip_endpoint.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 namespace ba = boost::asio;
@@ -86,4 +88,6 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

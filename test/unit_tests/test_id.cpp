@@ -29,6 +29,8 @@
 
 #include "kademlia/id.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
@@ -255,4 +257,6 @@ BOOST_AUTO_TEST_CASE( id_is_printable )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

@@ -33,10 +33,10 @@
 #include "kademlia/message_socket.hpp"
 #include "kademlia/lookup_task.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
-
-namespace {
 
 struct test_task : kd::lookup_task {
     template< typename Iterator >
@@ -49,8 +49,6 @@ struct test_task : kd::lookup_task {
 
 using routing_table_peer = std::pair< kd::id
                                     , kd::ip_endpoint >;
-
-} // anonymous namespace
 
 /**
  */
@@ -150,4 +148,6 @@ BOOST_AUTO_TEST_CASE( can_add_candidates )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

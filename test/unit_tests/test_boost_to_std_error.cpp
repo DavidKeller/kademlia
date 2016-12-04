@@ -37,6 +37,8 @@ namespace b = boost;
 namespace ba = b::asio;
 namespace bs = b::system;
 
+namespace {
+
 BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_AUTO_TEST_CASE( can_convert_generic_error )
@@ -60,4 +62,6 @@ BOOST_AUTO_TEST_CASE( cannot_convert_kademlia_error )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

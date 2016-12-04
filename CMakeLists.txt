@@ -22,33 +22,49 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.0.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 project(kademlia)
 
-# Configure compilers.
-if(WIN32)
+# C++11.
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     if (MSVC_VERSION LESS 1800) # 1800 -> VS 12.0
         message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
     endif()
-    add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WIN7
-        -D_WINSOCK_DEPRECATED_NO_WARNINGS)
-else()
-    include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
-    if(IS_CXX11_SUPPORTED)
-        set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
-    else()
-        message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
+    add_definitions(
+        -D_WIN32_WINNT=_WIN32_WINNT_WIN7
+        -D_WINSOCK_DEPRECATED_NO_WARNINGS
+    )
+    if(ENABLE_COVERAGE)
+        message(FATAL_ERROR "Can't generate coverage report on MSVC yet")
     endif()
-    check_cxx_compiler_flag(-stdlib=libc++ IS_LIBCPP_PRESENT)
-    if(IS_LIBCPP_PRESENT AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}")
+else()
+    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     endif()
 
-    set(CMAKE_CXX_FLAGS "-fvisibility=hidden ${CMAKE_CXX_FLAGS}")
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-std=c++11 IS_CXX11_SUPPORTED)
+    if(NOT IS_CXX11_SUPPORTED)
+        message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
+    endif()
+    set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -fvisibility=hidden ${CMAKE_CXX_FLAGS}")
+endif()
+
+# Coverage
+option(ENABLE_COVERAGE "Enable coverage target")
+if(ENABLE_COVERAGE)
+    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+        set(CMAKE_EXEC_LINKER_FLAGS "${CMAKE_EXEC_LINKER_FLAGS} --coverage")
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+        set(CMAKE_EXEC_LINKER_FLAGS "${CMAKE_EXEC_LINKER_FLAGS} --coverage")
+    else()
+        message(FATAL_ERROR "Can't generate coverage target on ${CMAKE_CXX_COMPILER_ID}")
+    endif()
 endif()
 
 # Threads

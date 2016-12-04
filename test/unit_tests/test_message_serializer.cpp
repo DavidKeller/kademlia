@@ -28,6 +28,8 @@
 #include "kademlia/message_serializer.hpp"
 #include "kademlia/message.hpp"
 
+namespace {
+
 namespace k = kademlia;
 namespace kd = k::detail;
 
@@ -93,4 +95,6 @@ BOOST_AUTO_TEST_CASE( can_serialize_a_message_without_body )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+}
 

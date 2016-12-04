@@ -11,7 +11,8 @@ before_install:
     - docker build -t kademlia ci/travis
 
 script:
-    - docker run -v $(pwd):/src kademlia /bin/sh -c 'mkdir /src/build_cov && cd /src/build_cov && ../scripts/generate_coverage_report.sh ..'
+    - docker run -v $(pwd):/src kademlia /bin/sh -c 'mkdir /src/build_cov && cd /src/build_cov && cmake -DENABLE_COVERAGE=ON ..'
+    - docker run -v $(pwd):/src kademlia /bin/sh -c 'cd /src/build_cov && make coverage'
 
 after_success:
     # Upload coverage report to coveralls.
