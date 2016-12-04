@@ -16,4 +16,5 @@ script:
 
 after_success:
     # Upload coverage report to coveralls.
-    - docker run -v $(pwd):/src kademlia /bin/sh -c 'cd /src && coveralls-lcov build_cov/app_total_stripped.info'
+    - env | grep TRAVIS > travis_env
+    - docker run -v $(pwd):/src --env-file travis_env kademlia /bin/sh -c 'cd /src && coveralls-lcov build_cov/app_total_stripped.info'
