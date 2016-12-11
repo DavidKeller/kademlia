@@ -360,6 +360,13 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( test_print )
 
+kd::header
+generate_incorrect_header( void )
+{
+    return kd::header{ kd::header::V1
+                     , static_cast< kd::header::type >( -1 ) };
+}
+
 BOOST_AUTO_TEST_CASE( header_is_printable )
 {
     boost::test_tools::output_test_stream out( k::test::get_capture_path( "pattern_header.out" )
@@ -394,6 +401,9 @@ BOOST_AUTO_TEST_CASE( header_is_printable )
         << std::endl;
 
     BOOST_REQUIRE( out.match_pattern() );
+
+    BOOST_REQUIRE_THROW( out << generate_incorrect_header()
+                       , std::exception );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
