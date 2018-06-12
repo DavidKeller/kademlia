@@ -1,20 +1,22 @@
+dist: trusty
 sudo: required
 
-dist: trusty
+language: cpp
 
-language: generic
+addons:
+  apt:
+    packages:
+    - lcov
+    - libboost-all-dev
 
-services:
-    - docker
-
-before_install:
-    - docker build -t kademlia ci/travis
+before_script:
+    - sudo sh -c 'echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6'
+    - gem install coveralls-lcov
+    - mkdir build_cov && cd build_cov && cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
 
 script:
-    - docker run -v $(pwd):/src kademlia /bin/sh -c 'mkdir /src/build_cov && cd /src/build_cov && cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..'
-    - docker run -v $(pwd):/src kademlia /bin/sh -c 'cd /src/build_cov && make coverage'
+    - make -j $(nproc) coverage
 
 after_success:
     # Upload coverage report to coveralls.
-    - env | grep TRAVIS > travis_env
-    - docker run -v $(pwd):/src --env-file travis_env kademlia /bin/sh -c 'cd /src && coveralls-lcov build_cov/app_total_stripped.info'
+    - coveralls-lcov app_total_stripped.info
