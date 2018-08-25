@@ -22,15 +22,15 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 project(kademlia)
 
 # C++11.
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    if (MSVC_VERSION LESS 1800) # 1800 -> VS 12.0
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if (MSVC_VERSION LESS 1910) # 1910 -> VS 15.0
         message(FATAL_ERROR "Current compiler does'nt support c++11 yet")
     endif()
     add_definitions(
@@ -41,7 +41,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         message(FATAL_ERROR "Can't generate coverage report on MSVC yet")
     endif()
 else()
-    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     endif()
 
@@ -56,10 +56,10 @@ endif()
 # Coverage
 option(ENABLE_COVERAGE "Enable coverage target")
 if(ENABLE_COVERAGE)
-    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
         set(CMAKE_EXEC_LINKER_FLAGS "${CMAKE_EXEC_LINKER_FLAGS} --coverage")
-    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
         set(CMAKE_EXEC_LINKER_FLAGS "${CMAKE_EXEC_LINKER_FLAGS} --coverage")
     else()
@@ -73,8 +73,6 @@ find_package(Threads REQUIRED)
 # Boost
 if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
-#elseif(APPLE)
-#    set(Boost_USE_STATIC_LIBS ON)
 endif()
 find_package(Boost REQUIRED COMPONENTS
     system
@@ -98,7 +96,7 @@ add_definitions(-DBOOST_ALL_NO_LIB
 if(NOT Boost_USE_STATIC_LIBS)
     add_definitions(-DBOOST_ALL_DYN_LINK)
 endif()
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DKADEMLIA_ENABLE_DEBUG)
 endif()
 
