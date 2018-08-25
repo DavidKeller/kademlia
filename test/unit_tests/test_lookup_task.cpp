@@ -50,8 +50,8 @@ struct test_task : kd::lookup_task {
 using routing_table_peer = std::pair< kd::id
                                     , kd::ip_endpoint >;
 
-/**
- */
+BOOST_AUTO_TEST_SUITE( lookup_task )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
@@ -146,6 +146,8 @@ BOOST_AUTO_TEST_CASE( can_add_candidates )
     c.add_candidates( new_candidates );
     BOOST_REQUIRE_EQUAL( 1, c.select_new_closest_candidates( 20 ).size() );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

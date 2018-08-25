@@ -31,6 +31,8 @@ namespace kd = k::detail;
 
 namespace {
 
+BOOST_AUTO_TEST_SUITE( concurrent_guard )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_default_constructed )
@@ -58,6 +60,8 @@ BOOST_AUTO_TEST_CASE( can_detect_concurrent_construction )
 
     BOOST_REQUIRE( kd::concurrent_guard::sentry{ guard } );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

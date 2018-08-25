@@ -34,8 +34,8 @@ namespace {
 namespace k = kademlia;
 namespace kd = k::detail;
 
-/**
- */
+BOOST_AUTO_TEST_SUITE( response_router )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
@@ -139,6 +139,8 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_not_forwarded_when_late, fixture )
     BOOST_REQUIRE_EQUAL( 0ULL, messages_received_count_ );
     BOOST_REQUIRE_EQUAL( 1ULL, error_count_ );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

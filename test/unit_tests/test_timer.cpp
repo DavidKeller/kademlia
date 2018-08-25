@@ -36,8 +36,8 @@ namespace {
 namespace k = kademlia;
 namespace kd = k::detail;
 
-/**
- */
+BOOST_AUTO_TEST_SUITE( timer )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
@@ -99,6 +99,8 @@ BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
 
     // A timeout (infinite) is still in flight atm.
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -61,6 +61,8 @@ struct fixture : k::test::task_fixture
     }
 };
 
+BOOST_AUTO_TEST_SUITE( store_value_task )
+
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
@@ -293,6 +295,8 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
     BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

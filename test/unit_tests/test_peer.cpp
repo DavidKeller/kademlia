@@ -44,6 +44,8 @@ struct fixture
     kd::ip_endpoint ip_endpoint_;
 };
 
+BOOST_AUTO_TEST_SUITE( peer )
+
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed )
@@ -62,6 +64,8 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
     expected << id_ << "@" << ip_endpoint_;
     BOOST_REQUIRE( out.is_equal( expected.str() ) );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -71,7 +71,7 @@ build_test(unit_tests_lib
         test_boost_to_std_error.cpp
         test_message.cpp
         test_message_serializer.cpp
-        test_value_task.cpp
+        test_lookup_task.cpp
         test_store_value_task.cpp
         test_find_value_task.cpp
         test_ip_endpoint.cpp

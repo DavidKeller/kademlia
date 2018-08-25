@@ -43,6 +43,8 @@ struct fixture
     kd::id id_;
 };
 
+BOOST_AUTO_TEST_SUITE( message_serializer )
+
 BOOST_FIXTURE_TEST_SUITE( test_message_serializer, fixture )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed )
@@ -93,6 +95,8 @@ BOOST_AUTO_TEST_CASE( can_serialize_a_message_without_body )
 
     BOOST_REQUIRE( i == e );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

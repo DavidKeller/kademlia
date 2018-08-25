@@ -35,8 +35,8 @@ namespace {
 namespace k = kademlia;
 namespace kd = k::detail;
 
-/**
- */
+BOOST_AUTO_TEST_SUITE( response_callbacks )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
@@ -143,6 +143,8 @@ BOOST_FIXTURE_TEST_CASE( multiple_callbacks_can_be_added, fixture )
     BOOST_REQUIRE_EQUAL( 2, messages_received_.size() );
     BOOST_REQUIRE_EQUAL( h2.random_token_, messages_received_.back() );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -74,6 +74,8 @@ operator<<
     , test_type const & a )
 { return out << a.a_ << " " << a.b_; }
 
+BOOST_AUTO_TEST_SUITE( r )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
@@ -243,6 +245,8 @@ BOOST_AUTO_TEST_CASE( can_be_assigned )
         BOOST_REQUIRE_EQUAL( e1, r1.e() );
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

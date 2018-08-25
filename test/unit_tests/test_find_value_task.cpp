@@ -39,8 +39,6 @@ namespace {
 namespace k = kademlia;
 namespace kd = k::detail;
 
-namespace {
-
 using data_type = std::vector< std::uint8_t >;
 
 struct fixture : k::test::task_fixture
@@ -64,7 +62,7 @@ struct fixture : k::test::task_fixture
     data_type data_;
 };
 
-} // anonymous namespace
+BOOST_AUTO_TEST_SUITE( find_value_task )
 
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
@@ -303,6 +301,8 @@ BOOST_AUTO_TEST_CASE( can_return_value_when_discovered_peer_has_the_value )
     BOOST_REQUIRE_EQUAL_COLLECTIONS( fv2.data_.begin(), fv2.data_.end()
                                    , data_.begin(), data_.end() );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

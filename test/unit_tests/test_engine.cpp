@@ -55,9 +55,8 @@ create_test_engine( boost::asio::io_service & io_service
     return std::move( t );
 }
 
-/**
- *
- */
+BOOST_AUTO_TEST_SUITE( engine )
+
 BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_save )
@@ -172,6 +171,8 @@ BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
 
     BOOST_REQUIRE_GT( io_service.poll(), 0 );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

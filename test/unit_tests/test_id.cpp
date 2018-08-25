@@ -34,9 +34,8 @@ namespace {
 namespace k = kademlia;
 namespace kd = k::detail;
 
-/**
- *  Test id::generate_id()
- */
+BOOST_AUTO_TEST_SUITE( id )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( random_generated_id_are_different )
@@ -255,6 +254,8 @@ BOOST_AUTO_TEST_CASE( id_is_printable )
 
     BOOST_REQUIRE( out.match_pattern() );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

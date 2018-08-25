@@ -51,6 +51,8 @@ struct rdbuf_saver
     std::streambuf * old_buffer_;
 };
 
+BOOST_AUTO_TEST_SUITE( log )
+
 BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_AUTO_TEST_CASE( can_write_to_debug_log )
@@ -116,6 +118,8 @@ BOOST_AUTO_TEST_CASE( can_convert_container_to_string )
         BOOST_REQUIRE_EQUAL( "\\1\\2\\3", r );
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

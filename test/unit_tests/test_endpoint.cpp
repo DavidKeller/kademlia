@@ -30,6 +30,8 @@ namespace {
 
 namespace k = kademlia;
 
+BOOST_AUTO_TEST_SUITE( endpoint )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_with_service_as_string )
@@ -66,6 +68,8 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 
     BOOST_CHECK( out.is_equal( "127.0.0.1:1234" ) );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

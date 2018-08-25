@@ -38,6 +38,8 @@ namespace k = kademlia;
 namespace kd = k::detail;
 namespace a = boost::asio;
 
+BOOST_AUTO_TEST_SUITE( fake_socket )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_created )
@@ -277,6 +279,8 @@ BOOST_AUTO_TEST_CASE( can_send_and_receive_messages_to_self )
                                    , received.begin(), received.end() );
 }
 
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

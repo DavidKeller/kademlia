@@ -60,9 +60,8 @@ struct fixture
     k::endpoint ipv6_;
 };
 
-/**
- *
- */
+BOOST_AUTO_TEST_SUITE( network )
+
 BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
 
 BOOST_AUTO_TEST_CASE( schedule_receive_on_construction )
@@ -76,6 +75,8 @@ BOOST_AUTO_TEST_CASE( schedule_receive_on_construction )
                              , _1, _2, _3 ) };
     (void)m;
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

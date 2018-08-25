@@ -46,10 +46,8 @@ compare_enum_to_message( char const * name, k::error_type const& error )
     return name == message;
 }
 
+BOOST_AUTO_TEST_SUITE( error )
 
-/**
- *
- */
 BOOST_AUTO_TEST_SUITE( test_usage )
 
 #define KADEMLIA_TEST_ERROR( e ) \
@@ -84,6 +82,8 @@ BOOST_AUTO_TEST_CASE( error_category_is_kademlia )
 }
 
 #undef KADEMLIA_TEST_ERROR
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

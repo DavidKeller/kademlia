@@ -35,6 +35,8 @@ namespace k = kademlia;
 namespace kd = k::detail;
 namespace ba = boost::asio;
 
+BOOST_AUTO_TEST_SUITE( ip_endpoint )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_default_constructed )
@@ -86,6 +88,8 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 
     BOOST_CHECK( out.is_equal( "192.168.0.1:1234" ) );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

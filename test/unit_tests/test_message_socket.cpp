@@ -40,9 +40,8 @@ namespace kd = kademlia::detail;
 
 using message_socket_type = kd::message_socket< boost::asio::ip::udp::socket >;
 
-/**
- *
- */
+BOOST_AUTO_TEST_SUITE( message_socket )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
@@ -118,6 +117,8 @@ BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
         message_socket_type::ipv6( io_service, endpoint );
     );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 

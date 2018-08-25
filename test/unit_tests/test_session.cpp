@@ -41,9 +41,8 @@ namespace {
 namespace k = kademlia;
 namespace bo = boost::asio;
 
-/**
- *  Test routing_table::routing_table()
- */
+BOOST_AUTO_TEST_SUITE( session )
+
 BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( session_opens_sockets_on_all_interfaces_by_default )
@@ -118,6 +117,8 @@ BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
 
     BOOST_REQUIRE( result.get() == k::RUN_ABORTED );
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()
 
