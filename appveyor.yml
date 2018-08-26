@@ -17,6 +17,3 @@ before_build:
 build:
     project: build\kademlia.sln
     verbosity: minimal
-
-test_script:
-    - cmd: ctest --build-config %CONFIGURATION%

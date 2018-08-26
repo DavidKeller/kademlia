@@ -88,13 +88,13 @@ Destruction:
 
 ### Supported targets
 <table>
-<tr><th>OS</th><th>Compiler</th><th>Build + Unit tests</th></tr>
-<tr><td>FreeBSD 9</td><td>clang</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/freebsd9-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=freebsd9-x64-builder" /></a></td></tr>
-<tr><td>Fedora 21</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/fedora21-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=fedora21-x64-builder" /></a></td></tr>
-<tr><td>Ubuntu 14</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/ubuntu14-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=ubuntu14-x64-builder" /></a></td></tr>
-<tr><td>Centos 7</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/centos7-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=centos7-x64-builder" /></a></td></tr>
-<tr><td>Debian 8</td><td>gcc</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/debian8-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=debian8-x64-builder" /></a></td></tr>
-<tr><td>Windows 7</td><td>MSVC</td><td><a href="http://buildbot.litchis.fr/kademlia/builders/win2008r2-x64-builder"><img src="http://buildbot.litchis.fr/kademlia/png?builder=win2008r2-x64-builder" /></a></td></tr>
+<tr><th>OS</th><th>Compiler</th></tr>
+<tr><td>FreeBSD</td><td>clang</td></tr>
+<tr><td>Fedora</td><td>gcc</td></tr>
+<tr><td>Ubuntu</td><td>gcc</td></tr>
+<tr><td>Centos</td><td>gcc</td></tr>
+<tr><td>Debian</td><td>gcc</td></tr>
+<tr><td>Windows 7+</td><td>MSVC</td></tr>
 </table>
 
 ### Project structure
