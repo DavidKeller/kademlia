@@ -95,8 +95,8 @@ build_test(unit_tests_lib
         kademlia_static)
 
 if(ENABLE_COVERAGE)
-    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-        if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+        if(${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
             find_program(XCRUN xcrun)
             if(XCRUN)
                 execute_process(COMMAND
@@ -115,7 +115,7 @@ if(ENABLE_COVERAGE)
 
         set(GCOV ${CMAKE_CURRENT_BINARY_DIR}/llvm_gcov)
         configure_file(llvm_gcov.in ${GCOV} @ONLY)
-    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
         find_program(GCOV gcov)
 
         if (NOT GCOV)

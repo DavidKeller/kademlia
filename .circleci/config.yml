@@ -1,0 +1,74 @@
+version: 2
+
+.build: &build
+    working_directory: ~/build
+    steps:
+        - run:
+            name: Install dependencies
+            command: |
+                sh -c "${INSTALL_PACKAGES_CMD}"
+                gem install coveralls-lcov
+        - run:
+            name: Enable IPv6
+            command: echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+        - checkout:
+            path: ~/src
+        - run:
+            name: Configure
+            command: cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ~/src
+        - run:
+            name: Build
+            command: make
+        - run:
+            name: Test
+            command: make coverage
+        - run:
+            name: Upload coverage results
+            command: coveralls-lcov app_total_stripped.info
+
+jobs:
+    debian_build:
+        docker:
+            - image: debian:stable
+        environment:
+            INSTALL_PACKAGES_CMD: |
+                apt-get update
+                apt-get install -y git ssh tar gzip ca-certificates cmake make g++ lcov ruby libboost-all-dev libssl-dev
+        <<: *build
+
+    unbuntu_build:
+        docker:
+            - image: ubuntu:latest
+        environment:
+            INSTALL_PACKAGES_CMD: |
+                apt-get update
+                apt-get install -y git ssh tar gzip ca-certificates cmake make g++ lcov ruby libboost-all-dev libssl-dev
+        <<: *build
+
+    centos_build:
+        docker:
+            - image: centos:latest
+        environment:
+            INSTALL_PACKAGES_CMD: |
+                yum install epel-release
+                yum check-update
+                yum install -y git openssh-clients tar gzip ca-certificates cmake3 make gcc-c++ lcov rubygems boost-devel openssl-devel
+        <<: *build
+
+    fedora_build:
+        docker:
+            - image: fedora:latest
+        environment:
+            INSTALL_PACKAGES_CMD: |
+                dnf check-update
+                dnf install -y git openssh-clients tar gzip ca-certificates cmake3 make gcc-c++ lcov rubygems boost-devel openssl-devel
+        <<: *build
+
+workflows:
+    version: 2
+    all_ditro:
+        jobs:
+            - debian_build
+            - unbuntu_build 
+            - centos_build 
+            - fedora_build 
