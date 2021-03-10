@@ -1,9 +1,9 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 platform: x64
 
 environment:
-    BOOST_ROOT: C:/Libraries/boost_1_67_0
+    BOOST_ROOT: C:/Libraries/boost_1_73_0
     CTEST_OUTPUT_ON_FAILURE: 1
    
 configuration: Release
@@ -12,7 +12,7 @@ before_build:
     - cmd: |-
         md build
         cd build
-        cmake -G "Visual Studio 15 2017 Win64" -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS=ON ..
+        cmake -G "Visual Studio 16 2019 Win64" -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS=ON ..
 
 build:
     project: build\kademlia.sln
