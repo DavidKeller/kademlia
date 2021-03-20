@@ -31,7 +31,7 @@
 #   pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 #include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp>
+#include <boost/test/tools/output_test_stream.hpp>
 #ifdef __clang__
 #   pragma clang diagnostic pop
 #endif

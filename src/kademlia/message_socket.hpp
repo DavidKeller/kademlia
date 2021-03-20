@@ -329,7 +329,7 @@ message_socket< UnderlyingSocketType >::create_underlying_socket
 
     new_socket.bind( e );
 
-    return std::move( new_socket );
+    return new_socket;
 }
 
 template< typename UnderlyingSocketType >

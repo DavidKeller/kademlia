@@ -26,7 +26,7 @@
 #include "common.hpp"
 
 #include <iostream>
-#include <boost/test/output_test_stream.hpp>
+#include <boost/test/tools/output_test_stream.hpp>
 
 #include "kademlia/log.hpp"
 
