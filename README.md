@@ -1,3 +1,4 @@
+[![Documentation Status](https://readthedocs.org/projects/kademlia-cpp/badge/?version=latest)](https://kademlia-cpp.readthedocs.io/en/latest/?badge=latest)
 [![Build Status Linux](https://travis-ci.org/DavidKeller/kademlia.svg?branch=master)](https://travis-ci.org/DavidKeller/kademlia)
 [![Build status Windows](https://ci.appveyor.com/api/projects/status/vf43m6qq8fk6kri1?svg=true)](https://ci.appveyor.com/project/DavidKeller/kademlia)
 [![Coverage Status](https://coveralls.io/repos/github/DavidKeller/kademlia/badge.svg?branch=master)](https://coveralls.io/github/DavidKeller/kademlia?branch=master)

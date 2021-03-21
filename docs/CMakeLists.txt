@@ -1,4 +1,4 @@
-# Copyright (c) 2013, David Keller
+# Copyright (c) 2021, David Keller
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -22,3 +22,14 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+find_package(Sphinx REQUIRED)
+
+set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source)
+set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_target(doc
+    ALL
+    COMMAND ${SPHINX_EXECUTABLE} -b html ${SPHINX_SOURCE} ${SPHINX_BUILD}
+    VERBATIM
+    COMMENT "Generating sphinx documentation")

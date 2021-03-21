@@ -24,9 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 cmake_minimum_required(VERSION 3.5)
 
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
 project(kademlia)
+
+list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 
 # C++11.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -63,6 +63,9 @@ if(ENABLE_COVERAGE)
         message(FATAL_ERROR "Can't generate coverage target on ${CMAKE_CXX_COMPILER_ID}")
     endif()
 endif()
+
+# Documentation
+option(ENABLE_DOCUMENTATION "Enable documentation" OFF)
 
 # Threads
 find_package(Threads REQUIRED)
@@ -106,4 +109,8 @@ add_subdirectory(include)
 add_subdirectory(src)
 enable_testing()
 add_subdirectory(test)
+
+if(ENABLE_DOCUMENTATION)
+    add_subdirectory(docs)
+endif()
 

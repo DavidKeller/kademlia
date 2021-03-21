@@ -40,25 +40,13 @@
 
 namespace kademlia {
 
-/**
- *  @brief This object represents peers and listening addresses.
- */
 class endpoint final
 {
 public:
-    /// The IP/hostname address.
     using address_type = std::string;
-    /// The port identifier.
     using service_type = std::string;
-    /// The port number.
     using service_numeric_type = std::uint16_t;
 
-    /**
-     *  @brief Construct an endpoint from an address and a port identifier.
-     *
-     *  @param address The ip/hostname (e.g. www.example.com, 127.0.0.1).
-     *  @param service The port identifier (e.g. http, 80)
-     */
     endpoint
         ( address_type const& address
         , service_type const& service )
@@ -66,12 +54,6 @@ public:
             , service_( service )
     { }
 
-    /**
-     *  @brief Construct an endpoint from an address and a port number.
-     *
-     *  @param address The ip/hostname (e.g. www.example.com, 127.0.0.1).
-     *  @param service The port number (e.g.  80)
-     */
     endpoint
         ( address_type const& address
         , service_numeric_type const& service )
@@ -79,52 +61,30 @@ public:
             , service_( std::to_string( service ) )
     { }
 
-    /**
-     *  @brief Get the endpoint address.
-     *
-     *  @return The IP/hostname.
-     */
     address_type const&
     address
         ( void )
         const
     { return address_; }
 
-    /**
-     *  @brief Set the endpoint address.
-     *
-     *  @param address The IP/hostname.
-     */
     void
     address
         ( address_type const& address )
     { address_ = address; }
 
-    /**
-     *  @brief Get the endpoint port.
-     *
-     *  @return The port number/identifier.
-     */
     service_type const&
     service
         ( void )
         const
     { return service_; }
 
-    /**
-     *  @brief Set the endpoint port.
-     *
-     *  @param service The port number/identifier.
-     */
     void
     service
         ( service_type const& service )
     { service_ = service; }
 
 private:
-    ///
     address_type address_;
-    ///
     service_type service_;
 };
 
@@ -134,26 +94,12 @@ operator<<
     ( std::ostream & out
     , endpoint const& e );
 
-/**
- *  @brief Compare two endpoints for equality.
- *
- *  @param a The first endpoint to compare.
- *  @param b The second endpoint to compare.
- *  @return true if a & b are equals, false otherwise.
- */
 inline bool
 operator==
     ( endpoint const& a
     , endpoint const& b )
 { return a.address() == b.address() && a.service() == b.service(); }
 
-/**
- *  @brief Compare two endpoints for inequality.
- *
- *  @param a The first endpoint to compare.
- *  @param b The second endpoint to compare.
- *  @return false if a & b are equals, true otherwise.
- */
 inline bool
 operator!=
     ( endpoint const& a

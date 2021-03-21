@@ -40,77 +40,42 @@
 
 namespace kademlia {
 
-/**
- *  @brief This object is used to bootstrap a network.
- */
 class first_session final
         : public session_base
 {
 public:
-    /**
-     *  @brief Construct a passive first_session.
-     *  @details This first_session acts like an active first_session except it
-     *           does'nt try to discover neighbors. It can be used
-     *           by the first node of a network as no peer is known
-     *           uppon its creation.
-     *
-     *           It does'nt make sense to use this constructor once the
-     *           network has at least one peer.
-     *
-     *  @param listen_on_ipv4 IPv4 listening endpoint.
-     *  @param listen_on_ipv6 IPv6 listening endpoint.
-     */
     KADEMLIA_SYMBOL_VISIBILITY
     first_session
         ( endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
-    /**
-     *  @brief Destruct the first_session.
-     */
     KADEMLIA_SYMBOL_VISIBILITY
     ~first_session
         ( void );
 
-    /**
-     *  @brief Disabled copy constructor.
-     */
     first_session
         ( first_session const& )
         = delete;
 
-    /**
-     *  @brief Disabled assignment operator.
-     */
     first_session&
     operator=
         ( first_session const& )
         = delete;
 
-    /**
-     *  @brief This <b>blocking call</b> execute the first_session main loop.
-     *
-     *  @return The exit reason of the call.
-     */
     KADEMLIA_SYMBOL_VISIBILITY
     std::error_code
     run
         ( void );
 
-    /**
-     *  @brief Abort the first_session main loop.
-     */
     KADEMLIA_SYMBOL_VISIBILITY
     void
     abort
         ( void );
 
 private:
-    /// Hidden implementation.
     struct impl;
 
 private:
-    /// The hidden implementation instance.
     std::unique_ptr< impl > impl_;
 };
 
