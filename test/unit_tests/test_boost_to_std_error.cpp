@@ -27,8 +27,7 @@
 
 #include <boost/system/error_code.hpp>
 #include <boost/asio/error.hpp>
-
-#include "common.hpp"
+#include "gtest/gtest.h"
 #include "kademlia/boost_to_std_error.hpp"
 
 namespace k = kademlia;
@@ -39,33 +38,27 @@ namespace bs = b::system;
 
 namespace {
 
-BOOST_AUTO_TEST_SUITE( boost_to_std_error )
 
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( can_convert_generic_error )
+TEST(BoostToStdErrorTest, can_convert_generic_error)
 {
     auto const c = make_error_code( bs::errc::address_in_use );
     auto const e = make_error_code( std::errc::address_in_use );
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == e );
+    EXPECT_EQ(kd::boost_to_std_error( c ), e);
 }
 
-BOOST_AUTO_TEST_CASE( can_convert_system_error )
+TEST(BoostToStdErrorTest, can_convert_system_error)
 {
     bs::error_code const c{ 1000, bs::system_category() };
     std::error_code const e{ 1000, std::system_category() };
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == e );
+    EXPECT_EQ(kd::boost_to_std_error( c ), e);
 }
 
-BOOST_AUTO_TEST_CASE( cannot_convert_kademlia_error )
+
+TEST(BoostToStdErrorTest, cannot_convert_kademlia_error)
 {
     bs::error_code const c{ 1000, ba::error::misc_category };
-    BOOST_REQUIRE( kd::boost_to_std_error( c ) == k::UNKNOWN_ERROR );
+    EXPECT_EQ(kd::boost_to_std_error( c ), k::UNKNOWN_ERROR);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
-}
+} // namespace
 

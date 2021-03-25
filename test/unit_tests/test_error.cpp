@@ -23,11 +23,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/error.hpp>
+
+#include "kademlia/error.hpp"
+#include "gtest/gtest.h"
 #include <algorithm>
 #include <cctype>
-
-#include "common.hpp"
 
 namespace {
 
@@ -46,46 +46,33 @@ compare_enum_to_message( char const * name, k::error_type const& error )
     return name == message;
 }
 
-BOOST_AUTO_TEST_SUITE( error )
-
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-#define KADEMLIA_TEST_ERROR( e ) \
-    BOOST_REQUIRE( compare_enum_to_message( #e, k:: e ) )
-
-BOOST_AUTO_TEST_CASE( error_message_follows_the_error_name )
+TEST(ErrorTest, error_message_follows_the_error_name)
 {
-    KADEMLIA_TEST_ERROR( UNKNOWN_ERROR );
-    KADEMLIA_TEST_ERROR( RUN_ABORTED );
-    KADEMLIA_TEST_ERROR( INITIAL_PEER_FAILED_TO_RESPOND );
-    KADEMLIA_TEST_ERROR( INVALID_ID );
-    KADEMLIA_TEST_ERROR( TRUNCATED_ID );
-    KADEMLIA_TEST_ERROR( TRUNCATED_HEADER );
-    KADEMLIA_TEST_ERROR( TRUNCATED_ENDPOINT );
-    KADEMLIA_TEST_ERROR( TRUNCATED_ADDRESS );
-    KADEMLIA_TEST_ERROR( TRUNCATED_SIZE );
-    KADEMLIA_TEST_ERROR( UNKNOWN_PROTOCOL_VERSION );
-    KADEMLIA_TEST_ERROR( CORRUPTED_BODY );
-    KADEMLIA_TEST_ERROR( UNASSOCIATED_MESSAGE_ID );
-    KADEMLIA_TEST_ERROR( INVALID_IPV4_ADDRESS );
-    KADEMLIA_TEST_ERROR( INVALID_IPV6_ADDRESS );
-    KADEMLIA_TEST_ERROR( UNIMPLEMENTED );
-    KADEMLIA_TEST_ERROR( VALUE_NOT_FOUND );
-    KADEMLIA_TEST_ERROR( TIMER_MALFUNCTION );
-    KADEMLIA_TEST_ERROR( ALREADY_RUNNING );
+    EXPECT_TRUE(compare_enum_to_message("UNKNOWN_ERROR", k::UNKNOWN_ERROR));
+    EXPECT_TRUE(compare_enum_to_message("RUN_ABORTED", k::RUN_ABORTED));
+    EXPECT_TRUE(compare_enum_to_message("INITIAL_PEER_FAILED_TO_RESPOND", k::INITIAL_PEER_FAILED_TO_RESPOND));
+    EXPECT_TRUE(compare_enum_to_message("INVALID_ID", k::INVALID_ID));
+    EXPECT_TRUE(compare_enum_to_message("TRUNCATED_ID", k::TRUNCATED_ID));
+    EXPECT_TRUE(compare_enum_to_message("TRUNCATED_HEADER", k::TRUNCATED_HEADER));
+    EXPECT_TRUE(compare_enum_to_message("TRUNCATED_ENDPOINT", k::TRUNCATED_ENDPOINT));
+    EXPECT_TRUE(compare_enum_to_message("TRUNCATED_ADDRESS", k::TRUNCATED_ADDRESS));
+    EXPECT_TRUE(compare_enum_to_message("TRUNCATED_SIZE", k::TRUNCATED_SIZE));
+    EXPECT_TRUE(compare_enum_to_message("UNKNOWN_PROTOCOL_VERSION", k::UNKNOWN_PROTOCOL_VERSION));
+    EXPECT_TRUE(compare_enum_to_message("CORRUPTED_BODY", k::CORRUPTED_BODY));
+    EXPECT_TRUE(compare_enum_to_message("UNASSOCIATED_MESSAGE_ID", k::UNASSOCIATED_MESSAGE_ID));
+    EXPECT_TRUE(compare_enum_to_message("INVALID_IPV4_ADDRESS", k::INVALID_IPV4_ADDRESS));
+    EXPECT_TRUE(compare_enum_to_message("INVALID_IPV6_ADDRESS", k::INVALID_IPV6_ADDRESS));
+    EXPECT_TRUE(compare_enum_to_message("UNIMPLEMENTED", k::UNIMPLEMENTED));
+    EXPECT_TRUE(compare_enum_to_message("VALUE_NOT_FOUND", k::VALUE_NOT_FOUND));
+    EXPECT_TRUE(compare_enum_to_message("TIMER_MALFUNCTION", k::TIMER_MALFUNCTION));
+    EXPECT_TRUE(compare_enum_to_message("ALREADY_RUNNING", k::ALREADY_RUNNING));
 }
 
-BOOST_AUTO_TEST_CASE( error_category_is_kademlia )
+TEST(ErrorTest, error_category_is_kademlia)
 {
     auto e = make_error_condition( k::UNKNOWN_ERROR );
-    BOOST_REQUIRE_EQUAL( "kademlia", e.category().name() );
+    EXPECT_STREQ( "kademlia", e.category().name());
 }
-
-#undef KADEMLIA_TEST_ERROR
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

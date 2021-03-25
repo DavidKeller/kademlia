@@ -27,6 +27,8 @@
 add_custom_target(unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
 add_dependencies(check unit_tests)
 
+find_package(GTest REQUIRED)
+
 include_directories(BEFORE .)
 
 add_library(test_helpers STATIC
@@ -43,7 +45,8 @@ add_library(test_helpers STATIC
 
 target_link_libraries(test_helpers
     ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${GTEST_BOTH_LIBRARIES})
 
 set_target_properties(test_helpers PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -91,6 +94,7 @@ build_test(unit_tests_lib
         test_first_session.cpp
         test_concurrent_guard.cpp
         test_engine.cpp
+        test_fake_socket.cpp
     LIBRARIES 
         kademlia_static)
 

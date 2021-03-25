@@ -23,19 +23,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "common.hpp"
-#include "tracker_mock.hpp"
-#include "routing_table_mock.hpp"
 #include "corrupted_message.hpp"
-#include "task_fixture.hpp"
 
 #include <vector>
-#include <utility>
 
 #include "kademlia/id.hpp"
-#include "kademlia/peer.hpp"
 #include "kademlia/ip_endpoint.hpp"
 #include "kademlia/discover_neighbors_task.hpp"
+#include "gtest/gtest.h"
+#include "task_fixture.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
@@ -44,137 +40,128 @@ namespace {
 
 using endpoints_type = std::vector< kd::ip_endpoint >;
 
-struct fixture : k::test::task_fixture
+struct DiscoverNeighborsTaskTest : k::test::TaskFixture
 {
     void
-    operator()
-        ( std::error_code const& failure )
+    operator()(std::error_code const& failure)
     {
         ++ callback_call_count_;
         failure_ = failure;
     }
 };
 
-BOOST_AUTO_TEST_SUITE( discover_neighbors_task )
-
-BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
-
-BOOST_AUTO_TEST_CASE( can_notify_error_when_initial_endpoints_fail_to_respond )
+TEST_F(DiscoverNeighborsTaskTest, can_notify_error_when_initial_endpoints_fail_to_respond)
 {
     kd::id const my_id{ "a" };
 
     // Assume initial peer resolves to 2 IPv4 addresses.
-    endpoints_type const endpoints{ kd::to_ip_endpoint( "192.168.1.2", 5555 )
-                                  , kd::to_ip_endpoint( "192.168.1.3", 5555 ) };
+    endpoints_type const endpoints{ kd::to_ip_endpoint("192.168.1.2", 5555)
+            , kd::to_ip_endpoint("192.168.1.3", 5555) };
 
-    kd::start_discover_neighbors_task( my_id 
-                                     , tracker_
-                                     , routing_table_
-                                     , endpoints
-                                     , std::ref( *this ) );
+    kd::start_discover_neighbors_task(my_id
+            , tracker_
+            , routing_table_
+            , endpoints
+            , std::ref(*this));
 
     io_service_.poll();
 
     // As neither of theses addresses responded, the task throws.
-    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    EXPECT_EQ(1, callback_call_count_);
+    EXPECT_TRUE(failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND);
 }
 
-BOOST_AUTO_TEST_CASE( can_contact_endpoints_until_one_respond )
+TEST_F(DiscoverNeighborsTaskTest, can_contact_endpoints_until_one_respond)
 {
     kd::id const my_id{ "a" };
 
     // Assume initial peer resolves to 2 IPv4 addresses.
-    auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
-    auto const e2 = kd::to_ip_endpoint( "192.168.1.3", 5555 );
-    auto const e3 = kd::to_ip_endpoint( "::4", 5555 );
+    auto const e1 = kd::to_ip_endpoint("192.168.1.2", 5555);
+    auto const e2 = kd::to_ip_endpoint("192.168.1.3", 5555);
+    auto const e3 = kd::to_ip_endpoint("::4", 5555);
     endpoints_type const endpoints{ e1, e2, e3 };
 
-    auto p1 = create_peer( "192.168.1.4", kd::id{ "b" } );
-    auto p2 = create_peer( "192.168.1.5", kd::id{ "b" } );
-    auto p3 = create_peer( "192.168.1.6", kd::id{ "b" } );
-    auto p4 = create_peer( "192.168.1.7", kd::id{ "b" } );
+    auto p1 = create_peer("192.168.1.4", kd::id{ "b" });
+    auto p2 = create_peer("192.168.1.5", kd::id{ "b" });
+    auto p3 = create_peer("192.168.1.6", kd::id{ "b" });
+    auto p4 = create_peer("192.168.1.7", kd::id{ "b" });
     kd::find_peer_response_body const req{ { p1, p2, p3, p4 } };
-    tracker_.add_message_to_receive( e2, my_id, req );
+    tracker_.add_message_to_receive(e2, my_id, req);
 
-    kd::start_discover_neighbors_task( my_id 
-                                     , tracker_
-                                     , routing_table_
-                                     , endpoints
-                                     , std::ref( *this ) );
+    kd::start_discover_neighbors_task(my_id
+            , tracker_
+            , routing_table_
+            , endpoints
+            , std::ref(*this));
 
     io_service_.poll();
 
     kd::find_peer_request_body const fp{ my_id };
     // Task queried e3 but it didn't respond.
-    BOOST_REQUIRE( tracker_.has_sent_message( e3, fp ) );
+    EXPECT_TRUE(tracker_.has_sent_message(e3, fp));
 
     // Hence task queried e2 that responded without
     // providing new peer.
-    BOOST_REQUIRE( tracker_.has_sent_message( e2, fp ) );
+    EXPECT_TRUE(tracker_.has_sent_message(e2, fp));
 
     // Task didn't send any more message as previous peer responded.
-    BOOST_REQUIRE( ! tracker_.has_sent_message() );
+    EXPECT_TRUE(! tracker_.has_sent_message());
 
     // the callback has been called.
-    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( ! failure_ );
+    EXPECT_EQ(1, callback_call_count_);
+    EXPECT_TRUE(! failure_);
 
     // Ensure e2 response listed peer p1 has been added.
-    BOOST_REQUIRE_EQUAL( req.peers_.size(), routing_table_.peers_.size() );
+    EXPECT_EQ(req.peers_.size(), routing_table_.peers_.size());
 }
 
-BOOST_AUTO_TEST_CASE( can_skip_wrong_response )
+TEST_F(DiscoverNeighborsTaskTest, can_skip_wrong_response)
 {
     kd::id const my_id{ "a" };
 
     // Assume initial peer resolves to 2 IPv4 addresses.
-    auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
+    auto const e1 = kd::to_ip_endpoint("192.168.1.2", 5555);
     endpoints_type const endpoints{ e1 };
 
     kd::find_value_response_body const req{};
-    tracker_.add_message_to_receive( e1, my_id, req );
+    tracker_.add_message_to_receive(e1, my_id, req);
 
-    kd::start_discover_neighbors_task( my_id 
-                                     , tracker_
-                                     , routing_table_
-                                     , endpoints
-                                     , std::ref( *this ) );
+    kd::start_discover_neighbors_task(my_id
+            , tracker_
+            , routing_table_
+            , endpoints
+            , std::ref(*this));
 
     io_service_.poll();
 
     // the callback has been called.
-    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    EXPECT_EQ(1, callback_call_count_);
+    EXPECT_TRUE(failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND);
 }
 
-BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
+TEST_F(DiscoverNeighborsTaskTest, can_skip_corrupted_response)
 {
     kd::id const my_id{ "a" };
 
     // Assume initial peer resolves to 2 IPv4 addresses.
-    auto const e1 = kd::to_ip_endpoint( "192.168.1.2", 5555 );
+    auto const e1 = kd::to_ip_endpoint("192.168.1.2", 5555);
     endpoints_type const endpoints{ e1 };
 
     k::test::corrupted_message< kd::header::FIND_PEER_RESPONSE > const req{};
-    tracker_.add_message_to_receive( e1, my_id, req );
+    tracker_.add_message_to_receive(e1, my_id, req);
 
-    kd::start_discover_neighbors_task( my_id 
-                                     , tracker_
-                                     , routing_table_
-                                     , endpoints
-                                     , std::ref( *this ) );
+    kd::start_discover_neighbors_task(my_id
+            , tracker_
+            , routing_table_
+            , endpoints
+            , std::ref(*this));
 
     io_service_.poll();
 
     // the callback has been called.
-    BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    EXPECT_EQ(1, callback_call_count_);
+    EXPECT_TRUE(failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

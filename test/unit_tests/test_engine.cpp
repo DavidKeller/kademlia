@@ -24,12 +24,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
-
 #include <boost/asio/io_service.hpp>
-
 #include "test_engine.hpp"
-
-#include "common.hpp"
+#include "gtest/gtest.h"
 
 namespace {
 
@@ -55,11 +52,8 @@ create_test_engine( boost::asio::io_service & io_service
     return t;
 }
 
-BOOST_AUTO_TEST_SUITE( engine )
 
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_save )
+TEST(EngineTest, isolated_bootstrap_engine_cannot_save )
 {
     boost::asio::io_service io_service;
 
@@ -68,32 +62,32 @@ BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_save )
 
     auto e1 = create_test_engine( io_service, d::id{ "0" } );
 
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
+    EXPECT_EQ( 0, io_service.poll() );
 
     bool save_executed = false;
     auto on_save = [ &save_executed ]( std::error_code const& failure )
     { save_executed = true; };
     e1->async_save( "key", "data", on_save );
 
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
+    EXPECT_EQ( 0, io_service.poll() );
 
-    BOOST_REQUIRE( ! save_executed );
+    EXPECT_TRUE( ! save_executed );
 
     auto e2 = create_test_engine( io_service
                                 , d::id{ "1" }
                                 , e1->ipv4() );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
-    BOOST_REQUIRE( save_executed );
+    EXPECT_GT( io_service.poll(), 0 );
+    EXPECT_TRUE( save_executed );
 }
 
-BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_load )
+TEST(EngineTest, isolated_bootstrap_engine_cannot_load )
 {
     boost::asio::io_service io_service;
 
     auto e1 = create_test_engine( io_service, d::id{ "0" } );
 
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
+    EXPECT_EQ( 0, io_service.poll() );
 
     bool load_executed = false;
     auto on_load = [ &load_executed ]( std::error_code const& failure
@@ -101,46 +95,46 @@ BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_load )
     { load_executed = true; };
     e1->async_load( "key", on_load );
 
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
+    EXPECT_EQ( 0, io_service.poll() );
 
-    BOOST_REQUIRE( ! load_executed );
+    EXPECT_TRUE( ! load_executed );
 
     auto e2 = create_test_engine( io_service
                                 , d::id{ "1" }
                                 , e1->ipv4() );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
-    BOOST_REQUIRE( load_executed );
+    EXPECT_GT( io_service.poll(), 0 );
+    EXPECT_TRUE( load_executed );
 }
 
-BOOST_AUTO_TEST_CASE( isolated_engine_cannot_be_constructed )
+TEST(EngineTest, isolated_engine_cannot_be_constructed )
 {
     boost::asio::io_service io_service;
 
     k::endpoint initial_peer{ "172.18.1.2", k::session_base::DEFAULT_PORT };
 
-    BOOST_REQUIRE_THROW( create_test_engine( io_service
+    EXPECT_THROW( create_test_engine( io_service
                                            , d::id{}
                                            , initial_peer )
                        , std::exception );
 }
 
-BOOST_AUTO_TEST_CASE( two_engines_can_find_themselves )
+TEST(EngineTest, two_engines_can_find_themselves )
 {
     boost::asio::io_service io_service;
 
     d::id const id1{ "8000000000000000000000000000000000000000" };
     auto e1 = create_test_engine( io_service, id1 );
 
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
+    EXPECT_EQ( 0, io_service.poll() );
   
     d::id const id2{ "4000000000000000000000000000000000000000" };
     auto e2 = create_test_engine( io_service, id2, e1->ipv4() );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
+    EXPECT_GT( io_service.poll(), 0 );
 }
 
-BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
+TEST(EngineTest, two_engines_can_save_and_load )
 {
     boost::asio::io_service io_service;
 
@@ -150,7 +144,7 @@ BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
     d::id const id2{ "4000000000000000000000000000000000000000" };
     auto e2 = create_test_engine( io_service, id2, e1->ipv4() );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
+    EXPECT_GT( io_service.poll(), 0 );
 
     std::string const expected_data{ "data" };
 
@@ -158,7 +152,7 @@ BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
     { if ( failure ) throw std::system_error{ failure }; };
     e1->async_save( "key", expected_data, on_save );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
+    EXPECT_GT( io_service.poll(), 0 );
 
     auto on_load = [ &expected_data ]( std::error_code const& failure
                                      , std::string const& actual_data )
@@ -169,12 +163,8 @@ BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
     };
     e2->async_load( "key", on_load );
 
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
+    EXPECT_GT( io_service.poll(), 0 );
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

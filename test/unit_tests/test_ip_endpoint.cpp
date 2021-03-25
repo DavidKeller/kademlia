@@ -24,10 +24,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-
-#include <system_error>
-
 #include "kademlia/ip_endpoint.hpp"
+#include "gtest/gtest.h"
+#include <system_error>
 
 namespace {
 
@@ -35,63 +34,46 @@ namespace k = kademlia;
 namespace kd = k::detail;
 namespace ba = boost::asio;
 
-BOOST_AUTO_TEST_SUITE( ip_endpoint )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_default_constructed )
+TEST(IPEndpoint, can_be_default_constructed)
 {
-    BOOST_REQUIRE_NO_THROW(
+    EXPECT_NO_THROW(
         kd::ip_endpoint const e{};
         (void)e;
-    );
+   );
 }
 
-BOOST_AUTO_TEST_CASE( can_be_constructed_with_ip_and_port )
+TEST(IPEndpoint, can_be_constructed_with_ip_and_port)
 {
-    BOOST_REQUIRE_NO_THROW(
-        auto const e = kd::to_ip_endpoint( "192.168.0.1", 1234 ); 
+    EXPECT_NO_THROW(
+        auto const e = kd::to_ip_endpoint( "192.168.0.1", 1234); 
         (void)e;
-    );
+   );
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( can_be_compared)
+TEST(IPEndpoint, can_be_compared)
 {
     {
-        auto a = kd::to_ip_endpoint( "192.168.0.1", 1234 );
+        auto a = kd::to_ip_endpoint( "192.168.0.1", 1234);
         auto b = a;
-
-        BOOST_REQUIRE_EQUAL( a, b );
+        EXPECT_EQ(a, b);
     }
 
     {
-        auto a = kd::to_ip_endpoint( "192.168.0.1", 1234 );
-        auto b = kd::to_ip_endpoint( "192.168.0.2", 1234 );
-
-        BOOST_REQUIRE_NE( a, b );
+        auto a = kd::to_ip_endpoint( "192.168.0.1", 1234);
+        auto b = kd::to_ip_endpoint( "192.168.0.2", 1234);
+        EXPECT_NE(a, b);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( test_print )
-
-BOOST_AUTO_TEST_CASE( can_be_printed )
+TEST(IPEndpoint, can_be_printed)
 {
     boost::test_tools::output_test_stream out;
-
-    out << kd::to_ip_endpoint( "192.168.0.1", 1234 );
-
-    BOOST_CHECK( out.is_equal( "192.168.0.1:1234" ) );
+    out << kd::to_ip_endpoint( "192.168.0.1", 1234);
+    EXPECT_TRUE( out.is_equal( "192.168.0.1:1234"));
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

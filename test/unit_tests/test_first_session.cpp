@@ -23,93 +23,81 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdint>
-#include <future>
-
-#include <boost/asio/ip/udp.hpp>
-#include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
 #include <kademlia/error.hpp>
 #include <kademlia/first_session.hpp>
-
 #include "common.hpp"
 #include "network.hpp"
+#include "gtest/gtest.h"
+#include <cstdint>
+#include <future>
+
 
 namespace {
 
 namespace k = kademlia;
 namespace bo = boost::asio;
 
-BOOST_AUTO_TEST_SUITE( first_session )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( first_session_opens_sockets_on_all_interfaces_by_default )
+TEST(FirstSessionTest, opens_sockets_on_all_interfaces_by_default)
 {
     k::first_session s;
 
-    k::test::check_listening( "0.0.0.0", k::first_session::DEFAULT_PORT );
-    k::test::check_listening( "::", k::first_session::DEFAULT_PORT );
+    k::test::check_listening("0.0.0.0", k::first_session::DEFAULT_PORT);
+    k::test::check_listening("::", k::first_session::DEFAULT_PORT);
 }
 
-BOOST_AUTO_TEST_CASE( first_session_opens_both_ipv4_ipv6_sockets )
+TEST(FirstSessionTest, opens_both_ipv4_ipv6_sockets)
 {
     // Create listening socket.
     std::uint16_t const port1 = k::test::get_temporary_listening_port();
-    std::uint16_t const port2 = k::test::get_temporary_listening_port( port1 );
+    std::uint16_t const port2 = k::test::get_temporary_listening_port(port1);
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 
     k::first_session s{ ipv4_endpoint, ipv6_endpoint };
 
-    k::test::check_listening( "127.0.0.1", port1 );
-    k::test::check_listening( "::1", port2 );
+    k::test::check_listening("127.0.0.1", port1);
+    k::test::check_listening("::1", port2);
 }
 
-BOOST_AUTO_TEST_CASE( first_session_throw_on_invalid_ipv6_address )
+TEST(FirstSessionTest, throw_on_invalid_ipv6_address)
 {
     // Create listening socket.
     std::uint16_t const port1 = k::test::get_temporary_listening_port();
-    std::uint16_t const port2 = k::test::get_temporary_listening_port( port1 );
+    std::uint16_t const port2 = k::test::get_temporary_listening_port(port1);
     k::endpoint ipv4_endpoint{ "127.0.0.1", port1 };
     k::endpoint ipv6_endpoint{ "0.0.0.0", port2 };
 
-    BOOST_REQUIRE_THROW( k::first_session s( ipv4_endpoint
-                                           , ipv6_endpoint )
-                       , std::exception );
+    EXPECT_THROW(k::first_session s(ipv4_endpoint
+                                           , ipv6_endpoint)
+                       , std::exception);
 }
 
-BOOST_AUTO_TEST_CASE( first_session_throw_on_invalid_ipv4_address )
+TEST(FirstSessionTest, throw_on_invalid_ipv4_address)
 {
     // Create listening socket.
     std::uint16_t const port1 = k::test::get_temporary_listening_port();
-    std::uint16_t const port2 = k::test::get_temporary_listening_port( port1 );
+    std::uint16_t const port2 = k::test::get_temporary_listening_port(port1);
     k::endpoint ipv4_endpoint{ "::", port1 };
     k::endpoint ipv6_endpoint{ "::1", port2 };
 
-    BOOST_REQUIRE_THROW( k::first_session s( ipv4_endpoint
-                                           , ipv6_endpoint )
-                       , std::exception );
+    EXPECT_THROW(k::first_session s(ipv4_endpoint
+                                           , ipv6_endpoint)
+                       , std::exception);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( first_session_run_can_be_aborted )
+TEST(FirstSessionTest, run_can_be_aborted)
 {
     k::first_session s;
 
-    auto result = std::async( std::launch::async
-                            , &k::first_session::run, &s );
+    auto result = std::async(std::launch::async
+                            , &k::first_session::run, &s);
     s.abort();
 
-    BOOST_REQUIRE( result.get() == k::RUN_ABORTED );
+    EXPECT_TRUE(result.get() == k::RUN_ABORTED);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

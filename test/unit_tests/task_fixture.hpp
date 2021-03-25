@@ -35,11 +35,67 @@
 #include "common.hpp"
 #include "tracker_mock.hpp"
 #include "routing_table_mock.hpp"
+#include "gtest/gtest.h"
 
 namespace kademlia {
 namespace test {
 
+
+struct TaskFixture: public ::testing::Test
+{
+    TaskFixture
+            ( void )
+            : io_service_()
+            , io_service_work_( io_service_ )
+            , tracker_( io_service_ )
+            , failure_()
+            , routing_table_()
+            , callback_call_count_()
+    { }
+
+    detail::peer
+    create_peer
+            ( std::string const& ip, detail::id const& id )
+    {
+        auto e = detail::to_ip_endpoint( ip, 5555 );
+
+        return detail::peer{ id, e };
+    }
+
+    detail::peer
+    create_and_add_peer
+            ( std::string const& ip, detail::id const& id )
+    {
+        auto p = create_peer( ip, id );
+        routing_table_.peers_.emplace_back( p.id_, p.endpoint_ );
+
+        return p;
+    }
+
+    boost::asio::io_service io_service_;
+    boost::asio::io_service::work io_service_work_;
+    tracker_mock tracker_;
+    std::error_code failure_;
+    routing_table_mock routing_table_;
+    std::size_t callback_call_count_;
+
+protected:
+    ~TaskFixture() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
+};
+
+
 struct task_fixture
+
 {
     task_fixture
         ( void )

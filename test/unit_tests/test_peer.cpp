@@ -24,37 +24,49 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <sstream>
 
 #include "common.hpp"
 #include "kademlia/peer.hpp"
+#include "gtest/gtest.h"
+#include <sstream>
+
 
 namespace {
 
 namespace kd = kademlia::detail;
 
-struct fixture 
+struct PeerTest: public ::testing::Test
 {
-    fixture()
+    PeerTest()
             : id_{}
-            , ip_endpoint_( kd::to_ip_endpoint( "127.0.0.1", 1234 ) )
+            , ip_endpoint_(kd::to_ip_endpoint("127.0.0.1", 1234))
     { }
 
     kd::id id_;
     kd::ip_endpoint ip_endpoint_;
+
+protected:
+    ~PeerTest() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
 };
 
-BOOST_AUTO_TEST_SUITE( peer )
 
-BOOST_FIXTURE_TEST_SUITE( test_usage, fixture )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed )
+TEST_F(PeerTest, can_be_constructed)
 {
     kd::peer const p{ id_, ip_endpoint_ };
     (void)p;
 }
 
-BOOST_AUTO_TEST_CASE( can_be_printed )
+TEST_F(PeerTest, can_be_printed)
 {
     boost::test_tools::output_test_stream out;
 
@@ -62,12 +74,9 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
 
     std::ostringstream expected;
     expected << id_ << "@" << ip_endpoint_;
-    BOOST_REQUIRE( out.is_equal( expected.str() ) );
+    EXPECT_TRUE(out.is_equal(expected.str()));
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

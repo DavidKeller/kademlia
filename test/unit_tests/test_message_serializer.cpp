@@ -24,81 +24,84 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-
 #include "kademlia/message_serializer.hpp"
 #include "kademlia/message.hpp"
+#include "gtest/gtest.h"
 
 namespace {
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-struct fixture
+struct MessageSerializerTest: public ::testing::Test
 {
-    fixture
-        ( void )
-            : id_{ "abcd" }
+    MessageSerializerTest(): id_{"abcd"}
     {}
 
     kd::id id_;
+protected:
+    ~MessageSerializerTest() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
 };
 
-BOOST_AUTO_TEST_SUITE( message_serializer )
 
-BOOST_FIXTURE_TEST_SUITE( test_message_serializer, fixture )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed )
+TEST_F(MessageSerializerTest, can_be_constructed)
 {
     kd::message_serializer s{ id_ };
     (void)s;
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_a_message_with_a_body )
+TEST_F(MessageSerializerTest, can_serialize_a_message_with_a_body)
 {
     kd::message_serializer s{ id_ };
     kd::id const searched_id{ "1234" };
     kd::id const token{ "ABCD" };
 
     kd::find_peer_request_body const expected{ searched_id };
-    auto const b = s.serialize( expected, token );
+    auto const b = s.serialize(expected, token);
 
-    auto i = std::begin( b ), e = std::end( b );
+    auto i = std::begin(b), e = std::end(b);
     kd::header h;
-    BOOST_REQUIRE( ! kd::deserialize( i, e, h ) );
-    BOOST_REQUIRE_EQUAL( kd::header::V1, h.version_ );
-    BOOST_REQUIRE_EQUAL( kd::header::FIND_PEER_REQUEST, h.type_ );
-    BOOST_REQUIRE_EQUAL( id_, h.source_id_ );
-    BOOST_REQUIRE_EQUAL( token, h.random_token_ );
+    EXPECT_TRUE(! kd::deserialize(i, e, h));
+    EXPECT_EQ(kd::header::V1, h.version_);
+    EXPECT_EQ(kd::header::FIND_PEER_REQUEST, h.type_);
+    EXPECT_EQ(id_, h.source_id_);
+    EXPECT_EQ(token, h.random_token_);
 
     kd::find_peer_request_body actual;
-    BOOST_REQUIRE( ! kd::deserialize( i, e, actual ) );
-    BOOST_REQUIRE( expected.peer_to_find_id_ == actual.peer_to_find_id_ );
+    EXPECT_TRUE(! kd::deserialize(i, e, actual));
+    EXPECT_TRUE(expected.peer_to_find_id_ == actual.peer_to_find_id_);
 
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(i == e);
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_a_message_without_body )
+TEST_F(MessageSerializerTest, can_serialize_a_message_without_body)
 {
     kd::message_serializer s{ id_ };
     kd::id const searched_id{ "1234" };
     kd::id const token{ "ABCD" };
 
-    auto const b = s.serialize( kd::header::PING_REQUEST, token );
+    auto const b = s.serialize(kd::header::PING_REQUEST, token);
 
-    auto i = std::begin( b ), e = std::end( b );
+    auto i = std::begin(b), e = std::end(b);
     kd::header h;
-    BOOST_REQUIRE( ! kd::deserialize( i, e, h ) );
-    BOOST_REQUIRE_EQUAL( kd::header::V1, h.version_ );
-    BOOST_REQUIRE_EQUAL( kd::header::PING_REQUEST, h.type_ );
-    BOOST_REQUIRE_EQUAL( id_, h.source_id_ );
-    BOOST_REQUIRE_EQUAL( token, h.random_token_ );
+    EXPECT_TRUE(! kd::deserialize(i, e, h));
+    EXPECT_EQ(kd::header::V1, h.version_);
+    EXPECT_EQ(kd::header::PING_REQUEST, h.type_);
+    EXPECT_EQ(id_, h.source_id_);
+    EXPECT_EQ(token, h.random_token_);
 
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(i == e);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

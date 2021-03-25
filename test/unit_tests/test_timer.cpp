@@ -24,33 +24,27 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-
-#include <vector>
 #include "kademlia/error_impl.hpp"
-
 #include "kademlia/timer.hpp"
-#include "kademlia/log.hpp"
+#include "gtest/gtest.h"
+#include <vector>
 
 namespace {
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-BOOST_AUTO_TEST_SUITE( timer )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
+TEST(TimerConstructTest, can_be_constructed_using_a_reactor)
 {
     boost::asio::io_service io_service;
-    BOOST_REQUIRE_NO_THROW( kd::timer{ io_service } );
+    EXPECT_NO_THROW(kd::timer{ io_service });
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-struct fixture
+struct TimerTest: public ::testing::Test
 {
-    fixture()
+    TimerTest()
         : io_service_{}
         , work_{ io_service_ }
         , manager_{ io_service_ }
@@ -61,48 +55,53 @@ struct fixture
     boost::asio::io_service::work work_;
     kd::timer manager_;
     std::size_t timeouts_received_;
+
+protected:
+    ~TimerTest() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
 };
 
-/**
- *
- */
-BOOST_AUTO_TEST_SUITE( test_usage )
 
-BOOST_FIXTURE_TEST_CASE( multiple_associations_can_be_added, fixture )
+TEST_F(TimerTest, multiple_associations_can_be_added)
 {
-    BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_ );
+    EXPECT_EQ(0, io_service_.poll());
+    EXPECT_EQ(0, timeouts_received_);
 
     // Create the association.
-    auto on_expiration = [ this ] ( void )
+    auto on_expiration = [ this ] (void)
     { ++ timeouts_received_; };
 
-    auto const infinite = std::chrono::hours( 1 );
-    manager_.expires_from_now( infinite, on_expiration );
-    BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_ );
+    auto const infinite = std::chrono::hours(1);
+    manager_.expires_from_now(infinite, on_expiration);
+    EXPECT_EQ(0, io_service_.poll());
+    EXPECT_EQ(0, timeouts_received_);
 
     // This new expiration should trigger a cancel of the current
     // timeout (infinite), hence one task execution.
     auto const immediate = kd::timer::duration::zero();
-    manager_.expires_from_now( immediate, on_expiration );
-    BOOST_REQUIRE_EQUAL( 1, io_service_.run_one() );
-    BOOST_REQUIRE_EQUAL( 0, timeouts_received_ );
+    manager_.expires_from_now(immediate, on_expiration);
+    EXPECT_EQ(1, io_service_.run_one());
+    EXPECT_EQ(0, timeouts_received_);
 
     // Then the task execution of the new timeout (immediate)
     // and the call of its associated callback.
-    BOOST_REQUIRE_EQUAL( 1, io_service_.run_one() );
-    BOOST_REQUIRE_EQUAL( 1, timeouts_received_ );
+    EXPECT_EQ(1, io_service_.run_one());
+    EXPECT_EQ(1, timeouts_received_);
 
-    BOOST_REQUIRE_EQUAL( 0, io_service_.poll() );
-    BOOST_REQUIRE_EQUAL( 1, timeouts_received_ );
+    EXPECT_EQ(0, io_service_.poll());
+    EXPECT_EQ(1, timeouts_received_);
 
     // A timeout (infinite) is still in flight atm.
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
-

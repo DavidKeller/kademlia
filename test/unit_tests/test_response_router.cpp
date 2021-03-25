@@ -24,31 +24,26 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-
-#include <boost/asio/io_service.hpp>
-
+#include "boost/asio/io_service.hpp"
 #include "kademlia/response_router.hpp"
+#include "gtest/gtest.h"
 
 namespace {
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-BOOST_AUTO_TEST_SUITE( response_router )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
+TEST(ResponseRouterNoThrowTest, can_be_constructed_using_a_reactor)
 {
     boost::asio::io_service io_service;
-    BOOST_REQUIRE_NO_THROW( kd::response_router{ io_service } );
+    EXPECT_NO_THROW( kd::response_router{ io_service } );
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-struct fixture
+struct ResponseRouterTest: public ::testing::Test
 {
-    fixture()
+    ResponseRouterTest()
         : io_service_{}
         , router_{ io_service_ }
         , messages_received_count_{}
@@ -59,14 +54,23 @@ struct fixture
     kd::response_router router_;
     std::size_t messages_received_count_;
     std::size_t error_count_;
+
+protected:
+    ~ResponseRouterTest() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
 };
 
 
-/**
- */
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
+TEST_F(ResponseRouterTest, known_messages_are_forwarded)
 {
     // Create the callbacks.
     auto on_message_received = [ this ]
@@ -89,8 +93,8 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
                                        , on_error );
 
     io_service_.poll();
-    BOOST_REQUIRE_EQUAL( 0ULL, messages_received_count_ );
-    BOOST_REQUIRE_EQUAL( 0ULL, error_count_ );
+    EXPECT_EQ(0ULL, messages_received_count_ );
+    EXPECT_EQ(0ULL, error_count_ );
 
     kd::response_callbacks::endpoint_type const s{};
     kd::buffer const b;
@@ -99,11 +103,11 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
     router_.handle_new_response( s, h1, b.begin(), b.end() );
 
     io_service_.poll();
-    BOOST_REQUIRE_EQUAL( 1ULL, messages_received_count_ );
-    BOOST_REQUIRE_EQUAL( 0ULL, error_count_ );
+    EXPECT_EQ(1ULL, messages_received_count_ );
+    EXPECT_EQ(0ULL, error_count_ );
 }
 
-BOOST_FIXTURE_TEST_CASE( known_messages_are_not_forwarded_when_late, fixture )
+TEST_F(ResponseRouterTest, known_messages_are_not_forwarded_when_late)
 {
     // Create the callbacks.
     auto on_message_received = [ this ]
@@ -126,8 +130,8 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_not_forwarded_when_late, fixture )
                                        , on_error );
 
     io_service_.poll();
-    BOOST_REQUIRE_EQUAL( 0ULL, messages_received_count_ );
-    BOOST_REQUIRE_EQUAL( 1ULL, error_count_ );
+    EXPECT_EQ(0ULL, messages_received_count_ );
+    EXPECT_EQ(1ULL, error_count_ );
 
     kd::response_callbacks::endpoint_type const s{};
     kd::buffer const b;
@@ -136,13 +140,8 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_not_forwarded_when_late, fixture )
     router_.handle_new_response( s, h1, b.begin(), b.end() );
 
     io_service_.poll();
-    BOOST_REQUIRE_EQUAL( 0ULL, messages_received_count_ );
-    BOOST_REQUIRE_EQUAL( 1ULL, error_count_ );
+    EXPECT_EQ(0ULL, messages_received_count_ );
+    EXPECT_EQ(1ULL, error_count_ );
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

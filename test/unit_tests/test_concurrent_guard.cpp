@@ -23,47 +23,38 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "common.hpp"
+
 #include "kademlia/concurrent_guard.hpp"
+#include "gtest/gtest.h"
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
 namespace {
 
-BOOST_AUTO_TEST_SUITE( concurrent_guard )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_default_constructed )
+TEST(ConcurrentGuardTest, can_be_default_constructed)
 {
     kd::concurrent_guard{};
 }
 
-BOOST_AUTO_TEST_CASE( can_construct_sentry )
+TEST(ConcurrentGuardTest, can_construct_sentry)
 {
     kd::concurrent_guard guard{};
-    kd::concurrent_guard::sentry{ guard };
+    kd::concurrent_guard::sentry{guard};
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_concurrent_construction )
+TEST(ConcurrentGuardTest, can_detect_concurrent_construction)
 {
     kd::concurrent_guard guard;
 
     {
-        kd::concurrent_guard::sentry sentry{ guard };
-
-        BOOST_REQUIRE( sentry );
-
-        BOOST_REQUIRE( ! kd::concurrent_guard::sentry{ guard } );
+        kd::concurrent_guard::sentry sentry{guard};
+        EXPECT_TRUE(sentry);
+        EXPECT_TRUE(! kd::concurrent_guard::sentry{guard});
     }
-
-    BOOST_REQUIRE( kd::concurrent_guard::sentry{ guard } );
+    EXPECT_TRUE(kd::concurrent_guard::sentry{guard});
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

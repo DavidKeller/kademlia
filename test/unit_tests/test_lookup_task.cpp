@@ -25,13 +25,11 @@
 
 #include "common.hpp"
 #include "peer_factory.hpp"
-
+#include "kademlia/id.hpp"
+#include "kademlia/lookup_task.hpp"
+#include "gtest/gtest.h"
 #include <vector>
 #include <utility>
-
-#include "kademlia/id.hpp"
-#include "kademlia/message_socket.hpp"
-#include "kademlia/lookup_task.hpp"
 
 namespace {
 
@@ -41,8 +39,8 @@ namespace kd = k::detail;
 struct test_task : kd::lookup_task {
     template< typename Iterator >
     test_task
-        ( kd::id const& key
-        , Iterator i, Iterator e )
+        (kd::id const& key
+        , Iterator i, Iterator e)
         : lookup_task{ key, i, e }
     { }
 };
@@ -50,106 +48,93 @@ struct test_task : kd::lookup_task {
 using routing_table_peer = std::pair< kd::id
                                     , kd::ip_endpoint >;
 
-BOOST_AUTO_TEST_SUITE( lookup_task )
-
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed_without_candidates )
+TEST(LookupTaskTest, can_be_constructed_without_candidates)
 {
     std::vector< routing_table_peer > candidates;
     kd::id const key{};
     test_task c{ key, candidates.begin(), candidates.end() };
 
-    BOOST_REQUIRE( c.have_all_requests_completed() );
-    BOOST_REQUIRE_EQUAL( 0, c.select_new_closest_candidates( 1 ).size() );
-    BOOST_REQUIRE_EQUAL( 0, c.select_closest_valid_candidates( 1 ).size() );
-    BOOST_REQUIRE( c.have_all_requests_completed() );
-    BOOST_REQUIRE_EQUAL( key, c.get_key() );
+    EXPECT_TRUE(c.have_all_requests_completed());
+    EXPECT_EQ(0, c.select_new_closest_candidates(1).size());
+    EXPECT_EQ(0, c.select_closest_valid_candidates(1).size());
+    EXPECT_TRUE(c.have_all_requests_completed());
+    EXPECT_EQ(key, c.get_key());
 }
 
-BOOST_AUTO_TEST_CASE( can_be_constructed_with_candidates )
+TEST(LookupTaskTest, can_be_constructed_with_candidates)
 {
     std::vector< routing_table_peer > candidates;
     kd::ip_endpoint const default_address{};
-    candidates.emplace_back( kd::id{ "1" }, default_address );
+    candidates.emplace_back(kd::id{ "1" }, default_address);
     kd::id const key{};
     test_task c{ key, candidates.begin(), candidates.end() };
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( can_select_candidates )
+TEST(LookupTaskTest, can_select_candidates)
 {
     std::vector< routing_table_peer > candidates;
     kd::ip_endpoint const default_address{};
-    candidates.emplace_back( kd::id{ "7" }, default_address );
-    candidates.emplace_back( kd::id{ "3" }, default_address );
-    candidates.emplace_back( kd::id{ "6" }, default_address );
-    candidates.emplace_back( kd::id{ "18" }, default_address );
-    candidates.emplace_back( kd::id{ "2" }, default_address );
-    candidates.emplace_back( kd::id{ "9" }, default_address );
-    candidates.emplace_back( kd::id{ "1" }, default_address );
+    candidates.emplace_back(kd::id{ "7" }, default_address);
+    candidates.emplace_back(kd::id{ "3" }, default_address);
+    candidates.emplace_back(kd::id{ "6" }, default_address);
+    candidates.emplace_back(kd::id{ "18" }, default_address);
+    candidates.emplace_back(kd::id{ "2" }, default_address);
+    candidates.emplace_back(kd::id{ "9" }, default_address);
+    candidates.emplace_back(kd::id{ "1" }, default_address);
     kd::id const key{};
     test_task c{ key, candidates.begin(), candidates.end() };
 
-    BOOST_REQUIRE( c.have_all_requests_completed() );
-    auto closest_candidates = c.select_new_closest_candidates( 2 );
-    BOOST_REQUIRE( ! c.have_all_requests_completed() );
-    BOOST_REQUIRE_EQUAL( 2, closest_candidates.size() );
-    BOOST_REQUIRE_EQUAL( kd::id{ "1" }, closest_candidates[ 0 ].id_ );
-    BOOST_REQUIRE_EQUAL( kd::id{ "2" }, closest_candidates[ 1 ].id_ );
+    EXPECT_TRUE(c.have_all_requests_completed());
+    auto closest_candidates = c.select_new_closest_candidates(2);
+    EXPECT_TRUE(! c.have_all_requests_completed());
+    EXPECT_EQ(2, closest_candidates.size());
+    EXPECT_EQ(kd::id{ "1" }, closest_candidates[ 0 ].id_);
+    EXPECT_EQ(kd::id{ "2" }, closest_candidates[ 1 ].id_);
 
-    BOOST_REQUIRE_EQUAL( 0, c.select_closest_valid_candidates( 1 ).size() );
-    BOOST_REQUIRE( ! c.have_all_requests_completed() );
-    c.flag_candidate_as_valid( kd::id{ "1" } );
-    auto const valid_candidates = c.select_closest_valid_candidates( 1 );
-    BOOST_REQUIRE_EQUAL( 1, valid_candidates.size() );
-    BOOST_REQUIRE_EQUAL( kd::id{ "1" }, valid_candidates[ 0 ].id_ );
-    BOOST_REQUIRE( ! c.have_all_requests_completed() );
+    EXPECT_EQ(0, c.select_closest_valid_candidates(1).size());
+    EXPECT_TRUE(! c.have_all_requests_completed());
+    c.flag_candidate_as_valid(kd::id{ "1" });
+    auto const valid_candidates = c.select_closest_valid_candidates(1);
+    EXPECT_EQ(1, valid_candidates.size());
+    EXPECT_EQ(kd::id{ "1" }, valid_candidates[ 0 ].id_);
+    EXPECT_TRUE(! c.have_all_requests_completed());
 
-    c.flag_candidate_as_invalid( kd::id{ "2" } );
-    BOOST_REQUIRE( c.have_all_requests_completed() );
+    c.flag_candidate_as_invalid(kd::id{ "2" });
+    EXPECT_TRUE(c.have_all_requests_completed());
 
-    closest_candidates = c.select_new_closest_candidates( 2 );
-    BOOST_REQUIRE( ! c.have_all_requests_completed() );
-    BOOST_REQUIRE_EQUAL( 2, closest_candidates.size() );
-    BOOST_REQUIRE_EQUAL( kd::id{ "3" }, closest_candidates[ 0 ].id_ );
-    BOOST_REQUIRE_EQUAL( kd::id{ "6" }, closest_candidates[ 1 ].id_ );
+    closest_candidates = c.select_new_closest_candidates(2);
+    EXPECT_TRUE(! c.have_all_requests_completed());
+    EXPECT_EQ(2, closest_candidates.size());
+    EXPECT_EQ(kd::id{ "3" }, closest_candidates[ 0 ].id_);
+    EXPECT_EQ(kd::id{ "6" }, closest_candidates[ 1 ].id_);
 }
 
-BOOST_AUTO_TEST_CASE( can_add_candidates )
+TEST(LookupTaskTest, can_add_candidates)
 {
     std::vector< routing_table_peer > candidates;
     kd::ip_endpoint const default_address{};
-    candidates.emplace_back( kd::id{ "7" }, default_address );
+    candidates.emplace_back(kd::id{ "7" }, default_address);
 
     kd::id const our_id{};
     test_task c{ our_id, candidates.begin(), candidates.end() };
 
-    BOOST_REQUIRE_EQUAL( 1, c.select_new_closest_candidates( 20 ).size() );
+    EXPECT_EQ(1, c.select_new_closest_candidates(20).size());
 
     std::vector< kd::peer > new_candidates;
 
-    new_candidates.emplace_back( create_peer( kd::id{ "7" } ) );
-    c.add_candidates( new_candidates );
-    BOOST_REQUIRE_EQUAL( 0, c.select_new_closest_candidates( 20 ).size() );
+    new_candidates.emplace_back(create_peer(kd::id{ "7" }));
+    c.add_candidates(new_candidates);
+    EXPECT_EQ(0, c.select_new_closest_candidates(20).size());
 
-    new_candidates.emplace_back( create_peer( kd::id{ "6" } ) );
-    new_candidates.emplace_back( create_peer( kd::id{ "8" } ) );
-    c.add_candidates( new_candidates );
-    BOOST_REQUIRE_EQUAL( 2, c.select_new_closest_candidates( 20 ).size() );
+    new_candidates.emplace_back(create_peer(kd::id{ "6" }));
+    new_candidates.emplace_back(create_peer(kd::id{ "8" }));
+    c.add_candidates(new_candidates);
+    EXPECT_EQ(2, c.select_new_closest_candidates(20).size());
 
     candidates.clear();
-    new_candidates.emplace_back( create_peer( kd::id{ "9" } ) );
-    c.add_candidates( new_candidates );
-    BOOST_REQUIRE_EQUAL( 1, c.select_new_closest_candidates( 20 ).size() );
+    new_candidates.emplace_back(create_peer(kd::id{ "9" }));
+    c.add_candidates(new_candidates);
+    EXPECT_EQ(1, c.select_new_closest_candidates(20).size());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

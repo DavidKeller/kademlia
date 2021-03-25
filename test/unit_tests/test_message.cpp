@@ -24,22 +24,18 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "kademlia/message.hpp"
-
+#include "kademlia/error.hpp"
 #include "common.hpp"
-
+#include "gtest/gtest.h"
 #include <random>
-#include <kademlia/error.hpp>
 
 namespace {
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-BOOST_AUTO_TEST_SUITE( message )
 
-BOOST_AUTO_TEST_SUITE( test_message )
-
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_header )
+TEST(MessageTest, can_detect_corrupted_header)
 {
     std::default_random_engine random_engine;
 
@@ -52,12 +48,11 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_header )
             , kd::id{ random_engine } };
 
         kd::buffer buffer;
-        kd::serialize( header_out, buffer );
+        kd::serialize(header_out, buffer);
 
         kd::header header_in;
         auto i = buffer.cbegin(), e = buffer.cend();
-        BOOST_REQUIRE_EQUAL( k::UNKNOWN_PROTOCOL_VERSION
-                           , kd::deserialize( i, e, header_in ) );
+        EXPECT_EQ(k::UNKNOWN_PROTOCOL_VERSION, kd::deserialize(i, e, header_in));
     }
 
     // Missing bytes.
@@ -69,19 +64,19 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_header )
             , kd::id{ random_engine } };
 
         kd::buffer buffer;
-        kd::serialize( header_out, buffer );
+        kd::serialize(header_out, buffer);
 
         kd::header header_in;
         auto b = buffer.cbegin(), e = buffer.cend();
-        while ( b != e )
+        while (b != e)
         {
             auto i = b;
-            BOOST_REQUIRE( kd::deserialize( i, --e, header_in ) );
+            EXPECT_TRUE(kd::deserialize(i, --e, header_in));
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_header )
+TEST(MessageTest, can_serialize_header)
 {
     std::default_random_engine random_engine;
 
@@ -92,28 +87,22 @@ BOOST_AUTO_TEST_CASE( can_serialize_header )
         , kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( header_out, buffer );
+    kd::serialize(header_out, buffer);
 
     kd::header header_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, header_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, header_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL( header_out.version_, header_in.version_ );
-    BOOST_REQUIRE_EQUAL( header_out.type_, header_in.type_);
+    EXPECT_EQ(header_out.version_, header_in.version_);
+    EXPECT_EQ(header_out.type_, header_in.type_);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.source_id_.begin()
-                                   , header_out.source_id_.end()
-                                   , header_in.source_id_.begin()
-                                   , header_in.source_id_.end() );
+    EXPECT_EQ(header_out.source_id_, header_in.source_id_);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( header_out.random_token_.begin()
-                                   , header_out.random_token_.end()
-                                   , header_in.random_token_.begin()
-                                   , header_in.random_token_.end() );
+    EXPECT_EQ(header_out.random_token_, header_in.random_token_);
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_find_peer_request_body )
+TEST(MessageTest, can_serialize_find_peer_request_body)
 {
     std::default_random_engine random_engine;
 
@@ -121,20 +110,17 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_peer_request_body )
             { kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_peer_request_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, body_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.peer_to_find_id_.begin()
-                                   , body_out.peer_to_find_id_.end()
-                                   , body_in.peer_to_find_id_.begin()
-                                   , body_in.peer_to_find_id_.end() );
+    EXPECT_EQ(body_out.peer_to_find_id_, body_in.peer_to_find_id_);
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_peer_request_body )
+TEST(MessageTest, can_detect_corrupted_find_peer_request_body)
 {
     std::default_random_engine random_engine;
 
@@ -142,24 +128,24 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_peer_request_body )
             { kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_peer_request_body body_in;
     auto b = buffer.cbegin(), e = buffer.cend();
-    while ( b != e )
+    while (b != e)
     {
         auto i = b;
-        BOOST_REQUIRE( kd::deserialize( i, --e, body_in ) );
+        EXPECT_TRUE(kd::deserialize(i, --e, body_in));
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
+TEST(MessageTest, can_serialize_find_peer_response_body)
 {
     std::default_random_engine random_engine;
 
     kd::find_peer_response_body body_out;
 
-    for ( std::size_t i = 0; i < 10; ++ i)
+    for (std::size_t i = 0; i < 10; ++ i)
     {
         static std::string const IPS[2] =
             { "::1"
@@ -167,35 +153,31 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
 
         kd::peer new_peer =
             { kd::id{ random_engine }
-            , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
-              , std::uint16_t( 1024 + i ) } };
+            , { boost::asio::ip::address::from_string(IPS[ i % 2 ])
+              , std::uint16_t(1024 + i) } };
 
-        body_out.peers_.push_back( std::move( new_peer ) );
+        body_out.peers_.push_back(std::move(new_peer));
     }
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_peer_response_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, body_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL( body_out.peers_.size(), body_in.peers_.size() );
-
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.peers_.begin()
-                                   , body_out.peers_.end()
-                                   , body_in.peers_.begin()
-                                   , body_in.peers_.end() );
+    EXPECT_EQ(body_out.peers_.size(), body_in.peers_.size());
+    EXPECT_EQ(body_out.peers_, body_in.peers_);
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_peer_response_body )
+TEST(MessageTest, can_detect_corrupted_find_peer_response_body)
 {
     std::default_random_engine random_engine;
 
     kd::find_peer_response_body body_out;
 
-    for ( std::size_t i = 0; i < 10; ++ i)
+    for (std::size_t i = 0; i < 10; ++ i)
     {
         static std::string const IPS[2] =
             { "::1"
@@ -203,174 +185,161 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_peer_response_body )
 
         kd::peer new_peer =
             { kd::id{ random_engine }
-            , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
-              , std::uint16_t( 1024 + i ) } };
+            , { boost::asio::ip::address::from_string(IPS[ i % 2 ])
+              , std::uint16_t(1024 + i) } };
 
-        body_out.peers_.push_back( std::move( new_peer ) );
+        body_out.peers_.push_back(std::move(new_peer));
     }
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_peer_response_body body_in;
     auto b = buffer.cbegin(), e = buffer.cend();
-    while ( b != e )
+    while (b != e)
     {
         auto i = b;
-        BOOST_REQUIRE( kd::deserialize( i, --e, body_in ) );
+        EXPECT_TRUE(kd::deserialize(i, --e, body_in));
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_find_value_request_body )
+TEST(MessageTest, can_serialize_find_value_request_body)
 {
     std::default_random_engine random_engine;
 
     kd::find_value_request_body const body_out{ kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_value_request_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, body_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL( body_out.value_to_find_
-                       , body_in.value_to_find_ );
+    EXPECT_EQ(body_out.value_to_find_
+                       , body_in.value_to_find_);
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_value_request_body )
+TEST(MessageTest, can_detect_corrupted_find_value_request_body)
 {
     std::default_random_engine random_engine;
 
     kd::find_value_request_body const body_out{ kd::id{ random_engine } };
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_value_request_body body_in;
     auto b = buffer.cbegin(), e = buffer.cend();
-    while ( b != e )
+    while (b != e)
     {
         auto i = b;
-        BOOST_REQUIRE( kd::deserialize( i, --e, body_in ) );
+        EXPECT_TRUE(kd::deserialize(i, --e, body_in));
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_find_value_response_body )
+TEST(MessageTest, can_serialize_find_value_response_body)
 {
     kd::find_value_response_body body_out
-    { std::vector< std::uint8_t >( 4096 ) };
+    { std::vector< std::uint8_t >(4096) };
 
-    std::generate( body_out.data_.begin()
+    std::generate(body_out.data_.begin()
                  , body_out.data_.end()
-                 , std::rand );
+                 , std::rand);
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_value_response_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, body_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_.begin()
-                                   , body_out.data_.end()
-                                   , body_in.data_.begin()
-                                   , body_in.data_.end() );
+    EXPECT_EQ(body_out.data_, body_in.data_);
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_value_response_body )
+TEST(MessageTest, can_detect_corrupted_find_value_response_body)
 {
     kd::find_value_response_body body_out
-    { std::vector< std::uint8_t >( 4096 ) };
+    { std::vector< std::uint8_t >(4096) };
 
-    std::generate( body_out.data_.begin()
+    std::generate(body_out.data_.begin()
                  , body_out.data_.end()
-                 , std::rand );
+                 , std::rand);
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::find_value_response_body body_in;
     auto b = buffer.cbegin(), e = buffer.cend();
-    while ( b != e )
+    while (b != e)
     {
         auto i = b;
-        BOOST_REQUIRE( kd::deserialize( i, --e, body_in ) );
+        EXPECT_TRUE(kd::deserialize(i, --e, body_in));
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_serialize_store_value_request_body )
+TEST(MessageTest, can_serialize_store_value_request_body)
 {
     std::default_random_engine random_engine;
 
     kd::store_value_request_body body_out
             { kd::id{ random_engine }
-            , std::vector< std::uint8_t >( 4096 ) };
+            , std::vector< std::uint8_t >(4096) };
 
-    std::generate( body_out.data_value_.begin()
+    std::generate(body_out.data_value_.begin()
                  , body_out.data_value_.end()
-                 , std::rand );
+                 , std::rand);
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::store_value_request_body body_in;
     auto i = buffer.cbegin(), e = buffer.cend();
-    BOOST_REQUIRE( ! kd::deserialize( i, e, body_in ) );
-    BOOST_REQUIRE( i == e );
+    EXPECT_TRUE(! kd::deserialize(i, e, body_in));
+    EXPECT_TRUE(i == e);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_key_hash_.begin()
-                                   , body_out.data_key_hash_.end()
-                                   , body_in.data_key_hash_.begin()
-                                   , body_in.data_key_hash_.end() );
+    EXPECT_EQ(body_out.data_key_hash_, body_in.data_key_hash_);
 
-    BOOST_REQUIRE_EQUAL_COLLECTIONS( body_out.data_value_.begin()
-                                   , body_out.data_value_.end()
-                                   , body_in.data_value_.begin()
-                                   , body_in.data_value_.end() );
+    EXPECT_EQ(body_out.data_value_, body_in.data_value_);
 }
 
-BOOST_AUTO_TEST_CASE( can_detect_corrupted_store_value_request_body )
+TEST(MessageTest, can_detect_corrupted_store_value_request_body)
 {
     std::default_random_engine random_engine;
 
     kd::store_value_request_body body_out
             { kd::id{ random_engine }
-            , std::vector< std::uint8_t >( 4096 ) };
+            , std::vector< std::uint8_t >(4096) };
 
-    std::generate( body_out.data_value_.begin()
+    std::generate(body_out.data_value_.begin()
                  , body_out.data_value_.end()
-                 , std::rand );
+                 , std::rand);
 
     kd::buffer buffer;
-    kd::serialize( body_out, buffer );
+    kd::serialize(body_out, buffer);
 
     kd::store_value_request_body body_in;
     auto b = buffer.cbegin(), e = buffer.cend();
-    while ( b != e )
+    while (b != e)
     {
         auto i = b;
-        BOOST_REQUIRE( kd::deserialize( i, --e, body_in ) );
+        EXPECT_TRUE(kd::deserialize(i, --e, body_in));
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE( test_print )
 
 kd::header
-generate_incorrect_header( void )
+generate_incorrect_header(void)
 {
     return kd::header{ kd::header::V1
-                     , static_cast< kd::header::type >( -1 ) };
+                     , static_cast< kd::header::type >(-1) };
 }
 
-BOOST_AUTO_TEST_CASE( header_is_printable )
+TEST(MessageTest, header_is_printable)
 {
-    boost::test_tools::output_test_stream out( k::test::get_capture_path( "pattern_header.out" )
-                                             , true );
+    boost::test_tools::output_test_stream out(k::test::get_capture_path("pattern_header.out")
+                                             , true);
 
     out << kd::header{ kd::header::V1
                      , kd::header::PING_REQUEST }
@@ -400,15 +369,10 @@ BOOST_AUTO_TEST_CASE( header_is_printable )
                      , kd::header::FIND_VALUE_RESPONSE }
         << std::endl;
 
-    BOOST_REQUIRE( out.match_pattern() );
+    EXPECT_TRUE(out.match_pattern());
 
-    BOOST_REQUIRE_THROW( out << generate_incorrect_header()
-                       , std::exception );
+    EXPECT_THROW(out << generate_incorrect_header()
+                       , std::exception);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

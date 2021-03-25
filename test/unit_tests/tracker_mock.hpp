@@ -26,14 +26,11 @@
 #ifndef KADEMLIA_TEST_HELPERS_TRACKER_MOCK_HPP
 #define KADEMLIA_TEST_HELPERS_TRACKER_MOCK_HPP
 
-#include <queue>
-
-#include <boost/asio/io_service.hpp>
-
+#include "boost/asio/io_service.hpp"
 #include "kademlia/error_impl.hpp"
-
 #include "kademlia/message.hpp"
 #include "kademlia/message_serializer.hpp"
+#include <queue>
 
 namespace kademlia {
 namespace test {

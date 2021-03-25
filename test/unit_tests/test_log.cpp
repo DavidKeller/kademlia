@@ -24,11 +24,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-
-#include <iostream>
-#include <boost/test/tools/output_test_stream.hpp>
-
 #include "kademlia/log.hpp"
+#include "gtest/gtest.h"
+#include <iostream>
 
 namespace {
 
@@ -37,91 +35,101 @@ namespace kd = kademlia::detail;
 struct rdbuf_saver
 {
     rdbuf_saver
-        ( std::ostream & stream
-        , std::streambuf * buffer )
-            : stream_( stream )
-            , old_buffer_( stream.rdbuf( buffer ) )
+        (std::ostream & stream
+        , std::streambuf * buffer)
+            : stream_(stream)
+            , old_buffer_(stream.rdbuf(buffer))
     { }
 
     ~rdbuf_saver
-        ( void )
-    { stream_.rdbuf( old_buffer_ ); }
+        (void)
+    { stream_.rdbuf(old_buffer_); }
 
     std::ostream & stream_;
     std::streambuf * old_buffer_;
 };
 
-BOOST_AUTO_TEST_SUITE( log )
-
-BOOST_AUTO_TEST_SUITE( test_usage )
-
-BOOST_AUTO_TEST_CASE( can_write_to_debug_log )
+class LogTest: public ::testing::Test
 {
-    boost::test_tools::output_test_stream out;
-
+protected:
+    LogTest()
     {
-        rdbuf_saver const s{ std::cout, out.rdbuf() };
-        auto const ptr = reinterpret_cast< void *>( 0x12345678 );
-        kd::get_debug_log( "test", ptr ) << "message" << std::endl;
+    }
+    
+    ~LogTest() override
+    {
     }
 
-    BOOST_REQUIRE( out.is_equal( "[debug] (test @ 345678) message\n" ) );
-}
+    void SetUp() override
+    {
+        kd::enable_log_for("test");
+    }
 
-BOOST_AUTO_TEST_CASE( can_write_to_debug_log_using_macro )
+    void TearDown() override
+    {
+        kd::disable_log_for("*");
+    }
+};
+    
+TEST_F(LogTest, can_write_to_debug_log)
 {
-    boost::test_tools::output_test_stream out;
-
+    std::ostringstream out;
     {
         rdbuf_saver const s{ std::cout, out.rdbuf() };
-        auto const ptr = reinterpret_cast< void *>( 0x12345678 );
-        LOG_DEBUG( test, ptr ) << "message" << std::endl;
+        auto const ptr = reinterpret_cast< void *>(0x12345678);
+        kd::get_debug_log("test", ptr)<< "message" << std::endl;
+    }
+
+    EXPECT_EQ(out.str(), "[debug] (test @ 345678) message\n");
+}
+
+TEST_F(LogTest, can_write_to_debug_log_using_macro)
+{
+    std::ostringstream out;
+    {
+        rdbuf_saver const s{ std::cout, out.rdbuf() };
+        auto const ptr = reinterpret_cast< void *>(0x12345678);
+        LOG_DEBUG(test, ptr)<< "message" << std::endl;
     }
 
 #ifdef KADEMLIA_ENABLE_DEBUG
-    BOOST_REQUIRE( out.is_equal( "[debug] (test @ 345678) message\n" ) );
+    EXPECT_TRUE(out.str() == ("[debug] (test @ 345678) message\n"));
 #else
-    BOOST_REQUIRE( out.is_equal( "" ) );
+    EXPECT_TRUE(out.is_equal(""));
 #endif
 }
 
-BOOST_AUTO_TEST_CASE( can_enable_log_module )
+TEST_F(LogTest, can_enable_log_module)
 {
     // By default, unit tests enable log on all modules.
-    kd::disable_log_for( "*" );
+    kd::disable_log_for("*");
 
-    BOOST_REQUIRE( ! kd::is_log_enabled( "test1" ) );
-    BOOST_REQUIRE( ! kd::is_log_enabled( "test2" ) );
+    EXPECT_TRUE(! kd::is_log_enabled("test1"));
+    EXPECT_TRUE(! kd::is_log_enabled("test2"));
 
-    kd::enable_log_for( "test1" );
-    BOOST_REQUIRE( kd::is_log_enabled( "test1" ) );
-    BOOST_REQUIRE( ! kd::is_log_enabled( "test2" ) );
+    kd::enable_log_for("test1");
+    EXPECT_TRUE(kd::is_log_enabled("test1"));
+    EXPECT_TRUE(! kd::is_log_enabled("test2"));
 
-    kd::enable_log_for( "*" );
-    BOOST_REQUIRE( kd::is_log_enabled( "test1" ) );
-    BOOST_REQUIRE( kd::is_log_enabled( "test2" ) );
+    kd::enable_log_for("*");
+    EXPECT_TRUE(kd::is_log_enabled("test1"));
+    EXPECT_TRUE(kd::is_log_enabled("test2"));
 
 }
 
-BOOST_AUTO_TEST_CASE( can_convert_container_to_string )
+TEST_F(LogTest, can_convert_container_to_string)
 {
     {
         std::vector< std::uint8_t > const c{ 'a', 'b', 'c' };
-        auto const r = kd::to_string( c );
-
-        BOOST_REQUIRE_EQUAL( "abc", r );
+        auto const r = kd::to_string(c);
+        EXPECT_EQ("abc", r);
     }
     {
         std::vector< std::uint8_t > const c{ 1, 2, 3 };
-        auto const r = kd::to_string( c );
-
-        BOOST_REQUIRE_EQUAL( "\\1\\2\\3", r );
+        auto const r = kd::to_string(c);
+        EXPECT_EQ("\\1\\2\\3", r);
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

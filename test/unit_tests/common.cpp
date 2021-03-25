@@ -50,6 +50,7 @@ std::string get_capture_path( std::string const & capture_name )
 } // namespace test
 } // namespace kademlia
 
+
 /**
  *  When we are using boost as a shared (i.e. BOOST_TEST_DYN_LINK
  *  macro is defined), BOOST_TEST_ALTERNATIVE_INIT_API macro is
@@ -96,11 +97,31 @@ init_unit_test_suite
  */
 #ifdef BOOST_TEST_DYN_LINK
 
-int
-main
-    ( int argc
-    , char * argv[] )
-{ return boost::unit_test::unit_test_main( &init_unit_test, argc, argv ); }
-
+/*
+int main (int argc, char * argv[])
+{
+    //return boost::unit_test::unit_test_main( &init_unit_test, argc, argv );
+}
+*/
 #endif
+
+
+#include "gtest/gtest.h"
+
+bool doBoost = false;
+bool doGTest = true;
+
+int main(int argc, char **argv)
+{
+    int ret = true;
+    if (doBoost)
+        ret = ret && boost::unit_test::unit_test_main( &init_unit_test, argc, argv );
+
+    if (doGTest)
+    {
+        ::testing::InitGoogleTest(&argc, argv);
+        ret = ret && RUN_ALL_TESTS();
+    }
+    return ret;
+}
 

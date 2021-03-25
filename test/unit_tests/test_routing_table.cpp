@@ -25,9 +25,9 @@
 
 #include "common.hpp"
 #include "peer_factory.hpp"
-
 #include "kademlia/routing_table.hpp"
 #include "kademlia/ip_endpoint.hpp"
+#include "gtest/gtest.h"
 
 namespace {
 
@@ -36,29 +36,23 @@ namespace kd = k::detail;
 
 using test_routing_table = kd::routing_table< kd::ip_endpoint >;
 
-BOOST_AUTO_TEST_SUITE( routing_table )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( is_empty_on_construction )
+TEST(RoutingTableTest, is_empty_on_construction)
 {
     std::default_random_engine random_engine;
 
     // Create an empty routing_table.
-    test_routing_table rt{ kd::id( random_engine ) };
+    test_routing_table rt{ kd::id(random_engine) };
     // Doesn't contain any peer.
-    BOOST_REQUIRE_EQUAL( rt.peer_count(), 0 );
+    EXPECT_EQ(rt.peer_count(), 0);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 
 /**
  *  Test test_routing_table::push()
  */
-BOOST_AUTO_TEST_SUITE( test_push )
 
-BOOST_AUTO_TEST_CASE( largest_k_bucket_can_receive_unlimited_peers )
+TEST(RoutingTableTest, largest_k_bucket_can_receive_unlimited_peers)
 {
     // My id is 128 bit assigned to 0.
     kd::id const my_id;
@@ -69,191 +63,179 @@ BOOST_AUTO_TEST_CASE( largest_k_bucket_can_receive_unlimited_peers )
 
     // This peer will be associated with every id.
     // Unicity applies only to id, not peer.
-    auto const test_peer( create_endpoint() );
+    auto const test_peer(create_endpoint());
 
     // Theses should go into high bucket.
-    BOOST_REQUIRE( rt.push( kd::id{ "10" }, test_peer ) );
-    BOOST_REQUIRE( rt.push( kd::id{ "11" }, test_peer ) );
+    EXPECT_TRUE(rt.push(kd::id{ "10" }, test_peer));
+    EXPECT_TRUE(rt.push(kd::id{ "11" }, test_peer));
 
     // While theses go to a lower bucket.
-    BOOST_REQUIRE( rt.push( kd::id{ "20" }, test_peer ) );
-    BOOST_REQUIRE( rt.push( kd::id{ "21" }, test_peer ) );
+    EXPECT_TRUE(rt.push(kd::id{ "20" }, test_peer));
+    EXPECT_TRUE(rt.push(kd::id{ "21" }, test_peer));
     // This one should flag the lower bucket as the largest.
-    BOOST_REQUIRE( rt.push( kd::id{ "22" }, test_peer ) );
+    EXPECT_TRUE(rt.push(kd::id{ "22" }, test_peer));
     // This one can be saved as the largest bucket
     // is allowed to exceed bucket_size.
-    BOOST_REQUIRE( rt.push( kd::id{ "23" }, test_peer ) );
+    EXPECT_TRUE(rt.push(kd::id{ "23" }, test_peer));
 
     // This one can't go into first bucket as it is full
     // and is not the largest bucket.
-    BOOST_REQUIRE(! rt.push( kd::id{ "12" }, test_peer ) );
+    EXPECT_TRUE(! rt.push(kd::id{ "12" }, test_peer));
 }
 
-BOOST_AUTO_TEST_CASE( discards_already_pushed_ids )
+TEST(RoutingTableTest, discards_already_pushed_ids)
 {
     std::default_random_engine random_engine;
 
     test_routing_table rt{ kd::id{ random_engine } };
-    auto const test_peer( create_endpoint() );
+    auto const test_peer(create_endpoint());
     kd::id test_id;
 
     // Push two times the same peer.
-    BOOST_REQUIRE_EQUAL( rt.push( test_id, test_peer ), true );
+    EXPECT_EQ(rt.push(test_id, test_peer), true);
     // Expect the second call to fail.
-    BOOST_REQUIRE_EQUAL( rt.push( test_id, test_peer ), false );
-    BOOST_REQUIRE_EQUAL( rt.peer_count(), 1 );
+    EXPECT_EQ(rt.push(test_id, test_peer), false);
+    EXPECT_EQ(rt.peer_count(), 1);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
 /**
  *  Test test_routing_table::find()
  */
-BOOST_AUTO_TEST_SUITE( test_find )
 
-BOOST_AUTO_TEST_CASE( can_find_a_peer )
+TEST(RoutingTableTest, can_find_a_peer)
 {
     test_routing_table rt{ kd::id{} };
-    auto test_peer( create_endpoint() );
+    auto test_peer(create_endpoint());
     kd::id test_id{ "a" };
-    BOOST_REQUIRE( rt.push( test_id, test_peer ) );
+    EXPECT_TRUE(rt.push(test_id, test_peer));
 
     // Try to find the generated peer.
-    auto i = rt.find( test_id );
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer, i->second );
+    auto i = rt.find(test_id);
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer, i->second);
 }
 
-BOOST_AUTO_TEST_CASE( can_find_a_closer_peer )
+TEST(RoutingTableTest, can_find_a_closer_peer)
 {
     test_routing_table rt{ kd::id{} };
 
-    auto test_peer1( create_endpoint() );
+    auto test_peer1(create_endpoint());
     kd::id test_id1{ "1" };
-    BOOST_REQUIRE( rt.push( test_id1, test_peer1 ) );
+    EXPECT_TRUE(rt.push(test_id1, test_peer1));
 
-    auto test_peer2( create_endpoint() );
+    auto test_peer2(create_endpoint());
     kd::id test_id2{ "2" };
-    BOOST_REQUIRE( rt.push( test_id2, test_peer2 ) );
+    EXPECT_TRUE(rt.push(test_id2, test_peer2));
 
-    auto test_peer3( create_endpoint() );
+    auto test_peer3(create_endpoint());
     kd::id test_id3{ "4" };
-    BOOST_REQUIRE( rt.push( test_id3, test_peer3 ) );
+    EXPECT_TRUE(rt.push(test_id3, test_peer3));
 
     // test_peer2 is the closest peer.
-    auto i = rt.find( kd::id{ "6" } );
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer2, i->second );
+    auto i = rt.find(kd::id{ "6" });
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer2, i->second);
 }
 
-BOOST_AUTO_TEST_CASE( iterator_start_from_the_closest_k_bucket )
+TEST(RoutingTableTest, iterator_start_from_the_closest_k_bucket)
 {
-    test_routing_table rt( kd::id{}, 1 );
-    auto test_peer1( create_endpoint( "192.168.0.1" ) );
+    test_routing_table rt(kd::id{}, 1);
+    auto test_peer1(create_endpoint("192.168.0.1"));
     kd::id id1{ "1" };
-    BOOST_REQUIRE( rt.push( id1, test_peer1 ) );
+    EXPECT_TRUE(rt.push(id1, test_peer1));
 
-    auto test_peer2( create_endpoint( "192.168.0.2" ) );
+    auto test_peer2(create_endpoint("192.168.0.2"));
     kd::id id2{ "2" };
-    BOOST_REQUIRE( rt.push( id2, test_peer2 ) );
+    EXPECT_TRUE(rt.push(id2, test_peer2));
 
-    auto test_peer3( create_endpoint( "192.168.0.3" ) );
+    auto test_peer3(create_endpoint("192.168.0.3"));
     kd::id id3{ "4" };
-    BOOST_REQUIRE( rt.push( id3, test_peer3 ) );
+    EXPECT_TRUE(rt.push(id3, test_peer3));
 
     // Ask for id of the closest peer, and expect to see
     // all of them.
-    auto i = rt.find( id1 );
+    auto i = rt.find(id1);
 
     // This one should be in the close bucket.
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer1, i->second );
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer1, i->second);
     ++ i;
 
     // This one too.
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer2, i->second );
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer2, i->second);
     ++ i;
 
     // This one in the far bucket.
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer3, i->second );
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer3, i->second);
     ++ i;
 
-    BOOST_REQUIRE( i == rt.end() );
+    EXPECT_TRUE(i == rt.end());
 }
 
-BOOST_AUTO_TEST_CASE( iterator_skip_empty_k_bucket )
+TEST(RoutingTableTest, iterator_skip_empty_k_bucket)
 {
     test_routing_table rt{ kd::id{}, 1 };
     // Fill far k_bucket.
-    auto test_peer1( create_endpoint( "192.168.0.1" ) );
+    auto test_peer1(create_endpoint("192.168.0.1"));
     kd::id id1{ "1" };
-    BOOST_REQUIRE( rt.push( id1, test_peer1 ) );
+    EXPECT_TRUE(rt.push(id1, test_peer1));
 
     // Skip the next "2".
 
     // End with this one.
-    auto test_peer2( create_endpoint( "192.168.0.2" ) );
+    auto test_peer2(create_endpoint("192.168.0.2"));
     kd::id id2{ "4" };
-    BOOST_REQUIRE( rt.push( id2, test_peer2 ) );
+    EXPECT_TRUE(rt.push(id2, test_peer2));
 
     // Ask for id of the closest peer, and expect to see
     // all of them.
-    auto i = rt.find( id1 );
+    auto i = rt.find(id1);
 
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer1, i->second );
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer1, i->second);
     ++ i;
 
-    BOOST_REQUIRE( i != rt.end() );
-    BOOST_REQUIRE_EQUAL( test_peer2, i->second );
+    EXPECT_TRUE(i != rt.end());
+    EXPECT_EQ(test_peer2, i->second);
     ++ i;
 
-    BOOST_REQUIRE( i == rt.end() );
+    EXPECT_TRUE(i == rt.end());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
 /**
  *  Test test_routing_table::remove()
  */
-BOOST_AUTO_TEST_SUITE( test_remove )
 
-BOOST_AUTO_TEST_CASE( can_remove_a_peer )
+TEST(RoutingTableTest, can_remove_a_peer)
 {
     test_routing_table rt{ kd::id{} };
-    auto test_peer( create_endpoint() );
+    auto test_peer(create_endpoint());
     kd::id test_id{};
-    BOOST_REQUIRE( rt.push( test_id, test_peer ) );
+    EXPECT_TRUE(rt.push(test_id, test_peer));
 
     // Try to find the generated peer.
-    BOOST_REQUIRE( rt.find( test_id ) != rt.end() );
+    EXPECT_TRUE(rt.find(test_id) != rt.end());
     std::size_t saved_table_size = rt.peer_count();
-    BOOST_REQUIRE_EQUAL( rt.remove( test_id ), true );
-    BOOST_REQUIRE_EQUAL( rt.peer_count(), saved_table_size - 1 );
-    BOOST_REQUIRE( rt.find( test_id ) == rt.end() );
+    EXPECT_EQ(rt.remove(test_id), true);
+    EXPECT_EQ(rt.peer_count(), saved_table_size - 1);
+    EXPECT_TRUE(rt.find(test_id) == rt.end());
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 /**
  *  Test operator<<()
  */
-BOOST_AUTO_TEST_SUITE( test_print )
 
-BOOST_AUTO_TEST_CASE( print_empty_test_routing_table )
+TEST(RoutingTableTest, print_empty_test_routing_table)
 {
-    boost::test_tools::output_test_stream out( k::test::get_capture_path( "pattern_empty_routing_table.out" ), true);
+    boost::test_tools::output_test_stream out(k::test::get_capture_path("pattern_empty_routing_table.out"), true);
 
     out << test_routing_table{ kd::id{}, 20 };
 
-    BOOST_REQUIRE( out.match_pattern() );
+    EXPECT_TRUE(out.match_pattern());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

@@ -24,14 +24,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/asio/ip/udp.hpp>
-
-#include <kademlia/endpoint.hpp>
-
-#include "kademlia/ip_endpoint.hpp"
+#include "kademlia/endpoint.hpp"
 #include "kademlia/message_socket.hpp"
-
-#include "common.hpp"
 #include "network.hpp"
+#include "gtest/gtest.h"
 
 namespace {
 
@@ -40,11 +36,8 @@ namespace kd = kademlia::detail;
 
 using message_socket_type = kd::message_socket< boost::asio::ip::udp::socket >;
 
-BOOST_AUTO_TEST_SUITE( message_socket )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
+TEST(MessageSocketTest, faulty_address_are_detected)
 {
     boost::asio::io_service io_service;
 
@@ -52,75 +45,65 @@ BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
         k::endpoint const endpoint{ "error"
                                   , "27980" };
 
-        BOOST_REQUIRE_THROW(
-            message_socket_type::resolve_endpoint( io_service, endpoint );
-        , std::exception );
+        EXPECT_THROW(message_socket_type::resolve_endpoint(io_service, endpoint);,
+                     std::exception);
     }
 }
 
-BOOST_AUTO_TEST_CASE( dns_can_be_resolved )
+TEST(MessageSocketTest, dns_can_be_resolved)
 {
     boost::asio::io_service io_service;
 
     k::endpoint const endpoint{ "localhost"
                               , "27980" };
 
-    auto const e = message_socket_type::resolve_endpoint( io_service, endpoint );
+    auto const e = message_socket_type::resolve_endpoint(io_service, endpoint);
 
-    BOOST_REQUIRE_LE( 1, e.size() );
+    EXPECT_LE(1, e.size());
 }
 
-BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
+TEST(MessageSocketTest, ipv4_address_can_be_resolved)
 {
     boost::asio::io_service io_service;
 
     k::endpoint const endpoint{ "127.0.0.1"
                               , "27980" };
 
-    auto const e = message_socket_type::resolve_endpoint( io_service, endpoint );
+    auto const e = message_socket_type::resolve_endpoint(io_service, endpoint);
 
-    BOOST_REQUIRE_EQUAL( 1, e.size() );
+    EXPECT_EQ(1, e.size());
 }
 
-BOOST_AUTO_TEST_CASE( ipv6_address_can_be_resolved )
+TEST(MessageSocketTest, ipv6_address_can_be_resolved)
 {
     boost::asio::io_service io_service;
 
     k::endpoint const endpoint{ "::1"
                               , "27980" };
 
-    auto e = message_socket_type::resolve_endpoint( io_service, endpoint );
-    BOOST_REQUIRE_EQUAL( 1, e.size() );
+    auto e = message_socket_type::resolve_endpoint(io_service, endpoint);
+    EXPECT_EQ(1, e.size());
 }
 
 
-BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
+TEST(MessageSocketTest, ipv4_socket_can_be_created)
 {
     boost::asio::io_service io_service;
 
-    k::endpoint const endpoint( "127.0.0.1"
-                              , k::test::get_temporary_listening_port() );
+    k::endpoint const endpoint("127.0.0.1"
+                              , k::test::get_temporary_listening_port());
 
-    BOOST_REQUIRE_NO_THROW(
-        message_socket_type::ipv4( io_service, endpoint );
-    );
+    EXPECT_NO_THROW(message_socket_type::ipv4(io_service, endpoint););
 }
 
-BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
+TEST(MessageSocketTest, ipv6_socket_can_be_created)
 {
     boost::asio::io_service io_service;
 
-    k::endpoint const endpoint( "::1"
-                              , k::test::get_temporary_listening_port() );
+    k::endpoint const endpoint("::1"
+                              , k::test::get_temporary_listening_port());
 
-    BOOST_REQUIRE_NO_THROW(
-        message_socket_type::ipv6( io_service, endpoint );
-    );
+    EXPECT_NO_THROW(message_socket_type::ipv6(io_service, endpoint););
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

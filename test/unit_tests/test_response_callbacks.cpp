@@ -23,93 +23,95 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 #include "common.hpp"
-
-#include <vector>
 #include "kademlia/error_impl.hpp"
-
 #include "kademlia/response_callbacks.hpp"
+#include "gtest/gtest.h"
+#include <vector>
+
 
 namespace {
 
 namespace k = kademlia;
 namespace kd = k::detail;
 
-BOOST_AUTO_TEST_SUITE( response_callbacks )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
+TEST(ResponseCallbackTest, can_be_constructed_using_a_reactor)
 {
-    BOOST_REQUIRE_NO_THROW( kd::response_callbacks{} );
+    EXPECT_NO_THROW(kd::response_callbacks{});
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-struct fixture
+struct ResponseCallbacksTest: public ::testing::Test
 {
-    fixture()
-        : callbacks_{}
-        , messages_received_{}
-    { }
-
     kd::response_callbacks callbacks_;
     std::vector< kd::id > messages_received_;
+
+protected:
+    ~ResponseCallbacksTest() override
+    {
+    }
+
+    void SetUp() override
+    {
+    }
+
+    void TearDown() override
+    {
+    }
 };
 
-/**
- */
-BOOST_AUTO_TEST_SUITE( test_usage )
 
-BOOST_FIXTURE_TEST_CASE( unknown_message_are_dropped , fixture )
+TEST_F(ResponseCallbacksTest, unknown_message_are_dropped)
 {
     kd::response_callbacks::endpoint_type const s{};
     kd::header const h{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
-    auto result = callbacks_.dispatch_response( s, h, b.begin(), b.end() );
-    BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
+    auto result = callbacks_.dispatch_response(s, h, b.begin(), b.end());
+    EXPECT_TRUE(k::UNASSOCIATED_MESSAGE_ID == result);
 }
 
-BOOST_FIXTURE_TEST_CASE( known_messages_are_forwarded, fixture )
+TEST_F(ResponseCallbacksTest, known_messages_are_forwarded)
 {
     kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST
                        , kd::id{}, kd::id{ "1" } };
     kd::header const h2{ kd::header::V1, kd::header::PING_REQUEST };
     kd::buffer const b;
 
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    EXPECT_EQ(0, messages_received_.size());
 
     // Create the callback.
     auto on_message_received = [ this ]
-            ( kd::response_callbacks::endpoint_type const& s
+            (kd::response_callbacks::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
-            , kd::buffer::const_iterator )
-    { messages_received_.push_back( h.random_token_ ); };
-    callbacks_.push_callback( h1.random_token_
-                                , on_message_received );
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+            , kd::buffer::const_iterator)
+    { messages_received_.push_back(h.random_token_); };
+    callbacks_.push_callback(h1.random_token_
+                                , on_message_received);
+    EXPECT_EQ(0, messages_received_.size());
 
     kd::response_callbacks::endpoint_type const s{};
 
     // Send an unexpected message.
-    auto result = callbacks_.dispatch_response( s, h2, b.begin(), b.end() );
-    BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    auto result = callbacks_.dispatch_response(s, h2, b.begin(), b.end());
+    EXPECT_TRUE(k::UNASSOCIATED_MESSAGE_ID == result);
+    EXPECT_EQ(0, messages_received_.size());
 
     // Send the expected message.
-    result = callbacks_.dispatch_response( s, h1, b.begin(), b.end() );
-    BOOST_REQUIRE( ! result );
-    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
+    result = callbacks_.dispatch_response(s, h1, b.begin(), b.end());
+    EXPECT_TRUE(! result);
+    EXPECT_EQ(1, messages_received_.size());
+    EXPECT_EQ(h1.random_token_, messages_received_.front());
 
     // Send the previously expected message again.
-    result = callbacks_.dispatch_response( s, h1, b.begin(), b.end() );
-    BOOST_REQUIRE( k::UNASSOCIATED_MESSAGE_ID == result );
-    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
+    result = callbacks_.dispatch_response(s, h1, b.begin(), b.end());
+    EXPECT_TRUE(k::UNASSOCIATED_MESSAGE_ID == result);
+    EXPECT_EQ(1, messages_received_.size());
 }
 
-BOOST_FIXTURE_TEST_CASE( multiple_callbacks_can_be_added, fixture )
+TEST_F(ResponseCallbacksTest, multiple_callbacks_can_be_added)
 {
     kd::header const h1{ kd::header::V1, kd::header::PING_REQUEST
                        , kd::id{}, kd::id{ "1" } };
@@ -117,36 +119,31 @@ BOOST_FIXTURE_TEST_CASE( multiple_callbacks_can_be_added, fixture )
                        , kd::id{}, kd::id{ "2" } };
     kd::buffer const b;
 
-    BOOST_REQUIRE_EQUAL( 0, messages_received_.size() );
+    EXPECT_EQ(0, messages_received_.size());
     // Create the callback.
     auto on_message_received = [ this ]
-            ( kd::response_callbacks::endpoint_type const& s
+            (kd::response_callbacks::endpoint_type const& s
             , kd::header const& h
             , kd::buffer::const_iterator
-            , kd::buffer::const_iterator )
+            , kd::buffer::const_iterator)
     {
-        messages_received_.push_back( h.random_token_ );
+        messages_received_.push_back(h.random_token_);
     };
-    callbacks_.push_callback( h1.random_token_
-                            , on_message_received );
-    callbacks_.push_callback( h2.random_token_
-                            , on_message_received );
+    callbacks_.push_callback(h1.random_token_
+                            , on_message_received);
+    callbacks_.push_callback(h2.random_token_
+                            , on_message_received);
 
     kd::response_callbacks::endpoint_type const s{};
-    auto result = callbacks_.dispatch_response( s, h1, b.begin(), b.end() );
-    BOOST_REQUIRE( ! result );
-    BOOST_REQUIRE_EQUAL( 1, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( h1.random_token_, messages_received_.front() );
+    auto result = callbacks_.dispatch_response(s, h1, b.begin(), b.end());
+    EXPECT_TRUE(! result);
+    EXPECT_EQ(1, messages_received_.size());
+    EXPECT_EQ(h1.random_token_, messages_received_.front());
 
-    result = callbacks_.dispatch_response( s, h2, b.begin(), b.end() );
-    BOOST_REQUIRE( ! result );
-    BOOST_REQUIRE_EQUAL( 2, messages_received_.size() );
-    BOOST_REQUIRE_EQUAL( h2.random_token_, messages_received_.back() );
+    result = callbacks_.dispatch_response(s, h2, b.begin(), b.end());
+    EXPECT_TRUE(! result);
+    EXPECT_EQ(2, messages_received_.size());
+    EXPECT_EQ(h2.random_token_, messages_received_.back());
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
-
 }
-

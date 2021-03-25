@@ -23,10 +23,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
 
 #include "common.hpp"
 #include "kademlia/r.hpp"
+#include "gtest/gtest.h"
+#include <iostream>
+
 
 namespace {
 
@@ -36,22 +38,22 @@ namespace kd = k::detail;
 struct test_type
 {
     test_type
-        ( int a
-        , int b )
+        (int a
+        , int b)
         : a_{ a }
         , b_{ b }
         , moved_{ false }
     { }
 
     test_type
-        ( test_type && other )
+        (test_type && other)
         : a_{ other.a_ }
         , b_{ other.b_ }
         , moved_{ false }
     { other.moved_ = true; }
 
     test_type
-        ( test_type const & other )
+        (test_type const & other)
         : a_{ other.a_ }
         , b_{ other.b_ }
         , moved_{ false }
@@ -64,21 +66,18 @@ struct test_type
 
 bool
 operator==
-    ( test_type const & a
-    , test_type const & b )
+    (test_type const & a
+    , test_type const & b)
 { return a.a_ == b.a_ && a.b_ == b.b_; }
 
 std::ostream &
 operator<<
-    ( std::ostream & out
-    , test_type const & a )
+    (std::ostream & out
+    , test_type const & a)
 { return out << a.a_ << " " << a.b_; }
 
-BOOST_AUTO_TEST_SUITE( r )
 
-BOOST_AUTO_TEST_SUITE( test_construction )
-
-BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
+TEST(ReturnTest, can_be_constructed_from_a_value)
 {
     using type = kd::r< int >;
 
@@ -87,118 +86,115 @@ BOOST_AUTO_TEST_CASE( can_be_constructed_from_a_value )
     {
         type::value_type value{ 42 };
         type r{ value };
-        BOOST_REQUIRE( r );
-        BOOST_REQUIRE_EQUAL( value, r.v() );
-        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
+        EXPECT_TRUE(r);
+        EXPECT_EQ(value, r.v());
+        EXPECT_EQ(NO_ERROR, r.e());
     }
 
     {
         type::value_type const value{ 42 };
         type r{ value };
-        BOOST_REQUIRE( r );
-        BOOST_REQUIRE_EQUAL( value, r.v() );
-        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
+        EXPECT_TRUE(r);
+        EXPECT_EQ(value, r.v());
+        EXPECT_EQ(NO_ERROR, r.e());
     }
 
     {
         type r{ 42 };
-        BOOST_REQUIRE( r );
-        BOOST_REQUIRE_EQUAL( 42, r.v() );
-        BOOST_REQUIRE_EQUAL( NO_ERROR, r.e() );
+        EXPECT_TRUE(r);
+        EXPECT_EQ(42, r.v());
+        EXPECT_EQ(NO_ERROR, r.e());
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_be_constructed_emplace )
+TEST(ReturnTest, can_be_constructed_emplace)
 {
     kd::r< test_type > r{ 42, 69 };
-    BOOST_REQUIRE( r );
-    BOOST_REQUIRE_EQUAL( 42, r.v().a_ );
-    BOOST_REQUIRE_EQUAL( 69, r.v().b_ );
+    EXPECT_TRUE(r);
+    EXPECT_EQ(42, r.v().a_);
+    EXPECT_EQ(69, r.v().b_);
 
     auto const & rc = r;
-    BOOST_REQUIRE( rc );
-    BOOST_REQUIRE_EQUAL( 42, rc.v().a_ );
-    BOOST_REQUIRE_EQUAL( 69, rc.v().b_ );
+    EXPECT_TRUE(rc);
+    EXPECT_EQ(42, rc.v().a_);
+    EXPECT_EQ(69, rc.v().b_);
 }
 
-BOOST_AUTO_TEST_CASE( can_be_constructed_from_an_error )
+TEST(ReturnTest, can_be_constructed_from_an_error)
 {
     using type = kd::r< int >;
 
-    auto error = make_error_code( std::errc::address_in_use );
+    auto error = make_error_code(std::errc::address_in_use);
     {
         type r{ error };
-        BOOST_REQUIRE( ! r );
-        BOOST_REQUIRE_THROW( r.v(), type::exception_type );
-        BOOST_REQUIRE_EQUAL( error, r.e() );
+        EXPECT_TRUE(! r);
+        EXPECT_THROW(r.v(), type::exception_type);
+        EXPECT_EQ(error, r.e());
 
         auto const & rc = r;
-        BOOST_REQUIRE( ! rc );
-        BOOST_REQUIRE_THROW( rc.v(), type::exception_type );
-        BOOST_REQUIRE_EQUAL( error, rc.e() );
+        EXPECT_TRUE(! rc);
+        EXPECT_THROW(rc.v(), type::exception_type);
+        EXPECT_EQ(error, rc.e());
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_be_copy_constructed )
+TEST(ReturnTest, can_be_copy_constructed)
 {
     using type = kd::r< test_type >;
 
     {
         type r1{ 42, 69 };
         type r2{ r1 };
-        BOOST_REQUIRE( r2 );
-        BOOST_REQUIRE_EQUAL( r1.v(), r2.v() );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        EXPECT_TRUE(r2);
+        EXPECT_EQ(r1.v(), r2.v());
+        EXPECT_EQ(r1.e(), r2.e());
     }
 
     {
         const type r1{ 42, 69 };
         type r2{ r1 };
-        BOOST_REQUIRE( r2 );
-        BOOST_REQUIRE_EQUAL( r1.v(), r2.v() );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        EXPECT_TRUE(r2);
+        EXPECT_EQ(r1.v(), r2.v());
+        EXPECT_EQ(r1.e(), r2.e());
     }
 
     {
-        type r1{ make_error_code( std::errc::address_in_use ) };
+        type r1{ make_error_code(std::errc::address_in_use) };
         type r2{ r1 };
-        BOOST_REQUIRE( ! r2 );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        EXPECT_TRUE(! r2);
+        EXPECT_EQ(r1.e(), r2.e());
     }
 
     {
-        const type r1{ make_error_code( std::errc::address_in_use ) };
+        const type r1{ make_error_code(std::errc::address_in_use) };
         type r2{ r1 };
-        BOOST_REQUIRE( ! r2 );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        EXPECT_TRUE(! r2);
+        EXPECT_EQ(r1.e(), r2.e());
     }
 }
 
-BOOST_AUTO_TEST_CASE( can_be_move_constructed )
+TEST(ReturnTest, can_be_move_constructed)
 {
     using type = kd::r< test_type >;
 
     {
         type r1{ 42, 69 };
-        type r2{ std::move( r1 ) };
-        BOOST_REQUIRE( r1.v().moved_ );
-        BOOST_REQUIRE( r2 );
-        BOOST_REQUIRE_EQUAL( r1.v(), r2.v() );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        type r2{ std::move(r1) };
+        EXPECT_TRUE(r1.v().moved_);
+        EXPECT_TRUE(r2);
+        EXPECT_EQ(r1.v(), r2.v());
+        EXPECT_EQ(r1.e(), r2.e());
     }
     {
-        type r1{ make_error_code( std::errc::address_in_use ) };
-        type r2{ std::move( r1 ) };
-        BOOST_REQUIRE( ! r2 );
-        BOOST_REQUIRE_EQUAL( r1.e(), r2.e() );
+        type r1{ make_error_code(std::errc::address_in_use) };
+        type r2{ std::move(r1) };
+        EXPECT_TRUE(! r2);
+        EXPECT_EQ(r1.e(), r2.e());
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( test_assignment )
-
-BOOST_AUTO_TEST_CASE( can_be_assigned )
+TEST(ReturnTest, can_be_assigned)
 {
     using type = kd::r< test_type >;
 
@@ -206,49 +202,45 @@ BOOST_AUTO_TEST_CASE( can_be_assigned )
         type r1{ 0, 0 };
         test_type v1{ 42, 69 };
         r1 = v1;
-        BOOST_REQUIRE( r1 );
-        BOOST_REQUIRE_EQUAL( v1, r1.v() );
+        EXPECT_TRUE(r1);
+        EXPECT_EQ(v1, r1.v());
     }
     {
         type r1{ 0, 0 };
         const test_type v1{ 42, 69 };
         r1 = v1;
-        BOOST_REQUIRE( r1 );
-        BOOST_REQUIRE_EQUAL( v1, r1.v() );
+        EXPECT_TRUE(r1);
+        EXPECT_EQ(v1, r1.v());
     }
     {
         type r1{ 0, 0 };
-        auto e1 = make_error_code( std::errc::address_in_use );
+        auto e1 = make_error_code(std::errc::address_in_use);
         r1 = e1;
-        BOOST_REQUIRE( ! r1 );
-        BOOST_REQUIRE_EQUAL( e1, r1.e() );
+        EXPECT_TRUE(! r1);
+        EXPECT_EQ(e1, r1.e());
     }
     {
         type r1{ 0, 0 };
-        auto const e1 = make_error_code( std::errc::address_in_use );
+        auto const e1 = make_error_code(std::errc::address_in_use);
         r1 = e1;
-        BOOST_REQUIRE( ! r1 );
-        BOOST_REQUIRE_EQUAL( e1, r1.e() );
+        EXPECT_TRUE(! r1);
+        EXPECT_EQ(e1, r1.e());
     }
     {
-        type r1{ make_error_code( std::errc::address_family_not_supported ) };
-        auto e1 = make_error_code( std::errc::address_in_use );
+        type r1{ make_error_code(std::errc::address_family_not_supported) };
+        auto e1 = make_error_code(std::errc::address_in_use);
         r1 = e1;
-        BOOST_REQUIRE( ! r1 );
-        BOOST_REQUIRE_EQUAL( e1, r1.e() );
+        EXPECT_TRUE(! r1);
+        EXPECT_EQ(e1, r1.e());
     }
     {
-        type r1{ make_error_code( std::errc::address_family_not_supported ) };
-        auto const e1 = make_error_code( std::errc::address_in_use );
+        type r1{ make_error_code(std::errc::address_family_not_supported) };
+        auto const e1 = make_error_code(std::errc::address_in_use);
         r1 = e1;
-        BOOST_REQUIRE( ! r1 );
-        BOOST_REQUIRE_EQUAL( e1, r1.e() );
+        EXPECT_TRUE(! r1);
+        EXPECT_EQ(e1, r1.e());
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE_END()
 
 }
 

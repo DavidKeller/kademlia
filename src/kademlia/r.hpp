@@ -43,7 +43,7 @@ namespace detail {
 
 /**
  *  @brief Designed to return a value <b>or</b> an error code.
- *  @tparam ReturnType The value type to return if no error occured.
+ *  @tparam ReturnType The value type to return if no error occurred.
  */
 template< typename ReturnType >
 class r
