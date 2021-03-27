@@ -25,6 +25,8 @@
 
 #include "kademlia/timer.hpp"
 
+#include <functional>
+
 #include "kademlia/error_impl.hpp"
 #include "kademlia/log.hpp"
 
@@ -48,43 +50,46 @@ timer::schedule_next_tick
             << expiration_time.time_since_epoch().count()
             << "." << std::endl;
 
-    auto on_fire = [ this ]( boost::system::error_code const& failure )
+    using std::placeholders::_1;
+    timer_.async_wait( std::bind( &timer::on_fire, this, _1 ) );
+}
+
+void
+timer::on_fire
+    ( boost::system::error_code const& failure )
+{
+    // The current timeout has been canceled
+    // hence stop right there.
+    if ( failure == boost::asio::error::operation_aborted )
+        return;
+
+    if ( failure )
+        throw std::system_error{ make_error_code( TIMER_MALFUNCTION ) };
+
+    // The callbacks to execute are the first
+    // n callbacks with the same keys.
+    auto begin = timeouts_.begin();
+    auto end = timeouts_.upper_bound( begin->first );
+    // Call the user callbacks.
+    for ( auto i = begin; i != end; ++ i )
+        i->second();
+
+    LOG_DEBUG( timer, this )
+            << "remove " << std::distance( begin, end )
+            << " callback(s) scheduled at "
+            << begin->first.time_since_epoch().count()
+            << "." << std::endl;
+
+    // And remove the timeout.
+    timeouts_.erase( begin, end );
+
+    // If there is a remaining timeout, schedule it.
+    if ( ! timeouts_.empty() )
     {
-        // The current timeout has been canceled
-        // hence stop right there.
-        if ( failure == boost::asio::error::operation_aborted )
-            return;
-
-        if ( failure )
-            throw std::system_error{ make_error_code( TIMER_MALFUNCTION ) };
-
-        // The callbacks to execute are the first
-        // n callbacks with the same keys.
-        auto begin = timeouts_.begin();
-        auto end = timeouts_.upper_bound( begin->first );
-        // Call the user callbacks.
-        for ( auto i = begin; i != end; ++ i )
-            i->second();
-
         LOG_DEBUG( timer, this )
-                << "remove " << std::distance( begin, end )
-                << " callback(s) scheduled at "
-                << begin->first.time_since_epoch().count()
-                << "." << std::endl;
-
-        // And remove the timeout.
-        timeouts_.erase( begin, end );
-
-        // If there is a remaining timeout, schedule it.
-        if ( ! timeouts_.empty() )
-        {
-            LOG_DEBUG( timer, this )
-                    << "schedule remaining timers" << std::endl;
-            schedule_next_tick( timeouts_.begin()->first );
-        }
-    };
-
-    timer_.async_wait( on_fire );
+                << "schedule remaining timers" << std::endl;
+        schedule_next_tick( timeouts_.begin()->first );
+    }
 }
 
 } // namespace detail

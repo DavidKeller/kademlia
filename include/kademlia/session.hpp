@@ -70,11 +70,33 @@ public:
         , data_type const& data
         , save_handler_type handler );
 
+    template< typename KeyType, typename DataType >
+    void
+    async_save
+        ( KeyType const& key
+        , DataType const& data
+        , save_handler_type handler )
+    {
+        async_save( key_type{ std::begin( key ), std::end( key ) }
+                  , data_type{ std::begin( data ), std::end( data ) }
+                  , handler );
+    }
+
     KADEMLIA_SYMBOL_VISIBILITY
     void
     async_load
         ( key_type const& key
         , load_handler_type handler );
+
+    template< typename KeyType >
+    void
+    async_load
+        ( KeyType const& key
+        , load_handler_type handler )
+    {
+        async_load( key_type{ std::begin( key ), std::end( key ) }
+                  , handler );
+    }
 
     KADEMLIA_SYMBOL_VISIBILITY
     std::error_code

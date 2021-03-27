@@ -22,14 +22,16 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+add_executable(kademlia_cli
+    cli.cpp)
 
-find_package(Sphinx REQUIRED)
+target_link_libraries(kademlia_cli
+    kademlia
+    Threads::Threads)
 
-set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
-set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR})
+add_executable(kademlia_bootstrap
+    bootstrap.cpp)
 
-add_custom_target(kademlia_doc
-    ALL
-    COMMAND ${SPHINX_EXECUTABLE} -b html ${SPHINX_SOURCE} ${SPHINX_BUILD}
-    VERBATIM
-    COMMENT "Generating sphinx documentation")
+target_link_libraries(kademlia_bootstrap
+    kademlia
+    Threads::Threads)

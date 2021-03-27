@@ -16,6 +16,11 @@ Endpoint
    .. rubric:: Constructors
 
    .. cpp:function:: endpoint \
+                         ( void )
+
+      Construct an unitialized endpoint.
+
+   .. cpp:function:: endpoint \
                          ( address_type const& address \
                          , service_type const& service )
 
@@ -87,6 +92,13 @@ Endpoint
 
    Print the endpoint **e** string representation into the stream **out**.
 
+
+.. cpp:function:: std::istream & \
+                  operator>> \
+                      ( std::istream & in \
+                      , endpoint & e )
+
+   Parse the endpoint **e** string representation from the stream **in**.
 
 .. cpp:function:: bool \
                   operator== \

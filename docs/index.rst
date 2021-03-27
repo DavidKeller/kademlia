@@ -11,7 +11,7 @@ Kademlia C++'s documentation
    :caption: Examples
 
    examples/cli 
-
+   examples/bootstrap
 
 .. toctree::
    :caption: API

@@ -25,15 +25,13 @@
 
 #include "kademlia/error_impl.hpp"
 
-#include "kademlia/error_impl.hpp"
-
 namespace kademlia {
 
 std::error_condition
 make_error_condition
-    ( error_type code )
+    ( error_type condition )
 {
-    return std::error_condition{ static_cast<int>(code)
+    return std::error_condition{ static_cast< int >( condition )
                                , detail::error_category() };
 }
 

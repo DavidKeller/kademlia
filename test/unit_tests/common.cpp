@@ -24,11 +24,15 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-#include "kademlia/log.hpp"
+
+#include <cstdlib>
 
 #include <iostream>
+
 #include <boost/system/system_error.hpp>
 #include <boost/filesystem.hpp>
+
+#include "kademlia/log.hpp"
 
 namespace filesystem = boost::filesystem;
 namespace unit_test = boost::unit_test;

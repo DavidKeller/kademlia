@@ -108,7 +108,7 @@ std::error_code
 make_error_code
     ( error_type code )
 {
-    return std::error_code{ static_cast<int>(code)
+    return std::error_code{ static_cast< int >( code )
                           , error_category() };
 }
 

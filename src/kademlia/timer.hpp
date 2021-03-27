@@ -87,6 +87,13 @@ private:
     schedule_next_tick
         ( time_point const& expiration_time );
 
+    /**
+     *
+     */
+    void
+    on_fire
+        ( boost::system::error_code const& failure );
+
 private:
     ///
     deadline_timer timer_;
