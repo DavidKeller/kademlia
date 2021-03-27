@@ -121,11 +121,11 @@ BOOST_FIXTURE_TEST_CASE( known_messages_are_not_forwarded_when_late, fixture )
                        , kd::id{}, kd::id{ "1" } };
 
     router_.register_temporary_callback( h1.random_token_
-                                       , std::chrono::hours{ 0 }
+                                       , std::chrono::hours::zero()
                                        , on_message_received
                                        , on_error );
 
-    io_service_.poll();
+    io_service_.run_one();
     BOOST_REQUIRE_EQUAL( 0ULL, messages_received_count_ );
     BOOST_REQUIRE_EQUAL( 1ULL, error_count_ );
 
