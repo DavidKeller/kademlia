@@ -49,50 +49,38 @@ set_target_properties(test_helpers PROPERTIES
     COMPILE_DEFINITIONS TESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 macro(build_test test_name)
-    cmake_parse_arguments(ARG "" "" "LIBRARIES;SOURCES" ${ARGN})
-    add_executable(${test_name} ${ARG_SOURCES})
-    target_link_libraries(${test_name}
-        test_helpers
-        ${ARG_LIBRARIES})
+    add_executable(${test_name} ${ARGN})
+    target_link_libraries(${test_name} test_helpers kademlia_static)
     add_dependencies(unit_tests ${test_name})
     add_test(${test_name} ${test_name})
 endmacro()
 
-build_test(unit_tests_helpers
-    SOURCES
-        test_fake_socket.cpp
-    LIBRARIES
-        kademlia_static)
-
-build_test(unit_tests_lib
-    SOURCES
-        test_id.cpp
-        test_endpoint.cpp
-        test_boost_to_std_error.cpp
-        test_message.cpp
-        test_message_serializer.cpp
-        test_lookup_task.cpp
-        test_store_value_task.cpp
-        test_find_value_task.cpp
-        test_ip_endpoint.cpp
-        test_peer.cpp
-        test_error.cpp
-        test_discover_neighbors_task.cpp
-        test_notify_peer_task.cpp
-        test_response_router.cpp
-        test_response_callbacks.cpp
-        test_timer.cpp
-        test_network.cpp
-        test_message_socket.cpp
-        test_log.cpp
-        test_r.cpp
-        test_routing_table.cpp
-        test_session.cpp
-        test_first_session.cpp
-        test_concurrent_guard.cpp
-        test_engine.cpp
-    LIBRARIES 
-        kademlia_static)
+build_test(unit_tests_helpers test_fake_socket.cpp)
+build_test(test_id test_id.cpp)
+build_test(test_endpoint test_endpoint.cpp)
+build_test(test_boost_to_std_error test_boost_to_std_error.cpp)
+build_test(test_message test_message.cpp)
+build_test(test_message_serializer test_message_serializer.cpp)
+build_test(test_lookup_task test_lookup_task.cpp)
+build_test(test_store_value_task test_store_value_task.cpp)
+build_test(test_find_value_task test_find_value_task.cpp)
+build_test(test_ip_endpoint test_ip_endpoint.cpp)
+build_test(test_peer test_peer.cpp)
+build_test(test_error test_error.cpp)
+build_test(test_discover_neighbors_task test_discover_neighbors_task.cpp)
+build_test(test_notify_peer_task test_notify_peer_task.cpp)
+build_test(test_response_router test_response_router.cpp)
+build_test(test_response_callbacks test_response_callbacks.cpp)
+build_test(test_timer test_timer.cpp)
+build_test(test_network test_network.cpp)
+build_test(test_message_socket test_message_socket.cpp)
+build_test(test_log test_log.cpp)
+build_test(test_r test_r.cpp)
+build_test(test_routing_table test_routing_table.cpp)
+build_test(test_session test_session.cpp)
+build_test(test_first_session test_first_session.cpp)
+build_test(test_concurrent_guard test_concurrent_guard.cpp)
+build_test(test_engine test_engine.cpp)
 
 if(ENABLE_COVERAGE)
     if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
