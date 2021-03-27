@@ -69,6 +69,82 @@ BOOST_AUTO_TEST_CASE( can_be_printed )
     BOOST_CHECK( out.is_equal( "127.0.0.1:1234" ) );
 }
 
+BOOST_AUTO_TEST_CASE( can_be_parsed )
+{
+    // IPv4 + numeric port
+    {
+        k::endpoint e;
+        std::istringstream in{ "127.0.0.1:1234" };
+        in >> e;
+        BOOST_REQUIRE( ! in.fail() );
+        BOOST_REQUIRE_EQUAL( "127.0.0.1", e.address() );
+        BOOST_REQUIRE_EQUAL( "1234", e.service() );
+    }
+
+    // IPv6 + numeric port
+    {
+        k::endpoint e;
+        std::istringstream in{ "[AA:bb::1]:1234" };
+        in >> e;
+        BOOST_REQUIRE( ! in.fail() );
+        BOOST_REQUIRE_EQUAL( "AA:bb::1", e.address() );
+        BOOST_REQUIRE_EQUAL( "1234", e.service() );
+    }
+
+    // IPv4 + named port
+    {
+        k::endpoint e;
+        std::istringstream in{ "127.0.0.1:http" };
+        in >> e;
+        BOOST_REQUIRE( ! in.fail() );
+        BOOST_REQUIRE_EQUAL( "127.0.0.1", e.address() );
+        BOOST_REQUIRE_EQUAL( "http", e.service() );
+    }
+
+    // IPv6 + named port
+    {
+        k::endpoint e;
+        std::istringstream in{ "[AA:bb::1]:http" };
+        in >> e;
+        BOOST_REQUIRE( ! in.fail() );
+        BOOST_REQUIRE_EQUAL( "AA:bb::1", e.address() );
+        BOOST_REQUIRE_EQUAL( "http", e.service() );
+    }
+
+    // Invalid because missing address/service separator
+    // Expected the provided endpoint to remaining unmodified
+    {
+        k::endpoint e{ "0.0.0.0", "http" };
+        std::istringstream in{ "192.168.0.1http" };
+        in >> e;
+        BOOST_REQUIRE( in.fail() );
+        BOOST_REQUIRE_EQUAL( "0.0.0.0", e.address() );
+        BOOST_REQUIRE_EQUAL( "http", e.service() );
+    }
+
+    // Invalid because missing IPv6 leading bracket separator
+    // Expected the provided endpoint to remaining unmodified
+    {
+        k::endpoint e{ "0.0.0.0", "http" };
+        std::istringstream in{ "AA:bb::1]:http" };
+        in >> e;
+        BOOST_REQUIRE( in.fail() );
+        BOOST_REQUIRE_EQUAL( "0.0.0.0", e.address() );
+        BOOST_REQUIRE_EQUAL( "http", e.service() );
+    }
+
+    // Invalid because missing IPv6 trailing bracket separator
+    // Expected the provided endpoint to remaining unmodified
+    {
+        k::endpoint e{ "0.0.0.0", "http" };
+        std::istringstream in{ "[AA:bb::1:http" };
+        in >> e;
+        BOOST_REQUIRE( in.fail() );
+        BOOST_REQUIRE_EQUAL( "0.0.0.0", e.address() );
+        BOOST_REQUIRE_EQUAL( "http", e.service() );
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE_END()

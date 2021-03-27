@@ -47,6 +47,11 @@ public:
     using service_type = std::string;
     using service_numeric_type = std::uint16_t;
 
+public:
+    endpoint
+        ( void )
+    { }
+
     endpoint
         ( address_type const& address
         , service_type const& service )
@@ -93,6 +98,12 @@ std::ostream&
 operator<<
     ( std::ostream & out
     , endpoint const& e );
+
+KADEMLIA_SYMBOL_VISIBILITY
+std::istream &
+operator>>
+    ( std::istream & in
+    , endpoint & e );
 
 inline bool
 operator==

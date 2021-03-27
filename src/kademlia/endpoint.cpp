@@ -25,16 +25,102 @@
 
 #include <kademlia/endpoint.hpp>
 
+#include <cassert>
+
 #include <ostream>
+#include <istream>
+#include <cctype>
 
 namespace kademlia {
+
+namespace {
+
+std::string
+parse_ipv6( std::istream & in )
+{
+    std::string ipv6;
+
+    char c = in.get();
+    assert( c == '[' && "An IPv6 address starts with '['");
+
+    for ( c = in.get(); std::isalnum( c ) || c == ':'; c = in.get() )
+        ipv6.push_back(c);
+
+    if ( ipv6.empty() || c != ']' )
+        in.setstate( std::istream::failbit );
+
+    return ipv6;
+}
+
+std::string
+parse_ipv4( std::istream & in )
+{
+    std::string ipv4;
+
+    while ( std::isdigit( in.peek() ) || in.peek() == '.' )
+        ipv4.push_back( in.get() );
+
+    if ( ipv4.empty() )
+        in.setstate( std::istream::failbit );
+
+    return ipv4;
+}
+
+std::string
+parse_ip( std::istream & in )
+{
+    // Check if the address is an IPv6
+    if ( in.peek() == '[' )
+        return parse_ipv6( in );
+
+    return parse_ipv4( in );
+}
+
+std::string
+parse_service( std::istream & in )
+{
+    std::string service;
+
+    in >> service;
+
+    return service;
+}
+
+}
+
+std::istream&
+operator>>
+    ( std::istream & in
+    , endpoint & e )
+{
+    std::istream::sentry s{ in };
+
+    if ( s )
+    {
+        std::string const address = parse_ip( in );
+
+        if ( in.get() != ':' )
+            in.setstate( std::istream::failbit );
+
+        std::string const service = parse_service( in );
+
+        if ( in )
+            e = endpoint{ address, service };
+    }
+
+    return in;
+}
 
 std::ostream&
 operator<<
     ( std::ostream & out
     , endpoint const& e )
 {
-    out << e.address() << ":" << e.service();
+    std::ostream::sentry s{ out };
+
+    if ( s )
+        out << e.address() << ":" << e.service();
+
     return out;
 }
 
