@@ -6,6 +6,7 @@ Kademlia C++'s documentation
 
    overview/concept
    overview/walkthrough
+   overview/installation
 
 .. toctree::
    :caption: Examples

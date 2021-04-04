@@ -74,7 +74,7 @@ find_package(Threads REQUIRED)
 if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
 endif()
-find_package(Boost REQUIRED COMPONENTS
+find_package(Boost 1.65 REQUIRED COMPONENTS
     system
     filesystem
     unit_test_framework)

@@ -22,8 +22,7 @@ Session
 
          This session perform a neighbors discovery on creation.
          If the network is down or the **initial_peer** can't be contacted,
-         an exception will be throw from the :cpp:func:`run()`
-         method.
+         an exception will be throw.
 
       Both **listen_on_ipv4** and **listen_on_ipv6** can be provided to
       change the addresses and ports this session is using to exchange
