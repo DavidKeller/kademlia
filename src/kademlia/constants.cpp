@@ -33,7 +33,7 @@ std::size_t const CONCURRENT_FIND_PEER_REQUESTS_COUNT{ 3 };
 std::size_t const REDUNDANT_SAVE_COUNT{ 3 };
 
 std::chrono::milliseconds const INITIAL_CONTACT_RECEIVE_TIMEOUT{ 1000 };
-std::chrono::milliseconds const PEER_LOOKUP_TIMEOUT{ 20 };
+std::chrono::milliseconds const PEER_LOOKUP_TIMEOUT{ 200 };
 
 } // namespace detail
 } // namespace kademlia
