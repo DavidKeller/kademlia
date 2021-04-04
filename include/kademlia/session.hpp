@@ -79,7 +79,7 @@ public:
     {
         async_save( key_type{ std::begin( key ), std::end( key ) }
                   , data_type{ std::begin( data ), std::end( data ) }
-                  , handler );
+                  , std::move( handler ) );
     }
 
     KADEMLIA_SYMBOL_VISIBILITY
@@ -95,7 +95,7 @@ public:
         , load_handler_type handler )
     {
         async_load( key_type{ std::begin( key ), std::end( key ) }
-                  , handler );
+                  , std::move( handler ) );
     }
 
     KADEMLIA_SYMBOL_VISIBILITY

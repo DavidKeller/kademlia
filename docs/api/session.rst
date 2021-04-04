@@ -40,6 +40,16 @@ Session
       Asynchronously save a **data** with **key** within the network.
       On completion, the provided **handler** is called.
 
+   .. cpp:function:: template< typename KeyType, typename DataType > \
+                     void \
+                     async_save \
+                         ( KeyType const& key \
+                         , DataType const& data \
+                         , save_handler_type handler )
+
+      This methods acts like :cpp:func:`session::async_save()` but
+      accepts any *bytes* sequence as **key** and **data**.
+
    .. cpp:function:: void \
                      async_load \
                          ( key_type const& key \
@@ -48,6 +58,15 @@ Session
       Asynchronously retrieve the data associated with **key** within the network.
       On completion, the provided **handler** is called, with the associated data
       in case of success.
+
+   .. cpp:function:: template< typename KeyType > \
+                     void \
+                     async_load \
+                         ( KeyType const& key \
+                         , save_handler_type handler )
+
+      This methods acts like :cpp:func:`session::async_load()` but
+      accepts any *bytes* sequence as **key**.
 
    .. cpp:function:: std::error_code \
                      run \

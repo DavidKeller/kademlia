@@ -44,6 +44,8 @@ enum error_type
     RUN_ABORTED,
     /// The session failed to contact a valid peer uppon creation.
     INITIAL_PEER_FAILED_TO_RESPOND,
+    /// The session routing table is missing peers.
+    MISSING_PEERS,
     /// An id has been corrupted.
     INVALID_ID,
     /// An id has been truncated.

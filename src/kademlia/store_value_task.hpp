@@ -248,7 +248,7 @@ private:
             send_store_request( c, task );
 
         if ( candidates.empty() )
-            task->notify_caller( make_error_code( INITIAL_PEER_FAILED_TO_RESPOND ) );
+            task->notify_caller( make_error_code( MISSING_PEERS ) );
         else
             task->notify_caller( std::error_code{} );
     }

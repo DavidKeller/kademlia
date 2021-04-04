@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_routing_table_is_empty )
     BOOST_REQUIRE_EQUAL( 1, routing_table_.find_call_count_ );
 
     // Task didn't send any more message.
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    BOOST_REQUIRE( failure_ == k::MISSING_PEERS );
 
     // Task notified the error.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_unique_peer_fails_to_respond )
 
     // Task notified the error.
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    BOOST_REQUIRE( failure_ == k::MISSING_PEERS );
 }
 
 BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( can_notify_error_when_all_peers_fail_to_respond )
 
     // Task notified the error.
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    BOOST_REQUIRE( failure_ == k::MISSING_PEERS );
 }
 
 BOOST_AUTO_TEST_CASE( can_store_value_when_already_known_peer_is_the_target )
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE( can_skip_wrong_response )
 
     // the callback has been called.
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    BOOST_REQUIRE( failure_ == k::MISSING_PEERS );
 }
 
 BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE( can_skip_corrupted_response )
 
     // the callback has been called.
     BOOST_REQUIRE_EQUAL( 1, callback_call_count_ );
-    BOOST_REQUIRE( failure_ == k::INITIAL_PEER_FAILED_TO_RESPOND );
+    BOOST_REQUIRE( failure_ == k::MISSING_PEERS );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

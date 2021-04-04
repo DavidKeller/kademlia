@@ -71,8 +71,10 @@ BOOST_AUTO_TEST_CASE( can_query_known_peer_for_specific_id )
                                    , kd::find_peer_response_body{} );
 
 
+    bool finished = false;
+    auto on_finish = [ &finished ] { finished = true; };
 
-    kd::start_notify_peer_task( my_id, tracker_, routing_table_ );
+    kd::start_notify_peer_task( my_id, tracker_, routing_table_, on_finish );
 
     io_service_.poll();
 
@@ -87,6 +89,7 @@ BOOST_AUTO_TEST_CASE( can_query_known_peer_for_specific_id )
 
     // Task didn't send any more message.
     BOOST_REQUIRE( ! tracker_.has_sent_message() );
+    BOOST_REQUIRE( finished );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

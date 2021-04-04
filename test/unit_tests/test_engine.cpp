@@ -59,60 +59,6 @@ BOOST_AUTO_TEST_SUITE( engine )
 
 BOOST_AUTO_TEST_SUITE( test_usage )
 
-BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_save )
-{
-    boost::asio::io_service io_service;
-
-    k::endpoint ipv4_endpoint{ "127.0.0.1", k::session_base::DEFAULT_PORT };
-    k::endpoint ipv6_endpoint{ "::1", k::session_base::DEFAULT_PORT };
-
-    auto e1 = create_test_engine( io_service, d::id{ "0" } );
-
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
-
-    bool save_executed = false;
-    auto on_save = [ &save_executed ]( std::error_code const& failure )
-    { save_executed = true; };
-    e1->async_save( "key", "data", on_save );
-
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
-
-    BOOST_REQUIRE( ! save_executed );
-
-    auto e2 = create_test_engine( io_service
-                                , d::id{ "1" }
-                                , e1->ipv4() );
-
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
-    BOOST_REQUIRE( save_executed );
-}
-
-BOOST_AUTO_TEST_CASE( isolated_bootstrap_engine_cannot_load )
-{
-    boost::asio::io_service io_service;
-
-    auto e1 = create_test_engine( io_service, d::id{ "0" } );
-
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
-
-    bool load_executed = false;
-    auto on_load = [ &load_executed ]( std::error_code const& failure
-                                     , std::string const& data )
-    { load_executed = true; };
-    e1->async_load( "key", on_load );
-
-    BOOST_REQUIRE_EQUAL( 0, io_service.poll() );
-
-    BOOST_REQUIRE( ! load_executed );
-
-    auto e2 = create_test_engine( io_service
-                                , d::id{ "1" }
-                                , e1->ipv4() );
-
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
-    BOOST_REQUIRE( load_executed );
-}
-
 BOOST_AUTO_TEST_CASE( isolated_engine_cannot_be_constructed )
 {
     boost::asio::io_service io_service;
@@ -136,8 +82,6 @@ BOOST_AUTO_TEST_CASE( two_engines_can_find_themselves )
   
     d::id const id2{ "4000000000000000000000000000000000000000" };
     auto e2 = create_test_engine( io_service, id2, e1->ipv4() );
-
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
 }
 
 BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
@@ -149,8 +93,6 @@ BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
 
     d::id const id2{ "4000000000000000000000000000000000000000" };
     auto e2 = create_test_engine( io_service, id2, e1->ipv4() );
-
-    BOOST_REQUIRE_GT( io_service.poll(), 0 );
 
     std::string const expected_data{ "data" };
 

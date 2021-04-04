@@ -42,7 +42,7 @@ namespace kademlia {
 namespace detail {
 
 ///
-template< typename TrackerType >
+template< typename TrackerType, typename OnFinishType >
 class notify_peer_task final
     : public lookup_task
 {
@@ -62,10 +62,12 @@ public:
     start
         ( detail::id const & key
         , tracker_type & tracker
-        , RoutingTableType & routing_table )
+        , RoutingTableType & routing_table
+        , OnFinishType on_finish )
     {
         std::shared_ptr< notify_peer_task > c;
-        c.reset( new notify_peer_task( key, tracker, routing_table ) );
+        c.reset( new notify_peer_task( key, tracker
+                                     , routing_table, on_finish ) );
 
         try_to_notify_neighbors( c );
     }
@@ -78,11 +80,14 @@ private:
     notify_peer_task
         ( detail::id const & key
         , tracker_type & tracker
-        , RoutingTableType & routing_table )
+        , RoutingTableType & routing_table
+        , OnFinishType on_finish )
             : lookup_task( key
                          , routing_table.find( key )
                          , routing_table.end() )
             , tracker_( tracker )
+            , in_flight_requests_count_()
+            , on_finish_( on_finish )
     {
         LOG_DEBUG( notify_peer_task, this )
                 << "create notify peer task for '"
@@ -119,7 +124,7 @@ private:
         , std::shared_ptr< notify_peer_task > task )
     {
         LOG_DEBUG( notify_peer_task, task.get() )
-                << "sending find peer to notify to '"
+                << "sending peer notification to '"
                 << current_peer << "'." << std::endl;
 
         auto on_message_received = [ task, current_peer ]
@@ -130,17 +135,36 @@ private:
         {
             task->flag_candidate_as_valid( current_peer.id_ );
             handle_notify_peer_response( s, h, i, e, task );
+            task->check_for_completion();
         };
 
         auto on_error = [ task, current_peer ]
             ( std::error_code const& )
-        { task->flag_candidate_as_invalid( current_peer.id_ ); };
+        {
+            task->flag_candidate_as_invalid( current_peer.id_ );
+            task->check_for_completion();
+        };
+
+        ++ task->in_flight_requests_count_;
 
         task->tracker_.send_request( request
                                    , current_peer.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
                                    , on_message_received
                                    , on_error );
+    }
+
+    /**
+     *
+     */
+    void
+    check_for_completion
+        ( void )
+    {
+        -- in_flight_requests_count_;
+
+        if (in_flight_requests_count_ == 0)
+            on_finish_();
     }
 
     /**
@@ -169,7 +193,7 @@ private:
             return;
         }
 
-        // If new candidate have been discovered, ask them.
+        // If new candidate have been discovered, notify them.
         task->add_candidates( response.peers_ );
         try_to_notify_neighbors( task );
     }
@@ -177,21 +201,29 @@ private:
 private:
     ///
     tracker_type & tracker_;
+    ///
+    std::size_t in_flight_requests_count_;
+    ///
+    OnFinishType on_finish_;
 };
 
 /**
  *
  */
-template< typename TrackerType, typename RoutingTableType >
+template< typename TrackerType
+        , typename RoutingTableType
+        , typename OnFinishType >
 void
 start_notify_peer_task
     ( id const& key
     , TrackerType & tracker
-    , RoutingTableType & routing_table )
+    , RoutingTableType & routing_table
+    , OnFinishType on_finish )
 {
-    using task = notify_peer_task< TrackerType >;
+    using task = notify_peer_task< TrackerType, OnFinishType >;
 
-    task::start( key, tracker, routing_table );
+    task::start( key, tracker, routing_table
+               , std::forward< OnFinishType >( on_finish ) );
 }
 
 } // namespace detail

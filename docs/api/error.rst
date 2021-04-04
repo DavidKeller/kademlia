@@ -19,6 +19,10 @@ Error
 
       The session failed to contact a valid peer uppon creation.
 
+   .. cpp:enumerator:: MISSING_PEERS
+
+      The session routing table is missing peers.
+
    .. cpp:enumerator:: INVALID_ID
 
       An id has been corrupted.
