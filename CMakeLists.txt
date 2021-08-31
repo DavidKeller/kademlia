@@ -25,6 +25,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(kademlia)
+include(CTest)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -107,8 +108,10 @@ include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
 # Build everything.
 add_subdirectory(include)
 add_subdirectory(src)
-enable_testing()
-add_subdirectory(test)
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(test)
+endif()
 add_subdirectory(examples)
 
 if(ENABLE_DOCUMENTATION)

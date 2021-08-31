@@ -349,10 +349,9 @@ message_socket< UnderlyingSocketType >::resolve_endpoint
     // multiple endpoints (e.g. IPv4 / IPv6 address).
     resolved_endpoints endpoints;
 
-    auto i = r.resolve( q );
-    for ( decltype( i ) end; i != end; ++i )
+    for ( auto i : r.resolve( q ) )
         // Convert from underlying_endpoint_type to endpoint_type.
-        endpoints.push_back( convert_endpoint( *i ) );
+        endpoints.push_back( convert_endpoint( i ) );
 
     return endpoints;
 }

@@ -24,8 +24,24 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Run all tests, timeouting if it takes more than 30 seconds.
-add_custom_target(unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout 30)
+add_custom_target(unit_tests
+    COMMAND
+        ${CMAKE_CTEST_COMMAND}
+            --output-on-failure
+            --timeout 30
+    WORKING_DIRECTORY
+        ${PROJECT_BINARY_DIR})
+
 add_dependencies(check unit_tests)
+
+add_custom_target(memcheck
+    COMMAND
+        ${CMAKE_CTEST_COMMAND}
+            --test-action memcheck
+            --output-on-failure
+            --timeout 30
+    WORKING_DIRECTORY
+        ${PROJECT_BINARY_DIR})
 
 include_directories(BEFORE .)
 
