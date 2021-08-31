@@ -86,7 +86,6 @@ private:
                          , routing_table.find( key )
                          , routing_table.end() )
             , tracker_( tracker )
-            , in_flight_requests_count_()
             , on_finish_( on_finish )
     {
         LOG_DEBUG( notify_peer_task, this )
@@ -145,8 +144,6 @@ private:
             task->check_for_completion();
         };
 
-        ++ task->in_flight_requests_count_;
-
         task->tracker_.send_request( request
                                    , current_peer.endpoint_
                                    , PEER_LOOKUP_TIMEOUT
@@ -161,9 +158,7 @@ private:
     check_for_completion
         ( void )
     {
-        -- in_flight_requests_count_;
-
-        if (in_flight_requests_count_ == 0)
+        if (have_all_requests_completed())
             on_finish_();
     }
 
@@ -201,8 +196,6 @@ private:
 private:
     ///
     tracker_type & tracker_;
-    ///
-    std::size_t in_flight_requests_count_;
     ///
     OnFinishType on_finish_;
 };
