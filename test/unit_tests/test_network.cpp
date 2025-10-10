@@ -56,7 +56,7 @@ struct fixture
         , kd::buffer::const_iterator )
     { };
 
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
     k::endpoint ipv4_;
     k::endpoint ipv6_;
 };

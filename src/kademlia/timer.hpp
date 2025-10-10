@@ -55,7 +55,7 @@ public:
      */
     explicit
     timer
-        ( boost::asio::io_service & io_service );
+        ( boost::asio::io_context & io_service );
 
     /**
      *

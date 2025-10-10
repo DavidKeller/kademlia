@@ -49,7 +49,7 @@ public:
      *
      */
     tracker_mock
-        ( boost::asio::io_service & io_service )
+        ( boost::asio::io_context & io_service )
             : io_service_( io_service )
             , id_()
             , message_serializer_( id_ )
@@ -202,7 +202,7 @@ private:
 
 private:
     ///
-    boost::asio::io_service & io_service_;
+    boost::asio::io_context & io_service_;
     ///
     detail::id id_;
     ///

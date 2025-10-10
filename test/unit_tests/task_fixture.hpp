@@ -70,8 +70,8 @@ struct task_fixture
         return p;
     }
 
-    boost::asio::io_service io_service_;
-    boost::asio::io_service::work io_service_work_;
+    boost::asio::io_context io_service_;
+    boost::asio::io_context::work io_service_work_;
     tracker_mock tracker_;
     std::error_code failure_;
     routing_table_mock routing_table_;

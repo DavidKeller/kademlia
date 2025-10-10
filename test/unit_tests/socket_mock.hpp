@@ -61,7 +61,7 @@ public:
      *
      */
     socket_mock
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , protocol_type const& )
     { }
 

@@ -79,7 +79,7 @@ public:
      *
      */
     fake_socket
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , protocol_type const& )
             : io_service_( io_service )
             , local_endpoint_()
@@ -597,7 +597,7 @@ private:
 
 private:
     ///
-    boost::asio::io_service & io_service_;
+    boost::asio::io_context & io_service_;
     ///
     endpoint_type local_endpoint_;
     ///

@@ -39,7 +39,7 @@ namespace t = k::test;
 
 template<typename ... InitialPeer >
 std::unique_ptr< t::test_engine >
-create_test_engine( boost::asio::io_service & io_service
+create_test_engine( boost::asio::io_context & io_service
                   , d::id const& id
                   , InitialPeer &&... initial_peer )
 {
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_SUITE( test_usage )
 
 BOOST_AUTO_TEST_CASE( isolated_engine_cannot_be_constructed )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint initial_peer{ "172.18.1.2", 27980 };
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE( isolated_engine_cannot_be_constructed )
 
 BOOST_AUTO_TEST_CASE( two_engines_can_find_themselves )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     d::id const id1{ "8000000000000000000000000000000000000000" };
     auto e1 = create_test_engine( io_service, id1 );
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( two_engines_can_find_themselves )
 
 BOOST_AUTO_TEST_CASE( two_engines_can_save_and_load )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     d::id const id1{ "8000000000000000000000000000000000000000" };
     auto e1 = create_test_engine( io_service, id1 );

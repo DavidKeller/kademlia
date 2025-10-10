@@ -44,7 +44,7 @@ create_socket
     , std::uint16_t port )
 {
     auto const a = boost::asio::ip::make_address( ip );
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     // Try to create a socket.
     typename Socket::endpoint_type endpoint( a, port );

@@ -42,7 +42,7 @@ class test_engine final
 {
 public:
     test_engine
-        ( boost::asio::io_service & service
+        ( boost::asio::io_context & service
         , endpoint const & ipv4
         , endpoint const & ipv6
         , detail::id const& new_id )
@@ -56,7 +56,7 @@ public:
     { }
 
     test_engine
-        ( boost::asio::io_service & service
+        ( boost::asio::io_context & service
         , endpoint const & initial_peer
         , endpoint const & ipv4
         , endpoint const & ipv6
@@ -122,7 +122,7 @@ private:
     using impl = detail::engine< fake_socket >;
 
 private:
-    boost::asio::io_service::work work_;
+    boost::asio::io_context::work work_;
     impl engine_;
     fake_socket::endpoint_type listen_ipv4_;
     fake_socket::endpoint_type listen_ipv6_;

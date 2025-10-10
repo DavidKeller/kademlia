@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     {
         k::endpoint const endpoint{ "error"
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( faulty_address_are_detected )
 
 BOOST_AUTO_TEST_CASE( dns_can_be_resolved )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint const endpoint{ "localhost"
                               , "27980" };
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE( dns_can_be_resolved )
 
 BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint const endpoint{ "127.0.0.1"
                               , "27980" };
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( ipv4_address_can_be_resolved )
 
 BOOST_AUTO_TEST_CASE( ipv6_address_can_be_resolved )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint const endpoint{ "::1"
                               , "27980" };
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE( ipv6_address_can_be_resolved )
 
 BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint const endpoint( "127.0.0.1"
                               , k::test::get_temporary_listening_port() );
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( ipv4_socket_can_be_created )
 
 BOOST_AUTO_TEST_CASE( ipv6_socket_can_be_created )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     k::endpoint const endpoint( "::1"
                               , k::test::get_temporary_listening_port() );

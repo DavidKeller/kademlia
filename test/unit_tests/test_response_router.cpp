@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
     BOOST_REQUIRE_NO_THROW( kd::response_router{ io_service } );
 }
 
@@ -55,7 +55,7 @@ struct fixture
         , error_count_{}
     { }
 
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
     kd::response_router router_;
     std::size_t messages_received_count_;
     std::size_t error_count_;
