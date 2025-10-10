@@ -27,7 +27,7 @@
 #define KADEMLIA_TEST_HELPERS_NETWORK_HPP
 
 #include <cstdint>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>

@@ -27,7 +27,7 @@
 
 #include <numeric>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "buffer.hpp"
 #include "fake_socket.hpp"

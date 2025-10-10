@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <system_error>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "peer.hpp"
 #include "common.hpp"

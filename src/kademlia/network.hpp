@@ -31,7 +31,7 @@
 #endif
 
 #include <functional>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "log.hpp"
 #include "ip_endpoint.hpp"

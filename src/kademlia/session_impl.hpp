@@ -34,7 +34,7 @@
 #include "session_impl.hpp"
 
 #include <utility>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
 
 #include "message_socket.hpp"
