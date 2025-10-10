@@ -294,8 +294,8 @@ public:
     get_first_ipv6
         ( void )
     {
-        using boost::asio::ip::address_v6;
-        return address_v6::from_string( "fc00::" );
+        using boost::asio::ip::make_address_v6;
+        return make_address_v6( "fc00::" );
     }
 
     /**
