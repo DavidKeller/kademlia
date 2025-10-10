@@ -342,13 +342,13 @@ message_socket< UnderlyingSocketType >::resolve_endpoint
 
     typename protocol_type::resolver r{ io_service };
     // Resolve addresses even if not reachable.
-    typename protocol_type::resolver::query::flags const f{};
-    typename protocol_type::resolver::query q{ e.address(), e.service(), f };
+    typename protocol_type::resolver::flags const f{};
     // One raw endpoint (e.g. localhost) can be resolved to
     // multiple endpoints (e.g. IPv4 / IPv6 address).
     resolved_endpoints endpoints;
 
-    for ( auto i : r.resolve( q ) )
+    auto resolver_results = r.resolve( e.address(), e.service(), f );
+    for ( auto i : resolver_results )
         // Convert from underlying_endpoint_type to endpoint_type.
         endpoints.push_back( convert_endpoint( i ) );
 
