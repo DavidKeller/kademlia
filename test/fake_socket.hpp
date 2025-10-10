@@ -416,7 +416,7 @@ private:
         ( boost::asio::const_buffer const& buffer
         , endpoint_type const & to )
     {
-        auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
+        auto i = static_cast< uint8_t const * >( buffer.data() );
         auto e = i + boost::asio::buffer_size( buffer );
 
         packet p{ local_endpoint_, to, { i, e } }; 
@@ -518,8 +518,8 @@ private:
         assert( source_size <= boost::asio::buffer_size( to )
               && "can't store message into target buffer" );
 
-        auto source_data = boost::asio::buffer_cast< uint8_t const * >( from );
-        auto target_data = boost::asio::buffer_cast< uint8_t * >( to );
+        auto source_data = static_cast< uint8_t const * >( from.data() );
+        auto target_data = static_cast< uint8_t * >( to.data() );
 
         std::memcpy( target_data, source_data, source_size );
 
