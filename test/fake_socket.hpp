@@ -39,6 +39,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/post.hpp>
 
 #include <kademlia/error.hpp>
 
