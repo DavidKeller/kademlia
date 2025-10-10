@@ -271,8 +271,8 @@ public:
     get_first_ipv4
         ( void )
     {
-        using boost::asio::ip::address_v4;
-        return address_v4::from_string( "10.0.0.0" );
+        using boost::asio::ip::make_address_v4;
+        return make_address_v4( "10.0.0.0" );
     }
 
     /**
