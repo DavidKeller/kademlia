@@ -43,7 +43,7 @@ create_socket
     ( std::string const& ip
     , std::uint16_t port )
 {
-    auto const a = boost::asio::ip::address::from_string( ip );
+    auto const a = boost::asio::ip::make_address( ip );
     boost::asio::io_service io_service;
 
     // Try to create a socket.
