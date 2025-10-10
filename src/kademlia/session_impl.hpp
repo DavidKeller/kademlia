@@ -151,7 +151,7 @@ public:
         auto service_stopper = [ this ] ( void )
         { is_abort_requested_ = true; };
 
-        io_service_.post( service_stopper );
+        boost::asio::post( io_service_, service_stopper );
     }
 
 private:

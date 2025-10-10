@@ -124,7 +124,7 @@ public:
 
         if ( responses_to_receive_.empty() 
            || responses_to_receive_.front().endpoint != endpoint )
-            io_service_.post( [ on_error ]( void )
+            boost::asio::post( io_service_, [ on_error ]( void )
                     { on_error( detail::make_error_code( UNIMPLEMENTED ) ); } );
         else {
             auto const r = responses_to_receive_.front();
@@ -141,7 +141,7 @@ public:
                                    , r.body.end() );
             };
 
-            io_service_.post( forwarder );
+            boost::asio::post( io_service_, forwarder );
         }
     }
 

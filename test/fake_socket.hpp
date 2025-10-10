@@ -557,7 +557,7 @@ private:
             target->pending_reads_.pop_front();
         };
 
-        io_service_.post( perform_write );
+        boost::asio::post( io_service_, perform_write );
     }
 
     /**
@@ -592,7 +592,7 @@ private:
             pending_writes_.pop_front();
         };
 
-        io_service_.post( perform_read );
+        boost::asio::post( io_service_, perform_read );
     }
 
 private:
