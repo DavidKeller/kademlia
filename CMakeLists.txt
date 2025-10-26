@@ -22,7 +22,7 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(kademlia)
 include(CTest)
@@ -75,7 +75,7 @@ find_package(Threads REQUIRED)
 if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
 endif()
-find_package(Boost 1.65 REQUIRED COMPONENTS
+find_package(Boost 1.70 CONFIG REQUIRED COMPONENTS
     system
     filesystem
     unit_test_framework)
