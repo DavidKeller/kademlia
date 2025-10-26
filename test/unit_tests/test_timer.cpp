@@ -53,13 +53,13 @@ struct fixture
 {
     fixture()
         : io_service_{}
-        , work_{ io_service_ }
+        , work_(boost::asio::make_work_guard(io_service_))
         , manager_{ io_service_ }
         , timeouts_received_{}
     { }
 
     boost::asio::io_context io_service_;
-    boost::asio::io_context::work work_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
     kd::timer manager_;
     std::size_t timeouts_received_;
 };

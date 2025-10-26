@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( invokes_send_callback_when_host_is_unreachable )
 BOOST_AUTO_TEST_CASE( can_send_and_receive_messages )
 {
     a::io_context io_service;
-    a::io_context::work work(io_service);
+    auto work_guard = a::make_work_guard(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     endpoint.port( k::test::fake_socket::FIXED_PORT );
 
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE( can_detect_invalid_address )
 BOOST_AUTO_TEST_CASE( can_detect_closed_socket )
 {
     a::io_context io_service;
-    a::io_context::work work(io_service);
+    auto work_guard = a::make_work_guard(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     endpoint.port( k::test::fake_socket::FIXED_PORT );
 
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE( can_detect_closed_socket )
 BOOST_AUTO_TEST_CASE( can_send_and_receive_messages_to_self )
 {
     a::io_context io_service;
-    a::io_context::work work(io_service);
+    auto work_guard = a::make_work_guard(io_service);
     boost::asio::ip::udp::endpoint endpoint;
     endpoint.port( k::test::fake_socket::FIXED_PORT );
 

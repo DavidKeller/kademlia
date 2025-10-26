@@ -46,7 +46,7 @@ public:
         , endpoint const & ipv4
         , endpoint const & ipv6
         , detail::id const& new_id )
-            : work_( service )
+            : work_(boost::asio::make_work_guard(service))
             , engine_( service
                      , ipv4, ipv6, new_id )
             , listen_ipv4_( fake_socket::get_last_allocated_ipv4()
@@ -61,7 +61,7 @@ public:
         , endpoint const & ipv4
         , endpoint const & ipv6
         , detail::id const& new_id )
-            : work_( service )
+            : work_( service.get_executor() )
             , engine_( service
                      , initial_peer
                      , ipv4, ipv6
@@ -122,7 +122,7 @@ private:
     using impl = detail::engine< fake_socket >;
 
 private:
-    boost::asio::io_context::work work_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
     impl engine_;
     fake_socket::endpoint_type listen_ipv4_;
     fake_socket::endpoint_type listen_ipv6_;
