@@ -35,7 +35,7 @@
 #include <kademlia/first_session.hpp>
 
 #include "common.hpp"
-#include "network.hpp"
+#include "network_utils.hpp"
 
 namespace {
 

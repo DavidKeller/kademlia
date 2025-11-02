@@ -26,10 +26,11 @@
 #include "common.hpp"
 
 #include <vector>
-#include "kademlia/error_impl.hpp"
 
-#include "kademlia/timer.hpp"
-#include "kademlia/log.hpp"
+#include <kademlia/error.hpp>
+
+#include "timer.hpp"
+#include "log.hpp"
 
 namespace {
 

@@ -35,8 +35,6 @@
 #include <system_error>
 #include <functional>
 
-#include <kademlia/detail/cxx11_macros.hpp>
-
 namespace kademlia {
 
 /**
@@ -64,7 +62,7 @@ public:
             >;
 
     /// This kademlia implementation default port.
-    static CXX11_CONSTEXPR std::uint16_t DEFAULT_PORT = 27980;
+    static constexpr std::uint16_t DEFAULT_PORT = 27980;
 
 protected:
     /**

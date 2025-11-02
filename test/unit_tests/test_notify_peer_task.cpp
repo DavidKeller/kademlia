@@ -31,10 +31,10 @@
 #include <vector>
 #include <utility>
 
-#include "kademlia/id.hpp"
-#include "kademlia/peer.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/notify_peer_task.hpp"
+#include "id.hpp"
+#include "peer.hpp"
+#include "ip_endpoint.hpp"
+#include "notify_peer_task.hpp"
 
 namespace {
 

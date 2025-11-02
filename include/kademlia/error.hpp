@@ -83,9 +83,21 @@ enum error_type
  *
  *  @return The created error condition.
  */
-KADEMLIA_SYMBOL_VISIBILITY std::error_condition
+KADEMLIA_EXPORT std::error_condition
 make_error_condition
     ( error_type condition );
+
+namespace detail {
+
+KADEMLIA_EXPORT std::error_category const&
+error_category
+    ( void );
+
+KADEMLIA_EXPORT std::error_code
+make_error_code
+    ( error_type code );
+
+} // namespace detail
 
 } // namespace kademlia
 

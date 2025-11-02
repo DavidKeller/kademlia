@@ -34,7 +34,6 @@
 #include <system_error>
 
 #include <kademlia/detail/symbol_visibility.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
 #include <kademlia/endpoint.hpp>
 #include <kademlia/session_base.hpp>
 
@@ -44,12 +43,12 @@ class first_session final
         : public session_base
 {
 public:
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     first_session
         ( endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     ~first_session
         ( void );
 
@@ -62,12 +61,12 @@ public:
         ( first_session const& )
         = delete;
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     std::error_code
     run
         ( void );
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     void
     abort
         ( void );

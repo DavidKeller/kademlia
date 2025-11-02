@@ -33,9 +33,9 @@
 #include <map>
 #include <functional>
 
-#include "kademlia/id.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/message.hpp"
+#include "id.hpp"
+#include "ip_endpoint.hpp"
+#include "message.hpp"
 
 namespace kademlia {
 namespace detail {

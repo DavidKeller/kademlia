@@ -39,7 +39,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/udp.hpp>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace test {

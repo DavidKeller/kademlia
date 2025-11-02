@@ -1,17 +1,15 @@
 [![Documentation Status](https://readthedocs.org/projects/kademlia-cpp/badge/?version=master)](https://kademlia-cpp.readthedocs.io/en/latest/?badge=master)
-[![Build Status Linux](https://app.travis-ci.com/DavidKeller/kademlia.svg?branch=master)](https://app.travis-ci.com/DavidKeller/kademlia)
-[![Build status Windows](https://ci.appveyor.com/api/projects/status/vf43m6qq8fk6kri1?svg=true)](https://ci.appveyor.com/project/DavidKeller/kademlia)
+[![Build status Linux](https://github.com/DavidKeller/kademlia/actions/workflows/linux.yaml/badge.svg)](https://github.com/DavidKeller/kademlia/actions/workflows/linux.yaml)
+[![Build status OSX](https://github.com/DavidKeller/kademlia/actions/workflows/osx.yaml/badge.svg)](https://github.com/DavidKeller/kademlia/actions/workflows/osx.yaml)
+[![Build status Windows](https://github.com/DavidKeller/kademlia/actions/workflows/windows.yaml/badge.svg)](https://github.com/DavidKeller/kademlia/actions/workflows/windows.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/DavidKeller/kademlia/badge.svg?branch=master)](https://coveralls.io/github/DavidKeller/kademlia?branch=master)
 
 # Description
 C++11 distributed hash table library
 
-**This software is experimental and under active development**.
+**This software is experimental and under development**.
 
 # Development
-
-## Bug and feature requests
-* [Tracker](http://redmine.litchis.fr/projects/kademlia)
 
 ## Supported targets
 <table>

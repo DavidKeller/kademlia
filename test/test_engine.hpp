@@ -27,12 +27,11 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include <kademlia/session_base.hpp>
 #include <kademlia/endpoint.hpp>
 
-#include "kademlia/log.hpp"
-#include "kademlia/buffer.hpp"
-#include "kademlia/engine.hpp"
+#include "log.hpp"
+#include "buffer.hpp"
+#include "engine.hpp"
 
 #include "fake_socket.hpp"
 
@@ -51,9 +50,9 @@ public:
             , engine_( service
                      , ipv4, ipv6, new_id )
             , listen_ipv4_( fake_socket::get_last_allocated_ipv4()
-                          , session_base::DEFAULT_PORT )
+                          , 27980 )
             , listen_ipv6_( fake_socket::get_last_allocated_ipv6()
-                          , session_base::DEFAULT_PORT )
+                          , 27980 )
     { }
 
     test_engine
@@ -68,9 +67,9 @@ public:
                      , ipv4, ipv6
                      , new_id )
             , listen_ipv4_( fake_socket::get_last_allocated_ipv4()
-                          , session_base::DEFAULT_PORT )
+                          , 27980 )
             , listen_ipv6_( fake_socket::get_last_allocated_ipv6()
-                          , session_base::DEFAULT_PORT )
+                          , 27980 )
     { }
 
     template< typename Callable >

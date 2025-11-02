@@ -34,11 +34,11 @@
 #include <memory>
 #include <type_traits>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
-#include "kademlia/log.hpp"
-#include "kademlia/constants.hpp"
-#include "kademlia/message.hpp"
+#include "log.hpp"
+#include "constants.hpp"
+#include "message.hpp"
 
 namespace kademlia {
 namespace detail {

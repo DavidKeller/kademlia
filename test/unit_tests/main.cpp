@@ -23,19 +23,60 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <kademlia/error.hpp>
+#include "common.hpp"
+#include "log.hpp"
 
-namespace kademlia {
-namespace detail {
+/**
+ *  When we are using boost as a shared (i.e. BOOST_TEST_DYN_LINK
+ *  macro is defined), BOOST_TEST_ALTERNATIVE_INIT_API macro is
+ *  automatically defined by boost unit-test config header.
+ *  Hence don't bother searching this macro definition in
+ *  this project build or source files.
+ *
+ *  That means with shared version of unit-test library, unit_test_main
+ *  accepts a bool (*)() init function while it uses a
+ *  test_suite * (*)(int, char *[]) when compiled as static.
+ *
+ *  See http://www.boost.org/doc/libs/1_55_0/libs/test/doc/html/utf/user-guide/test-runners.html
+ */
+#ifdef BOOST_TEST_ALTERNATIVE_INIT_API
 
-std::error_category const&
-error_category
-    ( void );
+bool
+init_unit_test
+    ( void )
+{ 
+    kademlia::detail::enable_log_for( "*" );
+    return true;
+}
 
-std::error_code
-make_error_code
-    ( error_type code );
+#else
 
-} // namespace detail
-} // namespace kademlia
+boost::unit_test::test_suite *
+init_unit_test_suite
+    ( int
+    , char* [] )
+{
+    kademlia::detail::enable_log_for( "*" );
+    return nullptr;
+}
+
+#endif
+
+/**
+ *  When using shared version of boost unit-test library, main
+ *  function is not defined, hence provide it.
+ *
+ *  We can assume that BOOST_TEST_ALTERNATIVE_INIT_API is defined
+ *  as the documentation says so when using shared library.
+ *  See http://www.boost.org/doc/libs/1_55_0/libs/test/doc/html/utf/user-guide/test-runners.html
+ */
+#ifdef BOOST_TEST_DYN_LINK
+
+int
+main
+    ( int argc
+    , char * argv[] )
+{ return boost::unit_test::unit_test_main( &init_unit_test, argc, argv ); }
+
+#endif
 

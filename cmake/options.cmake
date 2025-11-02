@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MIT
+
+option(KADEMLIA_BUILD_TEST "Build ${PROJECT_NAME} unittest" ${PROJECT_IS_TOP_LEVEL})
+option(KADEMLIA_INSTALL "Install ${PROJECT_NAME}" ${PROJECT_IS_TOP_LEVEL})
+option(KADEMLIA_ENABLE_DOCUMENTATION "Enable documentation" OFF)

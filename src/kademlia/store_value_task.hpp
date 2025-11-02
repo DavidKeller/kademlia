@@ -34,10 +34,10 @@
 #include <type_traits>
 #include <system_error>
 
-#include "kademlia/lookup_task.hpp"
-#include "kademlia/log.hpp"
-#include "kademlia/message.hpp"
-#include "kademlia/constants.hpp"
+#include "lookup_task.hpp"
+#include "log.hpp"
+#include "message.hpp"
+#include "constants.hpp"
 
 namespace kademlia {
 namespace detail {

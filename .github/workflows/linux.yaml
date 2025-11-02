@@ -1,0 +1,50 @@
+name: Linux
+on: push
+jobs:
+  BuildTestAndReportCoverage:
+    runs-on: ubuntu-24.04
+    env:
+      CC: 'gcc-14'
+      CXX: 'g++-14'
+      GCOV: 'gcov-14'
+      CXXFLAGS: '--coverage'
+      LDFLAGS: '--coverage'
+    steps:
+      - name: Checkoout
+        uses: actions/checkout@v4
+
+      - name: Setup VCPKG
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "${{ github.env }}"
+
+      - name: Setup VCPKG cache
+        run: |
+          mkdir "$HOME/vcpkg-cache"
+          echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/vcpkg-cache" >> "${{ github.env }}"
+
+      - name: Register VCPKG cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ runner.os }}
+
+      - name: Build
+        run: cmake --workflow default
+
+      - name: Install gcovr
+        run: |
+          python3 -m venv python
+          python/bin/pip install --upgrade pip
+          python/bin/pip install gcovr
+
+      - name: Run gcovr
+        run: python/bin/gcovr
+          --filter src
+          --filter include
+          --exclude-directories vcpkg
+          --coveralls coveralls.json
+
+      - name: Upload to coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          format: coveralls
+          file: coveralls.json

@@ -33,10 +33,10 @@
 #include <memory>
 #include <system_error>
 
-#include "kademlia/lookup_task.hpp"
-#include "kademlia/message.hpp"
-#include "kademlia/tracker.hpp"
-#include "kademlia/constants.hpp"
+#include "lookup_task.hpp"
+#include "message.hpp"
+#include "tracker.hpp"
+#include "constants.hpp"
 
 namespace kademlia {
 namespace detail {

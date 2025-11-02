@@ -43,8 +43,8 @@ create_test_engine( boost::asio::io_service & io_service
                   , d::id const& id
                   , InitialPeer &&... initial_peer )
 {
-    k::endpoint ipv4_endpoint{ "127.0.0.1", k::session_base::DEFAULT_PORT };
-    k::endpoint ipv6_endpoint{ "::1", k::session_base::DEFAULT_PORT };
+    k::endpoint ipv4_endpoint{ "127.0.0.1", 27980 };
+    k::endpoint ipv6_endpoint{ "::1", 27980 };
 
     using engine_ptr = std::unique_ptr< t::test_engine >;
 
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( isolated_engine_cannot_be_constructed )
 {
     boost::asio::io_service io_service;
 
-    k::endpoint initial_peer{ "172.18.1.2", k::session_base::DEFAULT_PORT };
+    k::endpoint initial_peer{ "172.18.1.2", 27980 };
 
     BOOST_REQUIRE_THROW( create_test_engine( io_service
                                            , d::id{}

@@ -26,8 +26,8 @@
 #include "common.hpp"
 #include "peer_factory.hpp"
 
-#include "kademlia/routing_table.hpp"
-#include "kademlia/ip_endpoint.hpp"
+#include "routing_table.hpp"
+#include "ip_endpoint.hpp"
 
 namespace {
 

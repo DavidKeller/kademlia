@@ -25,7 +25,7 @@
 
 #include <kademlia/first_session.hpp>
 
-#include "kademlia/session_impl.hpp"
+#include "session_impl.hpp"
 
 namespace kademlia {
 

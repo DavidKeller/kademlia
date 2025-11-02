@@ -27,11 +27,11 @@
 
 #include <kademlia/endpoint.hpp>
 
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/message_socket.hpp"
+#include "ip_endpoint.hpp"
+#include "message_socket.hpp"
 
 #include "common.hpp"
-#include "network.hpp"
+#include "network_utils.hpp"
 
 namespace {
 

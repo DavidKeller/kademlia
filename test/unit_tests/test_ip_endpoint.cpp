@@ -27,7 +27,7 @@
 
 #include <system_error>
 
-#include "kademlia/ip_endpoint.hpp"
+#include "ip_endpoint.hpp"
 
 namespace {
 

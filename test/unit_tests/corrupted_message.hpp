@@ -26,7 +26,7 @@
 #ifndef KADEMLIA_TEST_HELPERS_CORRUPTED_MESSAGE_MOCK_HPP
 #define KADEMLIA_TEST_HELPERS_CORRUPTED_MESSAGE_MOCK_HPP
 
-#include "kademlia/message.hpp"
+#include "message.hpp"
 
 namespace kademlia {
 namespace test {
@@ -56,7 +56,7 @@ namespace detail {
  */
 template< detail::header::type Type >
 struct message_traits< test::corrupted_message< Type > >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = Type; };
+{ static constexpr header::type TYPE_ID = Type; };
 
 } // namespace detail
 } // namespace kademlia

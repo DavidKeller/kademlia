@@ -42,21 +42,21 @@
 #include <boost/asio/io_service.hpp>
 
 #include <kademlia/endpoint.hpp>
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
-#include "kademlia/log.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/message_serializer.hpp"
-#include "kademlia/response_router.hpp"
-#include "kademlia/network.hpp"
-#include "kademlia/message.hpp"
-#include "kademlia/routing_table.hpp"
-#include "kademlia/value_store.hpp"
-#include "kademlia/find_value_task.hpp"
-#include "kademlia/store_value_task.hpp"
-#include "kademlia/discover_neighbors_task.hpp"
-#include "kademlia/notify_peer_task.hpp"
-#include "kademlia/tracker.hpp"
+#include "log.hpp"
+#include "ip_endpoint.hpp"
+#include "message_serializer.hpp"
+#include "response_router.hpp"
+#include "network.hpp"
+#include "message.hpp"
+#include "routing_table.hpp"
+#include "value_store.hpp"
+#include "find_value_task.hpp"
+#include "store_value_task.hpp"
+#include "discover_neighbors_task.hpp"
+#include "notify_peer_task.hpp"
+#include "tracker.hpp"
 
 namespace kademlia {
 namespace detail {

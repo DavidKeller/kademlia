@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/id.hpp"
+#include "id.hpp"
 
 #include <cctype>
 #include <iostream>
@@ -37,12 +37,12 @@
 
 #include <openssl/sha.h>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
 
-static CXX11_CONSTEXPR std::size_t HEX_CHAR_PER_BLOCK = id::BYTE_PER_BLOCK * 2;
+static constexpr std::size_t HEX_CHAR_PER_BLOCK = id::BYTE_PER_BLOCK * 2;
 
 namespace {
 
@@ -81,7 +81,7 @@ id::id
 id::id
     ( std::string s )
 {
-    auto CXX11_CONSTEXPR STRING_MAX_SIZE = BLOCKS_COUNT * HEX_CHAR_PER_BLOCK;
+    auto constexpr STRING_MAX_SIZE = BLOCKS_COUNT * HEX_CHAR_PER_BLOCK;
 
     if ( s.size() > STRING_MAX_SIZE )
         throw std::system_error{ make_error_code( INVALID_ID ) };

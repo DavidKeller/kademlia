@@ -34,7 +34,6 @@
 #include <system_error>
 
 #include <kademlia/detail/symbol_visibility.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
 #include <kademlia/endpoint.hpp>
 #include <kademlia/session_base.hpp>
 
@@ -44,13 +43,13 @@ class session final
         : public session_base
 {
 public:
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     session
         ( endpoint const& initial_peer
         , endpoint const& listen_on_ipv4 = endpoint{ "0.0.0.0", DEFAULT_PORT }
         , endpoint const& listen_on_ipv6 = endpoint{ "::", DEFAULT_PORT } );
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     ~session
         ( void );
 
@@ -63,7 +62,7 @@ public:
         ( session const& )
         = delete;
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     void
     async_save
         ( key_type const& key
@@ -82,7 +81,7 @@ public:
                   , std::move( handler ) );
     }
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     void
     async_load
         ( key_type const& key
@@ -98,12 +97,12 @@ public:
                   , std::move( handler ) );
     }
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     std::error_code
     run
         ( void );
 
-    KADEMLIA_SYMBOL_VISIBILITY
+    KADEMLIA_EXPORT
     void
     abort
         ( void );

@@ -32,8 +32,8 @@
 
 #include <iosfwd>
 
-#include "kademlia/id.hpp"
-#include "kademlia/ip_endpoint.hpp"
+#include "id.hpp"
+#include "ip_endpoint.hpp"
 
 namespace kademlia {
 namespace detail {

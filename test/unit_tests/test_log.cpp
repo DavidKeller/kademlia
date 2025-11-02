@@ -28,7 +28,7 @@
 #include <iostream>
 #include <boost/test/tools/output_test_stream.hpp>
 
-#include "kademlia/log.hpp"
+#include "log.hpp"
 
 namespace {
 

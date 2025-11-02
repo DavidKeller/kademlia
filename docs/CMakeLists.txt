@@ -23,7 +23,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-find_package(Sphinx REQUIRED)
+find_program(
+    SPHINX_EXECUTABLE
+    NAMES sphinx-build
+    REQUIRED
+    DOC "Path to sphinx-build executable"
+)
 
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
 set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR})
@@ -32,4 +37,5 @@ add_custom_target(kademlia_doc
     ALL
     COMMAND ${SPHINX_EXECUTABLE} -b html ${SPHINX_SOURCE} ${SPHINX_BUILD}
     VERBATIM
-    COMMENT "Generating sphinx documentation")
+    COMMENT "Generating sphinx documentation"
+)

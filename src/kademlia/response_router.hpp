@@ -27,10 +27,10 @@
 #define KADEMLIA_RESPONSE_ROUTER_HPP
 
 #include <kademlia/error.hpp>
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/response_callbacks.hpp"
-#include "kademlia/timer.hpp"
-#include "kademlia/log.hpp"
+#include "ip_endpoint.hpp"
+#include "response_callbacks.hpp"
+#include "timer.hpp"
+#include "log.hpp"
 
 #ifdef _MSC_VER
 #   pragma once

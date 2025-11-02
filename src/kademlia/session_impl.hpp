@@ -31,15 +31,15 @@
 #endif
 
 
-#include <kademlia/session_impl.hpp>
+#include "session_impl.hpp"
 
 #include <utility>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 
-#include "kademlia/message_socket.hpp"
-#include "kademlia/engine.hpp"
-#include "kademlia/concurrent_guard.hpp"
+#include "message_socket.hpp"
+#include "engine.hpp"
+#include "concurrent_guard.hpp"
 
 namespace kademlia {
 namespace detail {

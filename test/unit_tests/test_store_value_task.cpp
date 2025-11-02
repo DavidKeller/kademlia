@@ -32,11 +32,11 @@
 #include <vector>
 #include <utility>
 
-#include "kademlia/id.hpp"
-#include "kademlia/peer.hpp"
-#include "kademlia/ip_endpoint.hpp"
+#include "id.hpp"
+#include "peer.hpp"
+#include "ip_endpoint.hpp"
 
-#include "kademlia/store_value_task.hpp"
+#include "store_value_task.hpp"
 
 namespace {
 

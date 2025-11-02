@@ -27,7 +27,7 @@
 #include <sstream>
 
 #include "common.hpp"
-#include "kademlia/peer.hpp"
+#include "peer.hpp"
 
 namespace {
 
