@@ -1,0 +1,31 @@
+name: Windows
+on: push
+jobs:
+  BuildAndTest:
+    runs-on: windows-2025
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+    steps:
+      - name: Checkoout
+        uses: actions/checkout@v4
+
+      - name: Setup VCPKG
+        run: |
+          Add-Content -Path "${{ github.env }}" -Value VCPKG_ROOT=$Env:VCPKG_INSTALLATION_ROOT
+
+      - name: Setup VCPKG cache
+        run: |
+          New-Item -ItemType Directory -Path C:\vcpkg-cache
+          Add-Content -Path "${{ github.env }}" -Value VCPKG_DEFAULT_BINARY_CACHE=C:\vcpkg-cache
+
+      - name: Register VCPKG cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ runner.os }}
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cmake --workflow windows

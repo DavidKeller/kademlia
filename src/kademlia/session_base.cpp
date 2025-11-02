@@ -23,11 +23,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/session_base.hpp"
+#include <kademlia/session_base.hpp>
 
 namespace kademlia {
 
-CXX11_CONSTEXPR std::uint16_t session_base::DEFAULT_PORT;
+constexpr std::uint16_t session_base::DEFAULT_PORT;
     
 } // namespace kademlia
 

@@ -32,10 +32,10 @@
 #include <vector>
 #include <utility>
 
-#include "kademlia/id.hpp"
-#include "kademlia/peer.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/discover_neighbors_task.hpp"
+#include "id.hpp"
+#include "peer.hpp"
+#include "ip_endpoint.hpp"
+#include "discover_neighbors_task.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

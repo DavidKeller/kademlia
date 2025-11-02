@@ -1,0 +1,28 @@
+name: OSX
+on: push
+jobs:
+  BuildAndTest:
+    runs-on: macos-15
+    steps:
+      - name: Checkoout
+        uses: actions/checkout@v4
+
+      - name: Setup VCPKG
+        run: |
+          git clone https://github.com/microsoft/vcpkg $HOME/vcpkg
+          $HOME/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+          echo "VCPKG_ROOT=$HOME/vcpkg" >> ${{ github.env }}
+          
+      - name: Setup VCPKG cache
+        run: |
+          mkdir "$HOME/vcpkg-cache"
+          echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/vcpkg-cache" >> "${{ github.env }}"
+
+      - name: Register VCPKG cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: ${{ runner.os }}
+
+      - name: Build
+        run: cmake --workflow default

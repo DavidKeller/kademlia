@@ -30,14 +30,14 @@
 #   pragma once
 #endif
 
-#include "kademlia/log.hpp"
-#include "kademlia/message_serializer.hpp"
-#include "kademlia/response_router.hpp"
-#include "kademlia/network.hpp"
-#include "kademlia/message.hpp"
-#include "kademlia/routing_table.hpp"
-#include "kademlia/value_store.hpp"
-#include "kademlia/constants.hpp"
+#include "log.hpp"
+#include "message_serializer.hpp"
+#include "response_router.hpp"
+#include "network.hpp"
+#include "message.hpp"
+#include "routing_table.hpp"
+#include "value_store.hpp"
+#include "constants.hpp"
 
 namespace kademlia {
 namespace detail {

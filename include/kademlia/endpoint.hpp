@@ -36,7 +36,6 @@
 #include <sstream>
 
 #include <kademlia/detail/symbol_visibility.hpp>
-#include <kademlia/detail/cxx11_macros.hpp>
 
 namespace kademlia {
 
@@ -93,13 +92,13 @@ private:
     service_type service_;
 };
 
-KADEMLIA_SYMBOL_VISIBILITY
+KADEMLIA_EXPORT
 std::ostream&
 operator<<
     ( std::ostream & out
     , endpoint const& e );
 
-KADEMLIA_SYMBOL_VISIBILITY
+KADEMLIA_EXPORT
 std::istream &
 operator>>
     ( std::istream & in

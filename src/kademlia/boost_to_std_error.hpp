@@ -33,7 +33,7 @@
 #include <system_error>
 #include <boost/system/error_code.hpp>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {

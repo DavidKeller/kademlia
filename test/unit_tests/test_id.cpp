@@ -27,7 +27,7 @@
 
 #include <system_error>
 
-#include "kademlia/id.hpp"
+#include "id.hpp"
 
 namespace {
 

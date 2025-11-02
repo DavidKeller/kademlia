@@ -23,11 +23,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/message.hpp"
+#include "message.hpp"
 
 #include <iostream>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {
@@ -91,7 +91,7 @@ deserialize
     , buffer::const_iterator e
     , std::vector< std::uint8_t > & data )
 {
-    std::uint64_t size;
+    std::size_t size;
     auto failure = deserialize_integer( i, e, size );
     if ( failure )
         return failure;
@@ -373,7 +373,7 @@ deserialize
     , buffer::const_iterator e
     , find_peer_response_body & body )
 {
-    std::uint64_t size;
+    std::size_t size;
     auto failure = deserialize_integer( i, e, size );
 
     for (

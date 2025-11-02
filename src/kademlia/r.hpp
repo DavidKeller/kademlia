@@ -36,8 +36,6 @@
 #include <utility>
 #include <type_traits>
 
-#include <kademlia/detail/cxx11_macros.hpp>
-
 namespace kademlia {
 namespace detail {
 
@@ -213,7 +211,7 @@ public:
      *          false otherwise.
      */
     explicit
-    operator bool() const CXX11_NOEXCEPT
+    constexpr operator bool() const 
     { return ! error_; }
 
     /**

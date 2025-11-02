@@ -34,8 +34,8 @@
 #include <map>
 #include <vector>
 
-#include "kademlia/peer.hpp"
-#include "kademlia/log.hpp"
+#include "peer.hpp"
+#include "log.hpp"
 
 namespace kademlia {
 namespace detail {

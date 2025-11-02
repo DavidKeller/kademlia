@@ -40,9 +40,10 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/udp.hpp>
 
-#include "kademlia/log.hpp"
-#include "kademlia/error_impl.hpp"
-#include "kademlia/message.hpp"
+#include <kademlia/error.hpp>
+
+#include "log.hpp"
+#include "message.hpp"
 
 namespace kademlia {
 namespace test {
@@ -363,18 +364,18 @@ private:
          *
          */
         template< typename IpAddress >
-        static std::size_t
+        static std::uint64_t
         address_as_index
             ( IpAddress const& address )
         {
-            std::size_t index = 0ULL;
+            std::uint64_t index = 0ULL;
 
             auto const bytes = address.to_bytes();
             // Skip the first byte as it's used to
             // mark the address as private (e.g. 10.x.x.x or fc00::).
-            for ( std::size_t i = 1, e = bytes.size(); i != e; ++ i )
+            for ( std::uint64_t i = 1, e = bytes.size(); i != e; ++ i )
             {
-                assert( index >> 56 == 0 /* no bytes are lost by next shift */ );
+                assert( index >> 56U == 0 /* no bytes are lost by next shift */ );
                 index <<= 8;
                 index |= bytes[ i ];
             }

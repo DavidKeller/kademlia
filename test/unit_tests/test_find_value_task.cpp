@@ -29,10 +29,10 @@
 #include <vector>
 #include <utility>
 
-#include "kademlia/id.hpp"
-#include "kademlia/peer.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/find_value_task.hpp"
+#include "id.hpp"
+#include "peer.hpp"
+#include "ip_endpoint.hpp"
+#include "find_value_task.hpp"
 
 namespace {
 

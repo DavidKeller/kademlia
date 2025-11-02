@@ -38,11 +38,9 @@
 
 #include <boost/asio/ip/address.hpp>
 
-#include <kademlia/detail/cxx11_macros.hpp>
-
-#include "kademlia/peer.hpp"
-#include "kademlia/id.hpp"
-#include "kademlia/buffer.hpp"
+#include "peer.hpp"
+#include "id.hpp"
+#include "buffer.hpp"
 
 namespace kademlia {
 namespace detail {
@@ -136,7 +134,7 @@ struct find_peer_request_body final
  */
 template<>
 struct message_traits< find_peer_request_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_PEER_REQUEST; };
+{ static constexpr header::type TYPE_ID = header::FIND_PEER_REQUEST; };
 
 /**
  *
@@ -170,7 +168,7 @@ struct find_peer_response_body final
  */
 template<>
 struct message_traits< find_peer_response_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_PEER_RESPONSE; };
+{ static constexpr header::type TYPE_ID = header::FIND_PEER_RESPONSE; };
 
 /**
  *
@@ -203,7 +201,7 @@ struct find_value_request_body final
  */
 template<>
 struct message_traits< find_value_request_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_VALUE_REQUEST; };
+{ static constexpr header::type TYPE_ID = header::FIND_VALUE_REQUEST; };
 
 /**
  *
@@ -236,7 +234,7 @@ struct find_value_response_body final
  */
 template<>
 struct message_traits< find_value_response_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::FIND_VALUE_RESPONSE; };
+{ static constexpr header::type TYPE_ID = header::FIND_VALUE_RESPONSE; };
 
 
 /**
@@ -272,7 +270,7 @@ struct store_value_request_body final
  */
 template<>
 struct message_traits< store_value_request_body >
-{ static CXX11_CONSTEXPR header::type TYPE_ID = header::STORE_REQUEST; };
+{ static constexpr header::type TYPE_ID = header::STORE_REQUEST; };
 
 
 /**

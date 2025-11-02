@@ -30,10 +30,10 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
-#include "kademlia/message.hpp"
-#include "kademlia/message_serializer.hpp"
+#include "message.hpp"
+#include "message_serializer.hpp"
 
 namespace kademlia {
 namespace test {

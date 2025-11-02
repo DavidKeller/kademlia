@@ -27,7 +27,7 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include "kademlia/response_router.hpp"
+#include "response_router.hpp"
 
 namespace {
 

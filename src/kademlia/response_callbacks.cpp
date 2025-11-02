@@ -23,11 +23,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "kademlia/response_callbacks.hpp"
+#include "response_callbacks.hpp"
 
 #include <cassert>
 
-#include "kademlia/error_impl.hpp"
+#include <kademlia/error.hpp>
 
 namespace kademlia {
 namespace detail {

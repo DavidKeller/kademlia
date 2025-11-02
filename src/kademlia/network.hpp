@@ -33,10 +33,10 @@
 #include <functional>
 #include <boost/asio/io_service.hpp>
 
-#include "kademlia/log.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/message_socket.hpp"
-#include "kademlia/buffer.hpp"
+#include "log.hpp"
+#include "ip_endpoint.hpp"
+#include "message_socket.hpp"
+#include "buffer.hpp"
 
 namespace kademlia {
 namespace detail {

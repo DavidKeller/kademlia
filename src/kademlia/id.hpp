@@ -39,8 +39,6 @@
 #include <functional>
 #include <algorithm>
 
-#include <kademlia/detail/cxx11_macros.hpp>
-
 namespace kademlia {
 namespace detail {
 
@@ -49,19 +47,19 @@ class id final
 {
 public:
     ///
-    static CXX11_CONSTEXPR std::size_t BIT_SIZE = 160;
+    static constexpr std::size_t BIT_SIZE = 160;
 
     ///
     using block_type = std::uint8_t;
 
     ///
-    static CXX11_CONSTEXPR std::size_t BYTE_PER_BLOCK = sizeof( block_type );
+    static constexpr std::size_t BYTE_PER_BLOCK = sizeof( block_type );
 
     ///
-    static CXX11_CONSTEXPR std::size_t BIT_PER_BLOCK = BYTE_PER_BLOCK * 8;
+    static constexpr std::size_t BIT_PER_BLOCK = BYTE_PER_BLOCK * 8;
 
     ///
-    static CXX11_CONSTEXPR std::size_t BLOCKS_COUNT = BIT_SIZE / BIT_PER_BLOCK;
+    static constexpr std::size_t BLOCKS_COUNT = BIT_SIZE / BIT_PER_BLOCK;
 
     ///
     using blocks_type = std::array< block_type, BLOCKS_COUNT >;

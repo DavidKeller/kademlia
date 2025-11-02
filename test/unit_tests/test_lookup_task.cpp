@@ -29,9 +29,9 @@
 #include <vector>
 #include <utility>
 
-#include "kademlia/id.hpp"
-#include "kademlia/message_socket.hpp"
-#include "kademlia/lookup_task.hpp"
+#include "id.hpp"
+#include "message_socket.hpp"
+#include "lookup_task.hpp"
 
 namespace {
 

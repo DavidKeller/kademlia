@@ -32,7 +32,7 @@
 
 #include <memory>
 
-#include "kademlia/message.hpp"
+#include "message.hpp"
 
 namespace kademlia {
 namespace detail {

@@ -1,0 +1,81 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "default",
+      "binaryDir": "${sourceDir}/out/",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "generator": "Ninja Multi-Config"
+    },
+    {
+      "name": "windows",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows",
+      "inherits": "default",
+      "configurePreset": "windows"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "output": {
+        "outputOnFailure": true
+      },
+      "configurePreset": "default",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows",
+      "inherits": "default",
+      "configurePreset": "windows"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "default"
+        },
+        {
+          "type": "build",
+          "name": "default"
+        },
+        {
+          "type": "test",
+          "name": "default"
+        }
+      ]
+    },
+    {
+      "name": "windows",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows"
+        },
+        {
+          "type": "build",
+          "name": "windows"
+        },
+        {
+          "type": "test",
+          "name": "windows"
+        }
+      ]
+    }
+  ]
+}

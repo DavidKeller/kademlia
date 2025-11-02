@@ -29,7 +29,7 @@
 #include <boost/asio/error.hpp>
 
 #include "common.hpp"
-#include "kademlia/boost_to_std_error.hpp"
+#include "boost_to_std_error.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;

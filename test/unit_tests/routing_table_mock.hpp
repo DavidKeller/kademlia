@@ -31,9 +31,9 @@
 #include <utility>
 #include <stdexcept>
 
-#include "kademlia/message.hpp"
-#include "kademlia/ip_endpoint.hpp"
-#include "kademlia/peer.hpp"
+#include "message.hpp"
+#include "ip_endpoint.hpp"
+#include "peer.hpp"
 
 namespace kademlia {
 namespace test {

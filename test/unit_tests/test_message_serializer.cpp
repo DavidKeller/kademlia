@@ -25,8 +25,8 @@
 
 #include "common.hpp"
 
-#include "kademlia/message_serializer.hpp"
-#include "kademlia/message.hpp"
+#include "message_serializer.hpp"
+#include "message.hpp"
 
 namespace {
 

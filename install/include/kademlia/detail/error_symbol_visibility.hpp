@@ -1,0 +1,42 @@
+
+#ifndef KADEMLIA_ERROR_EXPORT_H
+#define KADEMLIA_ERROR_EXPORT_H
+
+#ifdef KADEMLIA_ERROR_STATIC_DEFINE
+#  define KADEMLIA_ERROR_EXPORT
+#  define KADEMLIA_ERROR_NO_EXPORT
+#else
+#  ifndef KADEMLIA_ERROR_EXPORT
+#    ifdef kademlia_error_EXPORTS
+        /* We are building this library */
+#      define KADEMLIA_ERROR_EXPORT 
+#    else
+        /* We are using this library */
+#      define KADEMLIA_ERROR_EXPORT 
+#    endif
+#  endif
+
+#  ifndef KADEMLIA_ERROR_NO_EXPORT
+#    define KADEMLIA_ERROR_NO_EXPORT 
+#  endif
+#endif
+
+#ifndef KADEMLIA_ERROR_DEPRECATED
+#  define KADEMLIA_ERROR_DEPRECATED __declspec(deprecated)
+#endif
+
+#ifndef KADEMLIA_ERROR_DEPRECATED_EXPORT
+#  define KADEMLIA_ERROR_DEPRECATED_EXPORT KADEMLIA_ERROR_EXPORT KADEMLIA_ERROR_DEPRECATED
+#endif
+
+#ifndef KADEMLIA_ERROR_DEPRECATED_NO_EXPORT
+#  define KADEMLIA_ERROR_DEPRECATED_NO_EXPORT KADEMLIA_ERROR_NO_EXPORT KADEMLIA_ERROR_DEPRECATED
+#endif
+
+#if 0 /* DEFINE_NO_DEPRECATED */
+#  ifndef KADEMLIA_ERROR_NO_DEPRECATED
+#    define KADEMLIA_ERROR_NO_DEPRECATED
+#  endif
+#endif
+
+#endif /* KADEMLIA_ERROR_EXPORT_H */

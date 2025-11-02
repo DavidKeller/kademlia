@@ -31,7 +31,7 @@
 
 #include <boost/asio/io_service.hpp>
 
-#include "kademlia/peer.hpp"
+#include "peer.hpp"
 #include "common.hpp"
 #include "tracker_mock.hpp"
 #include "routing_table_mock.hpp"

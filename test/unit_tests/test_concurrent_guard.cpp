@@ -24,7 +24,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
-#include "kademlia/concurrent_guard.hpp"
+#include "concurrent_guard.hpp"
 
 namespace k = kademlia;
 namespace kd = k::detail;
