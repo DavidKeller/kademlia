@@ -39,7 +39,7 @@ create_endpoint
 {
     using endpoint_type = kademlia::detail::ip_endpoint;
 
-    return endpoint_type{ boost::asio::ip::address::from_string( ip )
+    return endpoint_type{ boost::asio::ip::make_address( ip )
                         , service };
 }
 

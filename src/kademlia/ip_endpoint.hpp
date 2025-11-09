@@ -54,7 +54,7 @@ to_ip_endpoint( std::string const& ip
               , std::uint16_t port )
 {
     return ip_endpoint
-        { boost::asio::ip::address::from_string( ip )
+        { boost::asio::ip::make_address( ip )
         , port };
 }
 

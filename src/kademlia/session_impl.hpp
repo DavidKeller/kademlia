@@ -34,8 +34,9 @@
 #include "session_impl.hpp"
 
 #include <utility>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/post.hpp>
 
 #include "message_socket.hpp"
 #include "engine.hpp"
@@ -151,12 +152,12 @@ public:
         auto service_stopper = [ this ] ( void )
         { is_abort_requested_ = true; };
 
-        io_service_.post( service_stopper );
+        boost::asio::post( io_service_, service_stopper );
     }
 
 private:
     ///
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
     ///
     engine_type engine_;
     ///

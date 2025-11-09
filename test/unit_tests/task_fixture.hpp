@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <system_error>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "peer.hpp"
 #include "common.hpp"
@@ -44,7 +44,7 @@ struct task_fixture
     task_fixture
         ( void )
         : io_service_()
-        , io_service_work_( io_service_ )
+        , io_service_work_(boost::asio::make_work_guard(io_service_))
         , tracker_( io_service_ )
         , failure_()
         , routing_table_()
@@ -70,8 +70,8 @@ struct task_fixture
         return p;
     }
 
-    boost::asio::io_service io_service_;
-    boost::asio::io_service::work io_service_work_;
+    boost::asio::io_context io_service_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> io_service_work_;
     tracker_mock tracker_;
     std::error_code failure_;
     routing_table_mock routing_table_;

@@ -39,7 +39,7 @@
 #include <utility>
 #include <type_traits>
 #include <functional>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <kademlia/endpoint.hpp>
 #include <kademlia/error.hpp>
@@ -88,7 +88,7 @@ public:
      *
      */
     engine
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , endpoint const& ipv4
         , endpoint const& ipv6
         , id const& new_id = id{} )
@@ -115,7 +115,7 @@ public:
      *
      */
     engine
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , endpoint const& initial_peer
         , endpoint const& ipv4
         , endpoint const& ipv6

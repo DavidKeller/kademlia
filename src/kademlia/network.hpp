@@ -31,7 +31,7 @@
 #endif
 
 #include <functional>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "log.hpp"
 #include "ip_endpoint.hpp"
@@ -67,7 +67,7 @@ public:
      *
      */
     network
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , message_socket_type && socket_ipv4
         , message_socket_type && socket_ipv6
         , on_message_received_type on_message_received )
@@ -168,7 +168,7 @@ private:
 
 private:
     ///
-    boost::asio::io_service & io_service_;
+    boost::asio::io_context & io_service_;
     ///
     message_socket_type socket_ipv4_;
     ///

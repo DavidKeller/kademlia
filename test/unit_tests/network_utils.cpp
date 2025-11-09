@@ -52,7 +52,7 @@ get_temporary_listening_port
         boost::asio::ip::udp::endpoint const e
                 { boost::asio::ip::udp::v4() , port };
 
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_service;
         // Try to open a socket at this address.
         boost::asio::ip::udp::socket socket{ io_service, e.protocol() };
         socket.bind( e, failure );

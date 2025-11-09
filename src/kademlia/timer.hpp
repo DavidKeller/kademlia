@@ -33,7 +33,7 @@
 #include <map>
 #include <chrono>
 #include <functional>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/basic_waitable_timer.hpp>
 
 namespace kademlia {
@@ -55,7 +55,7 @@ public:
      */
     explicit
     timer
-        ( boost::asio::io_service & io_service );
+        ( boost::asio::io_context & io_service );
 
     /**
      *

@@ -39,6 +39,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/post.hpp>
 
 #include <kademlia/error.hpp>
 
@@ -79,7 +80,7 @@ public:
      *
      */
     fake_socket
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , protocol_type const& )
             : io_service_( io_service )
             , local_endpoint_()
@@ -271,8 +272,8 @@ public:
     get_first_ipv4
         ( void )
     {
-        using boost::asio::ip::address_v4;
-        return address_v4::from_string( "10.0.0.0" );
+        using boost::asio::ip::make_address_v4;
+        return make_address_v4( "10.0.0.0" );
     }
 
     /**
@@ -294,8 +295,8 @@ public:
     get_first_ipv6
         ( void )
     {
-        using boost::asio::ip::address_v6;
-        return address_v6::from_string( "fc00::" );
+        using boost::asio::ip::make_address_v6;
+        return make_address_v6( "fc00::" );
     }
 
     /**
@@ -416,7 +417,7 @@ private:
         ( boost::asio::const_buffer const& buffer
         , endpoint_type const & to )
     {
-        auto i = boost::asio::buffer_cast< uint8_t const * >( buffer );
+        auto i = static_cast< uint8_t const * >( buffer.data() );
         auto e = i + boost::asio::buffer_size( buffer );
 
         packet p{ local_endpoint_, to, { i, e } }; 
@@ -518,8 +519,8 @@ private:
         assert( source_size <= boost::asio::buffer_size( to )
               && "can't store message into target buffer" );
 
-        auto source_data = boost::asio::buffer_cast< uint8_t const * >( from );
-        auto target_data = boost::asio::buffer_cast< uint8_t * >( to );
+        auto source_data = static_cast< uint8_t const * >( from.data() );
+        auto target_data = static_cast< uint8_t * >( to.data() );
 
         std::memcpy( target_data, source_data, source_size );
 
@@ -557,7 +558,7 @@ private:
             target->pending_reads_.pop_front();
         };
 
-        io_service_.post( perform_write );
+        boost::asio::post( io_service_, perform_write );
     }
 
     /**
@@ -592,12 +593,12 @@ private:
             pending_writes_.pop_front();
         };
 
-        io_service_.post( perform_read );
+        boost::asio::post( io_service_, perform_read );
     }
 
 private:
     ///
-    boost::asio::io_service & io_service_;
+    boost::asio::io_context & io_service_;
     ///
     endpoint_type local_endpoint_;
     ///

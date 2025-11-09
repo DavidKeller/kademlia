@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE( can_serialize_find_peer_response_body )
 
         kd::peer new_peer =
             { kd::id{ random_engine }
-            , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
+            , { boost::asio::ip::make_address( IPS[ i % 2 ] )
               , std::uint16_t( 1024 + i ) } };
 
         body_out.peers_.push_back( std::move( new_peer ) );
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE( can_detect_corrupted_find_peer_response_body )
 
         kd::peer new_peer =
             { kd::id{ random_engine }
-            , { boost::asio::ip::address::from_string( IPS[ i % 2 ] )
+            , { boost::asio::ip::make_address( IPS[ i % 2 ] )
               , std::uint16_t( 1024 + i ) } };
 
         body_out.peers_.push_back( std::move( new_peer ) );

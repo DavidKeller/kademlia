@@ -25,7 +25,7 @@
 
 #include <memory>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <kademlia/endpoint.hpp>
 
@@ -42,11 +42,11 @@ class test_engine final
 {
 public:
     test_engine
-        ( boost::asio::io_service & service
+        ( boost::asio::io_context & service
         , endpoint const & ipv4
         , endpoint const & ipv6
         , detail::id const& new_id )
-            : work_( service )
+            : work_(boost::asio::make_work_guard(service))
             , engine_( service
                      , ipv4, ipv6, new_id )
             , listen_ipv4_( fake_socket::get_last_allocated_ipv4()
@@ -56,12 +56,12 @@ public:
     { }
 
     test_engine
-        ( boost::asio::io_service & service
+        ( boost::asio::io_context & service
         , endpoint const & initial_peer
         , endpoint const & ipv4
         , endpoint const & ipv6
         , detail::id const& new_id )
-            : work_( service )
+            : work_( service.get_executor() )
             , engine_( service
                      , initial_peer
                      , ipv4, ipv6
@@ -122,7 +122,7 @@ private:
     using impl = detail::engine< fake_socket >;
 
 private:
-    boost::asio::io_service::work work_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
     impl engine_;
     fake_socket::endpoint_type listen_ipv4_;
     fake_socket::endpoint_type listen_ipv6_;

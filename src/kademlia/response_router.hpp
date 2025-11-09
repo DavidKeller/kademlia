@@ -54,7 +54,7 @@ public:
      */
     explicit
     response_router
-        ( boost::asio::io_service & io_service )
+        ( boost::asio::io_context & io_service )
             : response_callbacks_()
             , timer_( io_service )
     { }

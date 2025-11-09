@@ -27,7 +27,7 @@
 #define KADEMLIA_TEST_HELPERS_NETWORK_HPP
 
 #include <cstdint>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/system/system_error.hpp>
@@ -43,8 +43,8 @@ create_socket
     ( std::string const& ip
     , std::uint16_t port )
 {
-    auto const a = boost::asio::ip::address::from_string( ip );
-    boost::asio::io_service io_service;
+    auto const a = boost::asio::ip::make_address( ip );
+    boost::asio::io_context io_service;
 
     // Try to create a socket.
     typename Socket::endpoint_type endpoint( a, port );

@@ -28,7 +28,8 @@
 
 #include <queue>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 
 #include <kademlia/error.hpp>
 
@@ -49,7 +50,7 @@ public:
      *
      */
     tracker_mock
-        ( boost::asio::io_service & io_service )
+        ( boost::asio::io_context & io_service )
             : io_service_( io_service )
             , id_()
             , message_serializer_( id_ )
@@ -124,7 +125,7 @@ public:
 
         if ( responses_to_receive_.empty() 
            || responses_to_receive_.front().endpoint != endpoint )
-            io_service_.post( [ on_error ]( void )
+            boost::asio::post( io_service_, [ on_error ]( void )
                     { on_error( detail::make_error_code( UNIMPLEMENTED ) ); } );
         else {
             auto const r = responses_to_receive_.front();
@@ -141,7 +142,7 @@ public:
                                    , r.body.end() );
             };
 
-            io_service_.post( forwarder );
+            boost::asio::post( io_service_, forwarder );
         }
     }
 
@@ -202,7 +203,7 @@ private:
 
 private:
     ///
-    boost::asio::io_service & io_service_;
+    boost::asio::io_context & io_service_;
     ///
     detail::id id_;
     ///

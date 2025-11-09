@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_SUITE( test_construction )
 
 BOOST_AUTO_TEST_CASE( can_be_constructed_using_a_reactor )
 {
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
     BOOST_REQUIRE_NO_THROW( kd::timer{ io_service } );
 }
 
@@ -53,13 +53,13 @@ struct fixture
 {
     fixture()
         : io_service_{}
-        , work_{ io_service_ }
+        , work_(boost::asio::make_work_guard(io_service_))
         , manager_{ io_service_ }
         , timeouts_received_{}
     { }
 
-    boost::asio::io_service io_service_;
-    boost::asio::io_service::work work_;
+    boost::asio::io_context io_service_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
     kd::timer manager_;
     std::size_t timeouts_received_;
 };

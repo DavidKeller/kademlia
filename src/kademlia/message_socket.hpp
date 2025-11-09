@@ -32,7 +32,7 @@
 
 #include <vector>
 #include <algorithm>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/v6_only.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -68,7 +68,7 @@ public:
     template< typename EndpointType >
     static resolved_endpoints
     resolve_endpoint
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , EndpointType const& e );
 
     /**
@@ -77,7 +77,7 @@ public:
     template< typename EndpointType >
     static message_socket
     ipv4
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , EndpointType const& e );
 
     /**
@@ -86,7 +86,7 @@ public:
     template< typename EndpointType >
     static message_socket
     ipv6
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , EndpointType const& e );
 
     /**
@@ -153,7 +153,7 @@ private:
      *
      */
     message_socket
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , endpoint_type const& e );
 
     /**
@@ -161,7 +161,7 @@ private:
      */
     static underlying_socket_type
     create_underlying_socket
-        ( boost::asio::io_service & io_service
+        ( boost::asio::io_context & io_service
         , endpoint_type const& e );
 
     /**
@@ -191,7 +191,7 @@ template< typename UnderlyingSocketType >
 template< typename EndpointType >
 inline message_socket< UnderlyingSocketType >
 message_socket< UnderlyingSocketType >::ipv4
-    ( boost::asio::io_service & io_service
+    ( boost::asio::io_context & io_service
     , EndpointType const& ipv4_endpoint )
 {
     auto endpoints = resolve_endpoint( io_service, ipv4_endpoint );
@@ -209,7 +209,7 @@ template< typename UnderlyingSocketType >
 template< typename EndpointType >
 inline message_socket< UnderlyingSocketType >
 message_socket< UnderlyingSocketType >::ipv6
-    ( boost::asio::io_service & io_service
+    ( boost::asio::io_context & io_service
     , EndpointType const& ipv6_endpoint )
 {
     auto endpoints = resolve_endpoint( io_service, ipv6_endpoint );
@@ -226,7 +226,7 @@ message_socket< UnderlyingSocketType >::ipv6
 template< typename UnderlyingSocketType >
 inline
 message_socket< UnderlyingSocketType >::message_socket
-    ( boost::asio::io_service & io_service
+    ( boost::asio::io_context & io_service
     , endpoint_type const& e )
     : reception_buffer_( INPUT_BUFFER_SIZE )
     , current_message_sender_()
@@ -316,7 +316,7 @@ message_socket< UnderlyingSocketType >::local_endpoint
 template< typename UnderlyingSocketType >
 inline typename message_socket< UnderlyingSocketType >::underlying_socket_type
 message_socket< UnderlyingSocketType >::create_underlying_socket
-    ( boost::asio::io_service & io_service
+    ( boost::asio::io_context & io_service
     , endpoint_type const& endpoint )
 {
     auto const e = convert_endpoint( endpoint );
@@ -335,20 +335,20 @@ template< typename UnderlyingSocketType >
 template< typename EndpointType >
 inline typename message_socket< UnderlyingSocketType >::resolved_endpoints
 message_socket< UnderlyingSocketType >::resolve_endpoint
-    ( boost::asio::io_service & io_service
+    ( boost::asio::io_context & io_service
     , EndpointType const& e )
 {
     using protocol_type = typename underlying_socket_type::protocol_type;
 
     typename protocol_type::resolver r{ io_service };
     // Resolve addresses even if not reachable.
-    typename protocol_type::resolver::query::flags const f{};
-    typename protocol_type::resolver::query q{ e.address(), e.service(), f };
+    typename protocol_type::resolver::flags const f{};
     // One raw endpoint (e.g. localhost) can be resolved to
     // multiple endpoints (e.g. IPv4 / IPv6 address).
     resolved_endpoints endpoints;
 
-    for ( auto i : r.resolve( q ) )
+    auto resolver_results = r.resolve( e.address(), e.service(), f );
+    for ( auto i : resolver_results )
         // Convert from underlying_endpoint_type to endpoint_type.
         endpoints.push_back( convert_endpoint( i ) );
 

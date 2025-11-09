@@ -35,7 +35,7 @@ namespace kademlia {
 namespace detail {
 
 timer::timer
-    ( boost::asio::io_service & io_service )
+    ( boost::asio::io_context & io_service )
     : timer_{ io_service }
     , timeouts_{}
 {}
