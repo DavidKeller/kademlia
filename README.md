@@ -9,6 +9,17 @@ C++11 distributed hash table library
 
 **This software is experimental and under development**.
 
+# Installation
+
+## Requirements
+ * cmake 
+ * c++11 compiler
+
+## Compilation
+ 1. `cmake --preset default`
+ 1. `cmake --build out --config Release`
+ 1. `cmake --install out --config Release`
+
 # Development
 
 ## Supported targets
